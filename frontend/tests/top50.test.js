@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-import { buildTop50Query, fetchTop50, formatBytes } from '../src/top50.js'
+import { buildTop50Query, fetchTop50, formatBytes, formatScore } from '../src/top50.js'
 
 test('builds a backend query containing every active filter', () => {
   const query = buildTop50Query({
@@ -36,6 +36,20 @@ test('formats byte strings using business-friendly binary units', () => {
   assert.equal(formatBytes('0'), '0 B')
   assert.equal(formatBytes('1536'), '1.5 KB')
   assert.equal(formatBytes('5368709120'), '5 GB')
+})
+
+test('fractional decimal byte strings stay in the B display unit', () => {
+  assert.equal(formatBytes('0.5'), '0.5 B')
+  assert.equal(formatBytes('0.01'), '0.0 B')
+})
+
+test('unknown traffic and scores do not appear as real zero values', () => {
+  for (const value of [null, undefined, '', ' ']) {
+    assert.equal(formatBytes(value), '—')
+    assert.equal(formatScore(value), '—')
+  }
+  assert.equal(formatBytes('0'), '0 B')
+  assert.equal(formatScore(0), '0.000')
 })
 
 test('surfaces the backend error message when a query fails', async () => {

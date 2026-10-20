@@ -1,3 +1,4 @@
+
 package com.yukino.cdn;
 
 import org.springframework.boot.SpringApplication;

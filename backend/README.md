@@ -2,13 +2,15 @@
 
 本环节只修改 Java 服务。复用 Spring JDBC、现有 MySQL 和现有 Top50 原型，新增预测业务任务与异步编排；不接收 CSV、不读 Python 文件、不实现 Mock、不读取或聚合预测候选。
 
-## 数据库变更：尚未执行
+## 数据库变更与本地执行记录
 
 现有项目没有 Flyway/Liquibase 或版本化迁移 runner，仅有阶段②的 `schema.sql` / `data.sql`。本次只新增独立增量脚本：
 
 `src/main/resources/db/migrations/003_prediction_task.sql`
 
 该脚本只创建 `prediction_task` 一张表和对应索引，不修改或清空 `top50_prediction`，不写种子数据。必须经用户明确批准后才可对指定 MySQL 库执行；不因启动服务自动执行它。历史 `schema.sql`、`data.sql` 未改写。
+
+2026-10-20 用户已批准，并已在 `127.0.0.1:13306/cdn_hotspot` 执行该脚本，验证唯一索引及原 32 条 Fake 数据不变。同一库不要再次执行 CREATE TABLE；其他目标库仍须先确认。验收记录见 `../output/20261020_第三环节MySQL联调验收_v01.md`。
 
 当前 `spring.sql.init.mode=never`，避免每次重启执行旧 `data.sql` 的 DELETE 和种子重建。现存 Fake 榜单仍可按原 API 查询；空库不自动初始化。本文件中的启动行为取代根 README 的阶段②自动重建种子说明。
 
@@ -87,6 +89,14 @@ Java 不根据模型版本前缀选择 Mock，不发送 mock 标志，不对真�
 
 测试只在隔离 H2 内存/文件库执行独立测试表 fixture，不执行上述业务迁移脚本，不连接真实 MySQL。覆盖业务 API、并发幂等、校验、Python HTTP 请求格式、超时/404/5xx、丢失响应、文件库重开恢复，以及完整 Spring Boot 真实 HTTP 调用。`PredictionProcessRestartTest` 还会启动并重启真实 Java 进程，验证自动调度、原 taskId、幂等键与截止时间恢复且不重复提交。Python 预测响应均为显式测试专用契约替身，不是生产 Mock 算法。
 
-100 秒计算兼容性使用可控时钟推进验证，不宣称已运行第④步的真实 100 秒延迟 Mock。真实 MySQL 迁移及 Java→Python 预测成功联调仍分别等待用户批准和第④步实现。
+100 秒计算兼容性使用可控时钟推进验证，不宣称已运行第④步的真实 100 秒延迟 Mock。真实 MySQL 迁移与 Java 任务落库、重试、断连及进程重启联调已于 2026-10-20 完成；Python 预测成功联调仍等待第④步实现。
+
+本机已批准目标库的手动验收脚本为 `scripts/verify_mysql_flow.py`。从项目根目录运行：
+
+```bash
+conda run --no-capture-output -n cdn-predictor python backend/scripts/verify_mysql_flow.py
+```
+
+运行前须自行确认该库已经获批并完成迁移、MySQL 正在 13306 运行。脚本只启动既有 Java/Python 程序，不修改服务源码；使用真实 10350.csv，在独立端口验证 Python 导入与重启、Java 幂等/错误/重试、真实 MySQL 落库及 Java 重启。本次运行只在进程参数中使用 20 秒总时限，文件中的默认 180 秒不变。每次运行保留三条新的验收任务，不清库、不删除记录；日志保存于 runtime/step3mysql_20261020_<批次>/，Java/Python 验收进程退出时自动停止。
 
 第③步完成后停止，未经用户明确指示不进入第④步。

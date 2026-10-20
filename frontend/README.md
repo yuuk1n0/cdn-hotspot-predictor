@@ -33,4 +33,31 @@
 
 运行 `npm test` 和 `npm run build`。测试中的 HTTP 响应只用于前端单元测试，生产页面没有成功响应替身。
 
-本次不实现导入状态查询、质量报告、datasetId、预测、Mock 或榜单接入。Python 当前仅有健康检查，无上传接口：**前端已完成，真实上传联调待第②步验证**。第②步需验证 Python 实际接收 multipart、幂等键和文件原始字节，并返回持久化的 importTaskId。
+第①步前端范围不包含导入状态查询、质量报告、datasetId、预测或 Mock。上述内容记录上传面板的独立职责；Python 第②步的实现和实际验证以 `predictor/README.md` 为准。
+
+# 任务查询与榜单展示（第三阶段第⑥步）
+
+## 操作
+
+在上传面板下方使用“预测任务与本次榜单”。选择 taskId，粘贴 **Java 已创建的预测任务编号**，点击“查询”。PENDING/RUNNING 每 2 秒查询一次；只有 Java 返回 SUCCEEDED 和 runId 后才读取榜单。也可以选择 runId 查询已发布快照。
+
+查询时禁用重复提交；“暂停查询”只停止浏览器查询，不取消后台任务。“重新查询原编号”只执行 GET，不创建新任务。自动查询最多持续 5 分钟，超时只暂停，不将 Java 任务改成失败。网络错误停止当前查询，允许重试原编号；FAILED 展示 Java 返回的错误码和原因。最近查询类型及编号保存在 `cdn.prediction.lookup`，刷新后重新 GET；不把缓存的任务状态当成当前状态。支持 `/?taskId=...#prediction` 或 `/?runId=...#prediction`，URL 优先于本地记录。
+
+本轮不增加预测提交表单。taskId 必须来自既有 Java 预测提交接口，不能使用 Python 的 importTaskId。
+
+## 接口与展示契约
+
+| 浏览器 GET | 既有 Vite 代理目标 | 用途 |
+| --- | --- | --- |
+| `/api/tasks/{taskId}` | Java `/api/v1/tasks/{taskId}` | 业务任务状态、阶段、数据集和参数、错误 |
+| `/api/predictions/{runId}` | Java `/api/v1/predictions/{runId}` | Java 已发布的 Top50 快照 |
+
+沿用现有 `/api` 代理，没有新增路由别名、Python 查询或 POST。结果使用 `materials/方案v1.md` §6.5 的未来 Java 契约：`runId`、`datasetId`、`appId`、`cutoffDate`、`horizonDays`、`predictionStartDate`、`predictionEndDate`、`modelVersion`、`datasetSource`、`predictionSource`、`candidateCount`、`top50Count`、`top50PredictedBytes`、`items`。条目包含 `rank`、`fileKey`、十进制字符串 `predictedBytes`；文件大小、实际流量、类型、压缩状态、分数及理由可未知。
+
+前端校验任务/结果关联、窗口和来源；不修补错误响应，不排序、聚合或补齐候选。精确 B 字符串原样显示，额外保留原型的近似友好单位展示。周流量已经是连续 7 天累计，不乘 7。未知值显示“—”或“未知”；热点流量占比显示“不可计算”和缺少匹配分母的原因；MOCK 明确标为模拟计算。原有 Fake 看板、筛选及分页独立保留，新查询失败不从 Fake 看板取数据。保留上一份有效榜单时显式标注它不属于本次查询。
+
+## 当前可验证范围
+
+运行 `npm test`、`node --test --test-isolation=none`、`npm run build`。测试覆盖请求路径、轮询/终态、断连/404/503、原编号重查、刷新恢复、迟到响应隔离、模拟 100 秒后端等待、契约校验、精确字节字符串、未知值、真实 Vue 组件的服务端渲染及旧 Fake 表格兼容。
+
+**当前第④、⑤步尚未实现：Java 尚无 `GET /api/v1/predictions/{runId}`，也不会发布成功榜单。第⑥步前端代码已实现，真实成功榜单联调待第④、⑤步。** 测试 fixture 仅存在于测试文件；页面没有假成功响应。模拟 100 秒使用测试时钟，不是实际等待 100 秒的跨服务验收；未执行真实浏览器交互或完整链路验收。

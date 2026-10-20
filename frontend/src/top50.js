@@ -30,6 +30,7 @@ export async function fetchTop50Options(fetchService = fetch) {
 }
 
 export function formatBytes(value) {
+  if (value == null || String(value).trim() === '') return '—'
   const bytes = Number(value)
   if (!Number.isFinite(bytes) || bytes < 0) {
     return '—'
@@ -39,13 +40,14 @@ export function formatBytes(value) {
   }
 
   const units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
-  const unitIndex = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1)
+  const unitIndex = Math.max(0, Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1))
   const formatted = bytes / (1024 ** unitIndex)
   const digits = formatted >= 100 || Number.isInteger(formatted) ? 0 : 1
   return `${formatted.toFixed(digits)} ${units[unitIndex]}`
 }
 
 export function formatScore(value) {
+  if (value == null || String(value).trim() === '') return '—'
   const score = Number(value)
   return Number.isFinite(score) ? score.toFixed(3) : '—'
 }

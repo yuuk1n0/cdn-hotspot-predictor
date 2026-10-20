@@ -1,15 +1,12 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import CsvImportPanel from './CsvImportPanel.vue'
+import PredictionPanel from './PredictionPanel.vue'
+import Top50Table from './Top50Table.vue'
 
 import {
-  compressionStatusLabels,
   fetchTop50,
-  fetchTop50Options,
-  fileTypeLabels,
-  formatBytes,
-  formatScore,
-  granularityLabels
+  fetchTop50Options
 } from './top50.js'
 
 const filters = reactive({
@@ -122,17 +119,18 @@ onMounted(initialize)
           <p class="hero__copy">按预测窗口与业务维度检索热点候选，优先识别高流量、高压缩价值文件。</p>
         </div>
         <div class="mock-stamp" role="status">
-          <span>FAKE DATA</span>
-          <strong>演示预测结果</strong>
-          <small>查询链路真实 · 算法尚未接入</small>
+          <span>REAL / FAKE · MOCK / MODEL</span>
+          <strong>任务榜单与原型独立展示</strong>
+          <small>来源明确标注 · 不混用预测结果</small>
         </div>
       </div>
 
       <CsvImportPanel />
+      <PredictionPanel />
 
       <form class="filter-panel" aria-label="Top50 筛选条件" @submit.prevent="applyFilters">
         <div class="filter-panel__heading">
-          <div><span>QUERY MATRIX</span><strong>筛选预测结果</strong></div>
+          <div><span>FAKE DATA / 第二阶段原型</span><strong>筛选演示预测结果</strong></div>
           <p>全部条件由 Spring Boot 转换为 MySQL 查询</p>
         </div>
 
@@ -197,26 +195,7 @@ onMounted(initialize)
         </div>
 
         <template v-else>
-          <div class="table-scroll">
-            <table>
-              <thead><tr><th>排名</th><th>文件标识</th><th>类型</th><th>文件大小</th><th>预测流量</th><th>预测分数</th><th>推荐理由</th><th>最近实际流量</th><th>压缩状态</th><th>模型版本</th><th>预测窗口</th></tr></thead>
-              <tbody>
-                <tr v-for="item in items" :key="`${item.predictionDate}-${item.appId}-${item.granularity}-${item.modelVersion}-${item.rank}`">
-                  <td><div class="rank-cell" :style="{ '--rank-heat': `${Math.max(18, 104 - item.rank * 8)}%` }"><strong>#{{ String(item.rank).padStart(2, '0') }}</strong><span><i></i></span></div></td>
-                  <td><div class="file-key" :title="item.fileKey">{{ item.fileKey }}</div><small class="app-id">APP {{ item.appId }}</small></td>
-                  <td><span class="type-tag">{{ fileTypeLabels[item.fileType] || item.fileType }}</span></td>
-                  <td class="number-cell">{{ formatBytes(item.fileSizeBytes) }}</td>
-                  <td class="number-cell number-cell--primary">{{ formatBytes(item.predictedBytes) }}</td>
-                  <td class="score-cell">{{ formatScore(item.score) }}</td>
-                  <td><p class="reason">{{ item.reason }}</p></td>
-                  <td class="number-cell">{{ formatBytes(item.recentActualBytes) }}</td>
-                  <td><span class="status-pill" :class="`status-pill--${item.compressionStatus.toLowerCase()}`">{{ compressionStatusLabels[item.compressionStatus] || item.compressionStatus }}</span></td>
-                  <td><code>{{ item.modelVersion }}</code></td>
-                  <td><strong class="date-cell">{{ item.predictionDate }}</strong><small>{{ granularityLabels[item.granularity] || item.granularity }}预测</small></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <Top50Table :items="items" />
           <footer class="pagination">
             <label>每页<select v-model.number="pageSize" @change="changePageSize"><option :value="10">10</option><option :value="20">20</option><option :value="50">50</option></select>条</label>
             <div><button type="button" :disabled="page === 1 || loading" @click="changePage(page - 1)">上一页</button><span><b>{{ page }}</b> / {{ pageCount }}</span><button type="button" :disabled="page === pageCount || loading" @click="changePage(page + 1)">下一页</button></div>
