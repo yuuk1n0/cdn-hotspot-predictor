@@ -1,0 +1,1 @@
+"""CDN hotspot predictor service."""

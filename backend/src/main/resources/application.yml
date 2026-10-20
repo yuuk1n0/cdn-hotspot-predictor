@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: cdn-hotspot-backend
+  sql:
+    init:
+      mode: always
+      encoding: UTF-8
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:cdn_hotspot}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    username: ${MYSQL_USER:cdn}
+    password: ${MYSQL_PASSWORD:cdn_dev}
+    hikari:
+      initialization-fail-timeout: -1
+      connection-timeout: 3000
+      maximum-pool-size: 5
+
+server:
+  port: ${BACKEND_PORT:8080}
+
+app:
+  cors:
+    allowed-origin: ${FRONTEND_ORIGIN:http://localhost:5173}
