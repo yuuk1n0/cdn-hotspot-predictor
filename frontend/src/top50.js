@@ -1,3 +1,5 @@
+import { requestJson } from './http.js'
+
 const filterKeys = [
   'startDate',
   'endDate',
@@ -64,19 +66,4 @@ export const compressionStatusLabels = {
   PENDING: '待处理',
   PROCESSING: '处理中',
   COMPRESSED: '已压缩'
-}
-
-async function requestJson(path, fetchService) {
-  const response = await fetchService(path)
-  if (!response.ok) {
-    let message = `请求失败（HTTP ${response.status}）`
-    try {
-      const payload = await response.json()
-      if (payload.message) {
-        message = payload.message
-      }
-    } catch {}
-    throw new Error(message)
-  }
-  return response.json()
 }

@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
+import CsvImportPanel from './CsvImportPanel.vue'
 
 import {
   compressionStatusLabels,
@@ -126,6 +127,8 @@ onMounted(initialize)
           <small>查询链路真实 · 算法尚未接入</small>
         </div>
       </div>
+
+      <CsvImportPanel />
 
       <form class="filter-panel" aria-label="Top50 筛选条件" @submit.prevent="applyFilters">
         <div class="filter-panel__heading">
