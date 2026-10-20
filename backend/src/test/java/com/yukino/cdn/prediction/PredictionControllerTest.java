@@ -72,7 +72,10 @@ class PredictionControllerTest {
     @Test
     void missingTaskAndMissingTableDoNotReturnFakeSuccess() throws Exception {
         mvc.perform(get("/api/v1/tasks/unknown")).andExpect(status().isNotFound());
+        mvc.perform(get("/api/v1/predictions/unknown")).andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value("RUN_NOT_FOUND"));
         // Only the isolated test database is affected, never the real MySQL instance.
+        jdbc.execute("DROP TABLE prediction_run");
         jdbc.execute("DROP TABLE prediction_task");
         mvc.perform(post("/api/v1/predictions").header("Idempotency-Key", "one").contentType(MediaType.APPLICATION_JSON).content(REQUEST))
                 .andExpect(status().isServiceUnavailable()).andExpect(jsonPath("$.error.code").value("TASK_STORAGE_UNAVAILABLE"));

@@ -37,6 +37,11 @@ public class PredictorHttpClient implements PredictorClient {
         return parseTask(body, taskId);
     }
 
+    @Override
+    public JsonNode items(String runId) {
+        return exchange(() -> http.get().uri("/api/v1/predictions/{id}/items?page=1&pageSize=50", runId), 200, "items");
+    }
+
     private JsonNode exchange(java.util.function.Supplier<RestClient.RequestHeadersSpec<?>> request, int expectedStatus, String operation) {
         try {
             var response = request.get().retrieve().toEntity(JsonNode.class);
@@ -49,6 +54,7 @@ public class PredictorHttpClient implements PredictorClient {
             if (status == 404 && operation.equals("task")) return null;
             if (status == 404 && operation.equals("dataset")) throw new PredictionProblem(404, "DATASET_NOT_FOUND", "Python 数据集不存在。");
             if (status == 404 && operation.equals("submit")) throw PredictionProblem.retryable("PYTHON_API_UNAVAILABLE", "Python 预测接口尚不可用；等待原任务重试，不代表算法失败。");
+            if (status == 404 && operation.equals("items")) throw new PredictionProblem(422, "INVALID_RESULT", "Python 成功任务的完整结果不存在。");
             if (status >= 500 || status == 408 || status == 429 || status == 425) {
                 throw PredictionProblem.retryable("PYTHON_UNAVAILABLE", "Python 暂不可用或请求受限（HTTP " + status + "），将重试原任务。");
             }

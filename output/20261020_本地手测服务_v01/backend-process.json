@@ -1,0 +1,10 @@
+{
+  "pid": 20512,
+  "command": [
+    "/home/yukino/.sdkman/candidates/java/current/bin/java",
+    "-jar",
+    "/home/yukino/projects/work/cvte/cdn-hotspot-predictor/backend/target/cdn-hotspot-backend-0.1.0-SNAPSHOT.jar"
+  ],
+  "cwd": "/home/yukino/projects/work/cvte/cdn-hotspot-predictor/backend",
+  "port": 8080
+}

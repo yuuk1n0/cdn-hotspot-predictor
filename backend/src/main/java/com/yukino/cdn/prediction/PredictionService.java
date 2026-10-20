@@ -2,6 +2,7 @@ package com.yukino.cdn.prediction;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
@@ -45,6 +46,12 @@ public class PredictionService {
 
     public PredictionTask.View get(String taskId) {
         return repository.find(taskId).orElseThrow(() -> new PredictionProblem(404, "TASK_NOT_FOUND", "预测任务不存在。")).view();
+    }
+
+    public JsonNode result(String runId) {
+        String json = repository.snapshot(runId).orElseThrow(() -> new PredictionProblem(404, "RUN_NOT_FOUND", "已成功发布的业务榜单不存在。"));
+        try { return mapper.readTree(json); }
+        catch (JsonProcessingException exception) { throw new PredictionProblem(503, "RESULT_STORAGE_UNAVAILABLE", "已保存的榜单快照无法读取，未返回替代数据。"); }
     }
 
     private Accepted existing(PredictionTask task, String hash) {

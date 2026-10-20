@@ -1,0 +1,35 @@
+{
+  "import": {
+    "importTaskId": "imp_40a5b07803b1610ca184ae5404c56803c769550be1d8cb841406d9513cfadae2",
+    "status": "PENDING"
+  },
+  "dataset": {
+    "importTaskId": "imp_40a5b07803b1610ca184ae5404c56803c769550be1d8cb841406d9513cfadae2",
+    "status": "SUCCEEDED",
+    "datasetId": "ds_a2740c2769b0e4e56d95c5a6f7022457391aa48479b1eed8c3b00e231c057c3a",
+    "error": null,
+    "quality": null,
+    "createdAt": "2026-10-20T13:18:17.402054Z",
+    "updatedAt": "2026-10-20T13:18:17.469067Z"
+  },
+  "task": {
+    "taskId": "task_8a79ad53-4f1b-4296-ac5c-9b2306ccd998",
+    "status": "SUCCEEDED",
+    "stage": "COMPLETED",
+    "datasetId": "ds_a2740c2769b0e4e56d95c5a6f7022457391aa48479b1eed8c3b00e231c057c3a",
+    "appId": "10350",
+    "cutoffDate": "2026-10-06",
+    "horizonDays": 7,
+    "modelVersion": "contract-demo-v1",
+    "datasetSource": "REAL",
+    "predictionSource": "MOCK",
+    "runId": "run_8ccedaca2d8b0da74872fee45e8c4707304a8356a1a83cca46796d87fda76152",
+    "error": null,
+    "lastDependencyError": null,
+    "attemptCount": 2,
+    "createdAt": "2026-10-20T13:18:29.411Z",
+    "updatedAt": "2026-10-20T13:18:31.545Z",
+    "deadlineAt": "2026-10-20T13:21:29.411Z",
+    "nextAttemptAt": "2026-10-20T13:18:31.493Z"
+  }
+}

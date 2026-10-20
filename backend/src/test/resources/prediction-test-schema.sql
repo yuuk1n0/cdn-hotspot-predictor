@@ -24,3 +24,11 @@ CREATE TABLE prediction_task (
     deadline_at_ms BIGINT NOT NULL,
     next_attempt_at_ms BIGINT NOT NULL
 );
+
+CREATE TABLE prediction_run (
+    run_id VARCHAR(128) PRIMARY KEY,
+    task_id VARCHAR(64) NOT NULL UNIQUE REFERENCES prediction_task(task_id),
+    prediction_source VARCHAR(16) NOT NULL,
+    snapshot_json CLOB NOT NULL,
+    created_at_ms BIGINT NOT NULL
+);

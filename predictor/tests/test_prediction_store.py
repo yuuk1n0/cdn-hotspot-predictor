@@ -194,3 +194,34 @@ def test_unknown_and_traversal_identifiers_return_not_found(tmp_path):
         with pytest.raises(ImportProblem) as error:
             store.get_items(identifier, 1, 50)
         assert error.value.status == 404
+
+
+@pytest.mark.parametrize("damage", ["invalid-json", "non-object", "missing-source", "wrong-source", "wrong-count", "bad-item"])
+def test_corrupt_published_result_fails_only_its_task_and_recovery_continues(tmp_path, damage):
+    store, body = prepared(tmp_path)
+    store.accept(body)
+    finish(store)
+    run_id = store.get_task(body["taskId"])["runId"]
+    result_path = tmp_path / "runs" / run_id / "result.json"
+    result = json.loads(result_path.read_text())
+    if damage == "missing-source":
+        result.pop("datasetSource")
+    if damage == "wrong-source":
+        result["predictionSource"] = "REAL_ALGORITHM_MAGIC"
+    if damage == "wrong-count":
+        result["total"] = 99
+    if damage == "bad-item":
+        result["items"][0]["predictedBytes"] = -1
+    result_path.write_text("{" if damage == "invalid-json" else "[]" if damage == "non-object" else json.dumps(result))
+    record_path = next((tmp_path / "tasks").glob("*/task.json"))
+    record = json.loads(record_path.read_text())
+    record.update(status="RUNNING", runId=None)
+    record_path.write_text(json.dumps(record))
+    store.accept({**body, "taskId": "healthy-next"})
+    store.initialize()
+    failed = store.get_task(body["taskId"])
+    assert failed["status"] == "FAILED"
+    assert failed["error"]["code"] == "INVALID_RESULT"
+    assert failed["runId"] is None
+    finish(store)
+    assert store.get_task("healthy-next")["status"] == "SUCCEEDED"

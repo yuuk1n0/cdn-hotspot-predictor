@@ -86,9 +86,34 @@ class PredictionStore:
     def get_items(self, run_id, page, page_size):
         if not re.fullmatch(r"run_[0-9a-f]{64}", run_id) or not (self.runs / run_id / "result.json").is_file():
             raise ImportProblem("RUN_NOT_FOUND", "完整预测运行不存在。", 404)
-        result = read_json(self.runs / run_id / "result.json")
+        result = self._read_run(run_id)
         start = (page - 1) * page_size
         return {**result, "page": page, "pageSize": page_size, "items": result["items"][start:start + page_size]}
+
+    def _read_run(self, run_id):
+        try:
+            result = read_json(self.runs / run_id / "result.json")
+            if not isinstance(result, dict):
+                raise ValueError
+            request = PredictionRequest.from_json({key: result.get(key) for key in PredictionRequest.__dataclass_fields__})
+            cutoff = date.fromisoformat(request.cutoffDate)
+            if result.get("runId") != run_id or self._run_id(request.taskId) != run_id \
+                    or result.get("datasetSource") not in {"REAL", "FAKE"} or result.get("predictionSource") not in {"MOCK", "MODEL"} \
+                    or result.get("predictionStartDate") != (cutoff + timedelta(days=1)).isoformat() \
+                    or result.get("predictionEndDate") != (cutoff + timedelta(days=request.horizonDays)).isoformat() \
+                    or not isinstance(result.get("items"), list) or type(result.get("total")) is not int or result["total"] != len(result["items"]):
+                raise ValueError
+            identities = set()
+            for rank, item in enumerate(result["items"], 1):
+                if not isinstance(item, dict) or type(item.get("rank")) is not int or item["rank"] != rank \
+                        or not isinstance(item.get("fileKey"), str) or not item["fileKey"].strip() or item["fileKey"] in identities \
+                        or not isinstance(item.get("predictedBytes"), str) or len(item["predictedBytes"]) > 256 \
+                        or not re.fullmatch(r"(?:0|[1-9]\d*)(?:\.\d+)?", item["predictedBytes"]):
+                    raise ValueError
+                identities.add(item["fileKey"])
+            return result
+        except (ValueError, TypeError, KeyError, ImportProblem):
+            raise ImportProblem("INVALID_RESULT", "已发布结果损坏或不符合计算结果契约，不能作为成功结果读取。") from None
 
     async def process_next(self, stop):
         # Only the single execution worker calls this, never concurrently with another execution.
@@ -180,15 +205,19 @@ class PredictionStore:
         path = self.runs / self._run_id(task["taskId"]) / "result.json"
         if not path.is_file():
             return None
-        result = read_json(path)
+        result = self._read_run(self._run_id(task["taskId"]))
         expected = {key: task[key] for key in PredictionRequest.__dataclass_fields__}
-        if any(result.get(key) != value for key, value in expected.items()) or result.get("runId") != self._run_id(task["taskId"]) \
-                or not isinstance(result.get("items"), list) or result.get("total") != len(result["items"]):
+        if any(result.get(key) != value for key, value in expected.items()) \
+                or result["predictionSource"] != task["execution"]["mode"] \
+                or (task["datasetSource"] is not None and result["datasetSource"] != task["datasetSource"]):
             raise ImportProblem("INVALID_RESULT", "已发布结果与任务不匹配，不能标记成功。")
         return result
 
     def _settle(self, task, error):
-        result = self._published(task)
+        try:
+            result = self._published(task)
+        except ImportProblem as problem:
+            result, error = None, problem.as_dict()
         if result:
             self._update(task, status="SUCCEEDED", stage="COMPLETED", runId=result["runId"], error=None,
                          datasetSource=result["datasetSource"], predictionSource=result["predictionSource"])

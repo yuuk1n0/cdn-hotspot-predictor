@@ -1,6 +1,6 @@
-# 第三阶段第②步：CSV 接收、检查与保存
+# 第三阶段 Python：CSV 导入与异步 Mock
 
-本环节只实现 Python 导入，不包含预测任务、Mock、Java 编排或前端导入状态展示。第①步前端可继续提交 multipart；收到 202 仍只显示“已接收”，不会自动查询下面的导入结果。
+第②步的 CSV 导入能力原样保留，第④步增加 Python 异步计算任务和完整 Mock 结果。第①步前端可继续提交 multipart；收到 202 仍只显示“已接收”。本服务不回调 Java，不组织业务 Top50，不实现真实算法、回测、CStore、压缩或收益。
 
 ## 启动与验证
 
@@ -80,4 +80,82 @@ conda run -n cdn-predictor python -m pytest -q
 
 现有 Starlette/httpx 测试客户端会发出弃用警告；本环节不为此安装或更换依赖。未进行浏览器自动化联调，不宣称完整预测链路已完成。
 
-第②步完成后停止，等待用户明确指示进入第③步。
+## 第④步：异步预测接口
+
+| 接口 | 契约 |
+| --- | --- |
+| `POST /api/v1/predictions` | Java 提交 JSON；持久化后返回 HTTP 202 和任务视图 |
+| `GET /api/v1/tasks/{taskId}` | PENDING / RUNNING / SUCCEEDED / FAILED；非成功时 runId=null，失败时 error 有错误码及原因 |
+| `GET /api/v1/predictions/{runId}/items?page=1&pageSize=50` | 完整候选结果分页，page 从 1 开始，pageSize 为 1–200；rank 是全局名次 |
+
+沿用 V1 设计和 Java 现有路径，无需调整代理。Python 预测幂等使用 JSON 内的 Java taskId，不要求额外 `Idempotency-Key` 请求头；相同 taskId 和六字段内容返回已有状态，同 ID 不同参数返回 409，不重新执行。字符串 ID 原样返回，持久路径使用 taskId 摘要，不直接拼接外部 ID。含保留字符的 taskId 在 HTTP 路径中需 URL 编码。
+
+请求必须包含且只包含以下六字段，不能由调用方用 `mock=true` 改选执行模式。ID/App/版本不做数字转字符串等隐式转换：
+
+```json
+{
+  "taskId": "task_from_java_example",
+  "datasetId": "ds_replace_with_ready_dataset_id",
+  "appId": "10350",
+  "cutoffDate": "2026-10-06",
+  "horizonDays": 7,
+  "modelVersion": "contract-demo-v1"
+}
+```
+
+以上是契约占位，需替换为实际导入返回的 READY datasetId 和 Java taskId。App 必须存在于数据集，截止日在该 App 的观测日期范围内；允许有缺日警告，不将缺日补零。格式错误直接 422，不创建任务；语义错误进入可查询的 FAILED，如 DATASET_NOT_FOUND、APP_MISMATCH、INVALID_CUTOFF_DATE、MODEL_VERSION_UNSUPPORTED、MODEL_NOT_IMPLEMENTED。重复失败任务仍返回原失败状态，需要新业务任务才能重做。
+
+首次接收返回 PENDING，后续幂等请求可返回现有状态。后台阶段为 WAITING / VALIDATING / COMPUTING / COMPLETED / FAILED。成功任务含 `runId`；完整结果先原子发布，随后才把任务置为 SUCCEEDED。Python 的成功不代表 Java 业务成功。
+
+结果响应包含 taskId、runId、datasetId、appId、cutoffDate、horizonDays、predictionStartDate、predictionEndDate、modelVersion、datasetSource、predictionSource、generatedAt、page、pageSize、total、items。所有流量为 B 的十进制字符串。只分页，不截取保存 Top50，也不计算 Java 的 Top50 合计或热点占比。空候选不造文件，空页返回 items=[]。
+
+### Mock 规则与配置
+
+| 环境变量 | 默认值 | 作用 |
+| --- | --- | --- |
+| `PREDICTION_MODE` | `MOCK` | 仅允许 MOCK / MODEL；MODEL 明确失败，不静默回退 |
+| `PREDICTION_MODEL_VERSION` | `contract-demo-v1` | 精确匹配请求版本，不按版本前缀选 Mock |
+| `MOCK_DELAY_SECONDS` | `0` | 非负有限秒数；设置 100 可模拟长耗时，不影响 HTTP 查询 |
+| `PREDICTION_TASK_TIMEOUT_SECONDS` | `180` | 从接收起计算的总截止时限，包含队列等待；超时为 TASK_TIMEOUT |
+
+每份接收记录持久保存执行模式、模型版本、延迟及截止时间；配置变更不改变已接收任务的执行语义。单计算并发，其他计算任务留在持久化 PENDING，导入 worker 独立运行。延迟等待使用异步事件，退出时可快速停止；不会让 POST 请求挂起 100 秒。
+
+Mock 仅替代计算：取指定 App、cutoffDate 及以前每个原始文件标识最近一次**已有观测**，以该观测流量乘 horizonDays 作为确定性的模拟窗口累计值。该公式是链路占位，不是真实预测算法、日均值估计或算法效果证据。缺失日不作为真实零；截止日之后的文件和数值不参与；URL 与无协议路径保持不同身份。horizonDays=1 对应下一自然日，7 对应后续连续七天（非自然周）；Java/前端不得再乘 7。
+
+计算使用 Decimal，支持导入允许的最多128位整数字节，不经 float 中转。全部候选按累计模拟流量降序，同值按精确 fileKey 的 Unicode 顺序排序。输出 `predictionSource=MOCK`，数据来源沿用 READY 快照的 REAL/FAKE。score、fileType、fileSizeBytes、recentActualBytes、compressionStatus 均为 null，不生成未知业务事实；reason 明确标记模拟。
+
+长耗时启动示例（沿用既有环境，不安装依赖）：
+
+```bash
+cd predictor
+PREDICTION_MODE=MOCK MOCK_DELAY_SECONDS=100 PREDICTION_TASK_TIMEOUT_SECONDS=180 \
+  conda run --no-capture-output -n cdn-predictor \
+  python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+Java 继续使用现有单次 HTTP 超时和主动轮询；100 秒是后台计算延迟，不要求 Java 把单次读取超时改成100秒。
+
+### 任务、结果及恢复
+
+```text
+runtime/predictor/
+  tasks/<SHA256(taskId)>/task.json
+  runs/<runId>/result.json    # 保存本次全部候选和完整运行元数据
+```
+
+继续使用单实例、单 worker 和同一个持久卷。任务与结果不在内存中充当唯一事实来源。接收、更新和结果发布复用现有 fsync/原子替换；临时目录不参与查询。不自动删除旧任务/运行，失败任务不会覆盖其他运行。
+
+重启后 PENDING 继续排队；RUNNING 如果有完整且契约匹配的已发布结果则补齐成功，否则明确为 EXECUTION_INTERRUPTED。损坏结果为 INVALID_RESULT，仅该任务失败，不阻断其他任务恢复。短暂存储异常返回503或形成明确计算失败；若成功写入响应丢失，使用原 taskId 重试不会创建第二份任务或结果。不存在完整运行返回404，不以空榜单掩盖失败。
+
+### 第④步验收
+
+```bash
+cd predictor
+conda run -n cdn-predictor python -m pytest -q
+# 仅快速回归（不重复实际100秒用例）：
+conda run -n cdn-predictor python -m pytest -q --ignore=tests/test_prediction_http.py
+```
+
+完整测试包含真实 Uvicorn、10350.csv、实际100秒延迟和进程重启，因此耗时约两分钟；使用隔离临时目录及本机端口，不触碰现有运行数据、Java 或 MySQL。测试客户端已有的 Starlette/httpx 弃用警告仍保留，本轮不升级依赖。
+
+**第④步完成后停止。Java 第⑤步尚未实现，当前 Java 即使读到 Python SUCCEEDED，也会报告 AGGREGATION_NOT_IMPLEMENTED，不得据此宣称真实 Top50 闭环完成。** 本轮不修改 Java 或前端，不执行数据库迁移。

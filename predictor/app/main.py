@@ -144,7 +144,7 @@ def create_app(data_dir=None, *, max_file_bytes=None, max_rows=None, prediction_
     def submit_prediction(body: dict = Body(...)):
         return predictions.accept(body)
 
-    @app.get("/api/v1/tasks/{taskId}")
+    @app.get("/api/v1/tasks/{taskId:path}")
     def get_prediction_task(taskId: str):
         return predictions.get_task(taskId)
 

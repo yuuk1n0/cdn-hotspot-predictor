@@ -19,28 +19,28 @@
 
 文件：`predictor/app/prediction.py`、`predictor/tests/test_prediction.py`。
 
-- [ ] 先写请求严格类型、日期、App、模型模式、截止日隔离、精确 Decimal、稳定排序测试；运行确认失败。
-- [ ] 实现 `PredictionRequest.from_json(body)`、`mock_items(rows, request)`。手算断言：最近观测 `10000000000000001` B、horizonDays=7 → `70000000000000007` B；截止日后新增文件不出现。
-- [ ] 执行 `python -m pytest -q tests/test_prediction.py`。
+- [x] 先写请求严格类型、日期、App、模型模式、截止日隔离、精确 Decimal、稳定排序测试；运行确认失败。
+- [x] 实现 `PredictionRequest.from_json(body)`、`mock_items(rows, request)`。手算断言：最近观测 `10000000000000001` B、horizonDays=7 → `70000000000000007` B；截止日后新增文件不出现。
+- [x] 执行 `python -m pytest -q tests/test_prediction.py`。
 
 ### 2. 持久任务与结果
 
 文件：`predictor/app/prediction_store.py`、`predictor/tests/test_prediction_store.py`。
 
-- [ ] 先写持久接收、并发幂等/冲突、超过50候选分页、失败隔离、重启恢复及发布中断测试；确认失败。
-- [ ] 实现 `PredictionStore.accept(body)`、`get_task(task_id)`、`process_next(stop)`、`get_items(run_id,page,page_size)`、`recover()`。结果与任务分别原子发布，任务响应不泄露内部保留字段。
-- [ ] 执行存储测试；使用隔离目录，故障注入只替换实际文件写入边界。
+- [x] 先写持久接收、并发幂等/冲突、超过50候选分页、失败隔离、重启恢复及发布中断测试；确认失败。
+- [x] 实现 `PredictionStore.accept(body)`、`get_task(task_id)`、`process_next(stop)`、`get_items(run_id,page,page_size)`、`recover()`。结果与任务分别原子发布，任务响应不泄露内部保留字段。
+- [x] 执行存储测试；使用隔离目录，故障注入只替换实际文件写入边界。
 
 ### 3. HTTP 与异步生命周期
 
 文件：`predictor/app/main.py`、`predictor/tests/test_prediction_api.py`、`predictor/tests/test_prediction_http.py`。
 
-- [ ] 先写 POST 202 / GET任务 / GET结果、坏参数、错App、未知数据集及模型、延迟100秒、重启查询测试；确认预测路由尚不存在。
-- [ ] 接入独立单并发 worker、配置延迟/总超时；复用现有错误结构和服务启动生命周期。
-- [ ] 真实 Uvicorn HTTP 使用实际 `datasets/10350.csv`、临时持久目录及空闲端口，验证短Mock和实际100秒延迟Mock的相同契约与进程重启。
+- [x] 先写 POST 202 / GET任务 / GET结果、坏参数、错App、未知数据集及模型、延迟100秒、重启查询测试；确认预测路由尚不存在。
+- [x] 接入独立单并发 worker、配置延迟/总超时；复用现有错误结构和服务启动生命周期。
+- [x] 真实 Uvicorn HTTP 使用实际 `datasets/10350.csv`、临时持久目录及空闲端口，验证短Mock和实际100秒延迟Mock的相同契约与进程重启。
 
 ### 4. 收尾
 
-- [ ] 更新 `predictor/README.md`：启动配置、请求字段、响应、Mock规则、文件路径和验收边界。
-- [ ] 运行全部 Python 测试及 `git diff --check`；只读代码审查，修复有证据的问题。
-- [ ] 不安装依赖、不执行迁移、不提交/推送；不自动进入第⑤步。Java 仍会因未实现聚合而失败，不能宣称全链路成功。
+- [x] 更新 `predictor/README.md`：启动配置、请求字段、响应、Mock规则、文件路径和验收边界。
+- [x] 运行全部 Python 测试及 `git diff --check`；只读代码审查，修复有证据的问题。
+- [x] 本代理未安装依赖、执行迁移或提交/推送；不自动进入第⑤步。Java 仍会因未实现聚合而失败，不能宣称全链路成功。

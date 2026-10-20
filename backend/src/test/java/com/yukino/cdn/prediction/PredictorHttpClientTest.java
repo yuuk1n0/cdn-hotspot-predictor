@@ -98,4 +98,23 @@ class PredictorHttpClientTest {
     private PredictionRequest request() {
         return new PredictionRequest("ds_one", "10350", LocalDate.of(2026, 10, 6), 7, "actual-v1");
     }
+
+    @Test
+    void readsOnlyFirstFiftyCandidatesFromThePublishedRun() {
+        server.expect(requestTo("http://python.test/api/v1/predictions/run_one/items?page=1&pageSize=50"))
+                .andExpect(method(HttpMethod.GET)).andRespond(withSuccess("{\"runId\":\"run_one\",\"items\":[]}", MediaType.APPLICATION_JSON));
+        assertEquals("run_one", client.items("run_one").path("runId").textValue());
+        server.verify();
+    }
+
+    @Test
+    void missingPublishedResultIsAnExplicitContractFailureButNetworkErrorsRemainRetryable() {
+        server.expect(requestTo("http://python.test/api/v1/predictions/run_one/items?page=1&pageSize=50")).andRespond(withResourceNotFound());
+        server.expect(requestTo("http://python.test/api/v1/predictions/run_one/items?page=1&pageSize=50")).andRespond(withServerError());
+        var missing = assertThrows(PredictionProblem.class, () -> client.items("run_one"));
+        assertEquals("INVALID_RESULT", missing.code());
+        assertFalse(missing.retryable());
+        assertTrue(assertThrows(PredictionProblem.class, () -> client.items("run_one")).retryable());
+        server.verify();
+    }
 }

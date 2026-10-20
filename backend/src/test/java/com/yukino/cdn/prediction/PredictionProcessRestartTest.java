@@ -89,7 +89,7 @@ class PredictionProcessRestartTest {
         } finally { fixture.stop(0); }
     }
 
-    private static Process start(String databaseUrl, int port, String pythonUrl, Path log) throws IOException {
+    static Process start(String databaseUrl, int port, String pythonUrl, Path log) throws IOException {
         return new ProcessBuilder(Path.of(System.getProperty("java.home"), "bin", "java").toString(), "-cp",
                 System.getProperty("surefire.test.class.path", System.getProperty("java.class.path")), "com.yukino.cdn.CdnApplication",
                 "--server.port=" + port, "--spring.datasource.url=" + databaseUrl, "--spring.datasource.driver-class-name=org.h2.Driver",
@@ -98,7 +98,7 @@ class PredictionProcessRestartTest {
                 .redirectErrorStream(true).redirectOutput(log.toFile()).start();
     }
 
-    private static void awaitStartup(Process process, RestClient http, Path log) throws Exception {
+    static void awaitStartup(Process process, RestClient http, Path log) throws Exception {
         long deadline = System.nanoTime() + Duration.ofSeconds(20).toNanos();
         while (System.nanoTime() < deadline) {
             if (!process.isAlive()) fail(Files.readString(log));
@@ -121,7 +121,7 @@ class PredictionProcessRestartTest {
         throw new AssertionError("Task did not resume: " + id);
     }
 
-    private static void stop(Process process) throws InterruptedException {
+    static void stop(Process process) throws InterruptedException {
         process.destroy();
         if (!process.waitFor(10, TimeUnit.SECONDS)) { process.destroyForcibly(); process.waitFor(); }
     }

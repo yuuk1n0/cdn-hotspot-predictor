@@ -193,7 +193,7 @@ class PredictionFlowTest {
     }
 
     @Test
-    void pythonFailureIsPersistedButPythonSuccessCannotBecomeBusinessSuccessInStepThree() {
+    void pythonFailureIsPersistedAndSuccessRequiresAQueryableBusinessSnapshot() {
         var failed = service.submit(request(), "fail");
         python.taskStatus = "FAILED";
         worker.tick();
@@ -203,9 +203,129 @@ class PredictionFlowTest {
         python.taskStatus = "SUCCEEDED";
         worker.tick();
         var task = service.get(computed.taskId());
-        assertEquals("FAILED", task.status());
-        assertEquals("AGGREGATION_NOT_IMPLEMENTED", task.error().code());
-        assertNull(task.runId());
+        assertEquals("SUCCEEDED", task.status());
+        assertNull(task.error());
+        assertEquals("run_fixture", task.runId());
+        assertEquals("MOCK", task.predictionSource());
+        var snapshot = service.result(task.runId());
+        assertEquals(2, snapshot.path("top50Count").intValue());
+        assertEquals("20000000000000002", snapshot.path("top50PredictedBytes").textValue());
+        assertEquals(computed.taskId(), snapshot.path("taskId").textValue());
+        int calls = python.calls;
+        worker.tick();
+        assertEquals(calls, python.calls);
+        assertEquals(snapshot, service.result(task.runId()));
+        assertEquals(1L, new org.springframework.jdbc.core.JdbcTemplate(dataSource).queryForObject("SELECT COUNT(*) FROM prediction_run", Long.class));
+    }
+
+    @Test
+    void resultNetworkFailureRetriesTheOriginalRunWithoutCreatingNewPrediction() {
+        var accepted = service.submit(request(), "results-retry");
+        python.taskStatus = "SUCCEEDED";
+        python.itemsFailure = PredictionProblem.retryable("PYTHON_UNAVAILABLE", "结果暂时不可读");
+        worker.tick();
+        var waiting = service.get(accepted.taskId());
+        assertEquals("RUNNING", waiting.status());
+        assertEquals("WAITING_DEPENDENCY", waiting.stage());
+        assertNull(waiting.runId());
+        python.itemsFailure = null;
+        clock.advance(Duration.ofSeconds(2));
+        worker.tick();
+        assertEquals("SUCCEEDED", service.get(accepted.taskId()).status());
+        assertEquals(List.of("run_fixture", "run_fixture"), python.queriedRuns);
+        assertTrue(python.submittedIds.isEmpty());
+    }
+
+    @Test
+    void repeatedResultFailuresKeepExponentialBackoffAndCannotChangeTheRunReference() {
+        var accepted = service.submit(request(), "backoff");
+        python.taskStatus = "SUCCEEDED";
+        python.itemsFailure = PredictionProblem.retryable("PYTHON_UNAVAILABLE", "暂时不可用");
+        worker.tick();
+        clock.advance(Duration.ofSeconds(2));
+        worker.tick();
+        assertEquals(clock.instant().plusSeconds(4), service.get(accepted.taskId()).nextAttemptAt());
+        assertEquals(2, python.queriedRuns.size());
+        python.resultRunId = "changed-run";
+        clock.advance(Duration.ofSeconds(4));
+        worker.tick();
+        assertEquals("FAILED", service.get(accepted.taskId()).status());
+        assertEquals("INVALID_RESULT", service.get(accepted.taskId()).error().code());
+        assertEquals(2, python.queriedRuns.size());
+    }
+
+    @Test
+    void snapshotInsertAndTaskSuccessRollbackTogetherAndCanRetry() {
+        var accepted = service.submit(request(), "atomic");
+        python.taskStatus = "SUCCEEDED";
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.execute("ALTER TABLE prediction_task ADD CONSTRAINT fail_publication CHECK (status <> 'SUCCEEDED')");
+        worker.tick();
+        assertEquals(0L, jdbc.queryForObject("SELECT COUNT(*) FROM prediction_run", Long.class));
+        assertEquals("RUNNING", service.get(accepted.taskId()).status());
+        assertNull(service.get(accepted.taskId()).runId());
+        jdbc.execute("ALTER TABLE prediction_task DROP CONSTRAINT fail_publication");
+        clock.advance(Duration.ofSeconds(2));
+        worker.tick();
+        assertEquals("SUCCEEDED", service.get(accepted.taskId()).status());
+        assertEquals(1L, jdbc.queryForObject("SELECT COUNT(*) FROM prediction_run", Long.class));
+    }
+
+    @Test
+    void aDifferentRunCannotOverwriteAnEarlierValidSnapshotAndBadResultFailsExplicitly() {
+        var first = service.submit(request(), "valid");
+        python.taskStatus = "SUCCEEDED";
+        worker.tick();
+        var original = service.result(service.get(first.taskId()).runId());
+        var second = service.submit(request(), "conflicting-run");
+        worker.tick();
+        assertEquals("FAILED", service.get(second.taskId()).status());
+        assertEquals("INVALID_RESULT", service.get(second.taskId()).error().code());
+        assertEquals(original, service.result("run_fixture"));
+    }
+
+    @Test
+    void reenteringPublicationMustStillVerifyTheRunBelongsToTheLockedTask() {
+        var first = service.submit(request(), "first");
+        python.taskStatus = "SUCCEEDED";
+        worker.tick();
+        service.submit(request(), "second");
+        python.resultRunId = "run_second";
+        worker.tick();
+        var forged = repository.find(first.taskId()).orElseThrow();
+        forged.pythonRunId = "run_second";
+        var snapshot = PredictionResult.build(PredictionResultTest.page(forged, 2), forged);
+        assertEquals("INVALID_RESULT", assertThrows(PredictionProblem.class, () -> repository.publish(forged, snapshot, clock)).code());
+        assertEquals("run_fixture", service.get(first.taskId()).runId());
+    }
+
+    @Test
+    void lateOrMalformedResultNeverPublishesBusinessSuccess() {
+        var accepted = service.submit(request(), "late");
+        python.taskStatus = "SUCCEEDED";
+        python.onItems = () -> clock.advance(Duration.ofSeconds(181));
+        worker.tick();
+        assertEquals("FAILED", service.get(accepted.taskId()).status());
+        assertEquals("TASK_TIMEOUT", service.get(accepted.taskId()).error().code());
+        assertNull(service.get(accepted.taskId()).runId());
+        assertEquals(0L, new org.springframework.jdbc.core.JdbcTemplate(dataSource).queryForObject("SELECT COUNT(*) FROM prediction_run", Long.class));
+    }
+
+    @Test
+    void successSnapshotSurvivesFileDatabaseReopenAndPythonGoingOffline(@TempDir Path directory) {
+        var source = new DriverManagerDataSource("jdbc:h2:file:" + directory.resolve("snapshot") + ";MODE=MySQL", "sa", "");
+        new ResourceDatabasePopulator(new ClassPathResource("prediction-test-schema.sql")).execute(source);
+        wire(source);
+        var accepted = service.submit(request(), "snapshot-restart");
+        python.taskStatus = "SUCCEEDED";
+        worker.tick();
+        var result = service.result(service.get(accepted.taskId()).runId());
+        wire(new DriverManagerDataSource(source.getUrl(), "sa", ""));
+        python.datasetFailure = PredictionProblem.retryable("PYTHON_UNAVAILABLE", "offline");
+        assertEquals("SUCCEEDED", service.get(accepted.taskId()).status());
+        assertEquals(result, service.result("run_fixture"));
+        worker.tick();
+        assertEquals(0, python.calls);
     }
 
     @Test
@@ -233,7 +353,11 @@ class PredictionFlowTest {
                 "appIds", List.of("10350"), "appDateRanges", java.util.Map.of("10350", java.util.Map.of("start", "2026-01-05", "end", "2026-10-13"))));
         PredictionProblem datasetFailure;
         PredictionProblem submitFailure;
+        PredictionProblem itemsFailure;
+        Runnable onItems = () -> {};
+        List<String> queriedRuns = new ArrayList<>();
         String taskStatus;
+        String resultRunId = "run_fixture";
         List<String> submittedIds = new ArrayList<>();
         PredictionRequest submittedRequest;
 
@@ -246,7 +370,7 @@ class PredictionFlowTest {
         public java.util.Optional<PythonTask> task(String id) {
             calls++;
             return taskStatus == null ? java.util.Optional.empty() : java.util.Optional.of(new PythonTask(id, taskStatus,
-                    taskStatus.equals("SUCCEEDED") ? "run_fixture" : null,
+                    taskStatus.equals("SUCCEEDED") ? resultRunId : null,
                     taskStatus.equals("FAILED") ? new PredictionProblem.Error("MODEL_NOT_IMPLEMENTED", "真实模型未实现") : null));
         }
 
@@ -256,6 +380,15 @@ class PredictionFlowTest {
             submittedRequest = request;
             if (submitFailure != null) throw submitFailure;
             return new PythonTask(id, "PENDING", null, null);
+        }
+
+        public com.fasterxml.jackson.databind.JsonNode items(String runId) {
+            calls++; queriedRuns.add(runId); onItems.run();
+            if (itemsFailure != null) throw itemsFailure;
+            var task = PredictionResultTest.task();
+            task.taskId = repository.due(clock.instant()).get(0).taskId;
+            task.request = request(); task.pythonRunId = runId;
+            return PredictionResultTest.page(task, 2);
         }
     }
 

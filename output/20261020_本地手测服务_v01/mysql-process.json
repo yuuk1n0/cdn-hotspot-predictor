@@ -1,0 +1,14 @@
+{
+  "pid": 19778,
+  "command": [
+    "/usr/sbin/mysqld",
+    "--no-defaults",
+    "--datadir=/home/yukino/projects/work/cvte/cdn-hotspot-predictor/runtime/mysql",
+    "--socket=/tmp/cdn-hotspot-local-mysql.sock",
+    "--port=13306",
+    "--bind-address=127.0.0.1",
+    "--mysqlx=OFF",
+    "--pid-file=/home/yukino/projects/work/cvte/cdn-hotspot-predictor/output/20261020_\u672c\u5730\u624b\u6d4b\u670d\u52a1_v01/mysql.pid",
+    "--log-error=/home/yukino/projects/work/cvte/cdn-hotspot-predictor/output/20261020_\u672c\u5730\u624b\u6d4b\u670d\u52a1_v01/mysql-error.log"
+  ]
+}

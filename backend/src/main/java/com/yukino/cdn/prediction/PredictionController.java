@@ -19,4 +19,7 @@ public class PredictionController {
 
     @GetMapping("/tasks/{taskId}")
     public PredictionTask.View task(@PathVariable String taskId) { return service.get(taskId); }
+
+    @GetMapping("/predictions/{runId}")
+    public JsonNode result(@PathVariable String runId) { return service.result(runId); }
 }

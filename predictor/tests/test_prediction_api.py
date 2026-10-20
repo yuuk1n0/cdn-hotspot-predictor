@@ -1,4 +1,5 @@
 import time
+from urllib.parse import quote
 
 import pytest
 from fastapi.testclient import TestClient
@@ -111,3 +112,12 @@ def test_real_mode_never_silently_executes_a_mock(tmp_path):
         assert task["status"] == "FAILED"
         assert task["error"]["code"] == "MODEL_NOT_IMPLEMENTED"
         assert task["runId"] is None
+
+
+def test_opaque_task_id_roundtrips_through_encoded_http_path(tmp_path):
+    with TestClient(create_app(tmp_path)) as client:
+        body = prediction_body(client, "task/java?opaque")
+        assert client.post("/api/v1/predictions", json=body).status_code == 202
+        response = client.get(f"/api/v1/tasks/{quote(body['taskId'], safe='')}")
+        assert response.status_code == 200
+        assert response.json()["taskId"] == body["taskId"]

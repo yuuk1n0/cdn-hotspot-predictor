@@ -1,0 +1,15 @@
+{
+  "pid": 20511,
+  "command": [
+    "/home/yukino/miniconda3/envs/cdn-predictor/bin/python",
+    "-m",
+    "uvicorn",
+    "app.main:app",
+    "--host",
+    "127.0.0.1",
+    "--port",
+    "8000"
+  ],
+  "cwd": "/home/yukino/projects/work/cvte/cdn-hotspot-predictor/predictor",
+  "port": 8000
+}

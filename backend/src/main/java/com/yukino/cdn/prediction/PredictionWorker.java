@@ -1,6 +1,8 @@
 package com.yukino.cdn.prediction;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.springframework.dao.DataAccessException;
+import org.springframework.transaction.TransactionException;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -8,7 +10,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.Set;
 
-/** Single-instance worker: durable tasks, bounded HTTP calls, no result calculation or aggregation. */
+/** Single-instance durable orchestration; Python predicts, Java validates and publishes Top50. */
 public class PredictionWorker {
     private final PredictionRepository repository;
     private final PredictorClient python;
@@ -36,28 +38,40 @@ public class PredictionWorker {
             PredictorClient.PythonTask result = found.isPresent() ? found.get() : python.submit(task.taskId, task.request);
             if (expired(task)) { fail(task, "TASK_TIMEOUT", "Python 响应到达时任务已超时，不发布迟到结果。"); return; }
             validatePythonTask(task.taskId, result);
+            if (task.pythonRunId != null && !task.pythonRunId.equals(result.runId())) {
+                throw new PredictionProblem(422, "INVALID_RESULT", "同一 Python 成功任务的 runId 或终态发生改变。");
+            }
             task.pythonStatus = result.status(); task.pythonRunId = result.runId();
-            task.dependencyError = null; task.retryCount = 0;
             if ("FAILED".equals(result.status())) {
                 fail(task, result.error().code(), result.error().message());
             } else if ("SUCCEEDED".equals(result.status())) {
-                // Result fetching and atomic Top50 publication belong exclusively to step 5.
-                fail(task, "AGGREGATION_NOT_IMPLEMENTED", "Python 已完成计算；第⑤步榜单校验与发布尚未实现，Java 业务任务不能标记成功。");
+                task.stage = "AGGREGATING";
+                save(task);
+                JsonNode snapshot = PredictionResult.build(python.items(task.pythonRunId), task);
+                if (expired(task)) { fail(task, "TASK_TIMEOUT", "获取或校验结果期间超过任务总时限，不发布迟到榜单。"); return; }
+                repository.publish(task, snapshot, clock);
             } else {
+                task.dependencyError = null; task.retryCount = 0;
                 task.stage = "COMPUTING";
                 task.nextAttemptAt = clock.instant().plus(settings.pollInterval());
                 save(task);
             }
         } catch (PredictionProblem problem) {
-            if (expired(task)) { fail(task, "TASK_TIMEOUT", "依赖调用期间超过预测任务总时限。"); }
-            else if (!problem.retryable()) { fail(task, problem.code(), problem.getMessage()); }
-            else {
-                task.stage = "WAITING_DEPENDENCY"; task.dependencyError = problem.error(); task.retryCount++;
-                long delay = Math.min(settings.maxRetryDelay().toMillis(), settings.pollInterval().toMillis() * (1L << Math.min(task.retryCount - 1, 10)));
-                Instant retryAt = clock.instant().plusMillis(delay);
-                task.nextAttemptAt = retryAt.isAfter(task.deadlineAt) ? task.deadlineAt : retryAt;
-                save(task);
-            }
+            handle(task, problem);
+        } catch (DataAccessException | TransactionException storageFailure) {
+            handle(task, PredictionProblem.retryable("RESULT_STORAGE_UNAVAILABLE", "榜单持久化暂不可用，未确认发布；将查询原任务和原 runId 重试。"));
+        }
+    }
+
+    private void handle(PredictionTask task, PredictionProblem problem) {
+        if (expired(task)) { fail(task, "TASK_TIMEOUT", "依赖调用或榜单发布期间超过预测任务总时限。"); }
+        else if (!problem.retryable()) { fail(task, problem.code(), problem.getMessage()); }
+        else {
+            task.stage = "WAITING_DEPENDENCY"; task.dependencyError = problem.error(); task.retryCount++;
+            long delay = Math.min(settings.maxRetryDelay().toMillis(), settings.pollInterval().toMillis() * (1L << Math.min(task.retryCount - 1, 10)));
+            Instant retryAt = clock.instant().plusMillis(delay);
+            task.nextAttemptAt = retryAt.isAfter(task.deadlineAt) ? task.deadlineAt : retryAt;
+            save(task);
         }
     }
 
