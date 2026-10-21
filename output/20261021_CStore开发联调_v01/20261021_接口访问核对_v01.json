@@ -1,0 +1,24 @@
+{
+  "status": "AWAITING_INTERFACE_SPEC",
+  "head": "505e372cbc968ab287675696146582eb1369bccf",
+  "documents": [
+    {
+      "purpose": "access",
+      "providedUrl": "https://swqa.gz.cvte.cn/#/interfaceTest/project/cstore/interfaceView/api/2667/interface/15535",
+      "observedResult": "Browser redirected to /#/login; no authenticated session or interface body"
+    },
+    {
+      "purpose": "info",
+      "providedUrl": "https://swqa.gz.cvte.cn/#/interfaceTest/project/cstore/interfaceView/api/1578/interface/3649",
+      "observedResult": "Browser redirected to /#/login after async page loading; no interface body"
+    }
+  ],
+  "verification": [
+    "web tool: site not accessible",
+    "curl sandbox and escalated: SSL unexpected EOF; HTTP 000",
+    "existing Chromium: SEEWO login page requires domain account and password"
+  ],
+  "productionCodeChanged": false,
+  "actualCStoreRequestSent": false,
+  "credentialsRequested": false
+}

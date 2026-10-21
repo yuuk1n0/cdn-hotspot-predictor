@@ -1,0 +1,113 @@
+- generic [ref=e3]:
+  - list [ref=e5]:
+    - listitem [ref=e6] [cursor=pointer]:
+      - generic [ref=e7]: 问题反馈
+  - generic [ref=e44]:
+    - generic [ref=e45]:
+      - img [ref=e46] [cursor=pointer]
+      - link "SWQA" [ref=e48] [cursor=pointer]:
+        - /url: "#/index"
+      - separator [ref=e49]
+      - generic [ref=e50]: test
+      - 'generic "图标: caret-down" [ref=e52] [cursor=pointer]'
+    - generic [ref=e56]:
+      - generic [ref=e57]:
+        - generic:
+          - link:
+            - /url: "#/interfaceTest/group/undefined"
+        - text: /
+      - generic [ref=e58]: cstore-api
+    - link "未登录" [ref=e60] [cursor=pointer]:
+      - /url: "#/login"
+    - generic [ref=e62]:
+      - list:
+        - listitem [ref=e63]:
+          - link "测试流程" [ref=e64] [cursor=pointer]:
+            - /url: "#/developmentQuality"
+        - listitem [ref=e65]:
+          - link "质量管控" [ref=e66] [cursor=pointer]:
+            - /url: "#/qualityControl"
+        - listitem [ref=e67]:
+          - link "接口平台" [ref=e68] [cursor=pointer]:
+            - /url: "#/interfaceTest/group/399ef4f0-bb5f-11ee-989b-19efc644ccf0"
+        - listitem [ref=e69]:
+          - link "UI自动化" [ref=e70] [cursor=pointer]:
+            - /url: http://uiat.gz.cvte.cn/#/project/list?productId=399ef4f0-bb5f-11ee-989b-19efc644ccf0
+        - listitem [ref=e71]:
+          - link "性能平台" [ref=e72] [cursor=pointer]:
+            - /url: http://furion.seewo.com/app
+        - listitem [ref=e73]:
+          - link "真机平台" [ref=e74] [cursor=pointer]:
+            - /url: http://spider.gz.cvte.cn/#/device?productId=399ef4f0-bb5f-11ee-989b-19efc644ccf0
+        - listitem
+        - listitem [ref=e75]:
+          - link "用例平台" [ref=e76] [cursor=pointer]:
+            - /url: http://swcase.gz.cvte.cn/case/caseList/399ef4f0-bb5f-11ee-989b-19efc644ccf0
+        - listitem
+  - main [ref=e78]:
+    - generic [ref=e79]:
+      - generic [ref=e80]:
+        - menu [ref=e81]:
+          - menuitem [ref=e82] [cursor=pointer]:
+            - link "接口" [ref=e83]:
+              - /url: "#/interfaceTest/project/cstore/interfaceView"
+          - menuitem [ref=e84] [cursor=pointer]:
+            - link "用例" [ref=e85]:
+              - /url: "#/interfaceTest/project/cstore/api"
+          - menuitem [ref=e86] [cursor=pointer]:
+            - link "动态" [ref=e87]:
+              - /url: "#/interfaceTest/project/cstore/activity"
+          - menuitem [ref=e88] [cursor=pointer]:
+            - link "数据仓库" [ref=e89]:
+              - /url: "#/interfaceTest/project/cstore/keyword"
+          - menuitem [ref=e90] [cursor=pointer]:
+            - link "数据统计" [ref=e91]:
+              - /url: "#/interfaceTest/project/cstore/statistics"
+          - menuitem [ref=e92] [cursor=pointer]:
+            - link "设置" [ref=e93]:
+              - /url: "#/interfaceTest/project/cstore/setting"
+          - menuitem [ref=e94] [cursor=pointer]:
+            - link "文档" [ref=e95]:
+              - /url: "#/interfaceTest/project/cstore/wiki"
+          - menuitem [ref=e96] [cursor=pointer]:
+            - link "接口Diff" [ref=e97]:
+              - /url: "#/interfaceTest/project/cstore/diff"
+        - 'button "图标: question-circle 帮助" [ref=e98] [cursor=pointer]':
+          - 'generic "图标: question-circle"'
+          - generic: 帮助
+      - main [ref=e100]:
+        - generic [ref=e102]:
+          - generic [ref=e105]:
+            - generic [ref=e106]: 接口列表
+            - generic [ref=e107]:
+              - generic [ref=e108]:
+                - textbox "搜索接口" [ref=e109]
+                - button "添加分组" [ref=e110] [cursor=pointer]
+              - generic [ref=e112]:
+                - tree
+          - generic [ref=e115]:
+            - generic:
+              - generic:
+                - tablist:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - 'generic "图标: left"'
+                    - generic:
+                      - generic:
+                        - 'generic "图标: right"'
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - tab "预览" [selected]
+                            - tab "编辑"
+                            - tab "运行"
+                            - tab "高级mock"
+                - generic:
+                  - tabpanel:
+                    - generic:
+                      - 'generic "图标: frown-o"'
+                      - paragraph: 暂无数据
+                      - paragraph: 先去别处逛逛吧
+                      - paragraph

@@ -4,6 +4,8 @@ import Top50Table from './Top50Table.vue'
 import FileDetailDialog from './components/FileDetailDialog.vue'
 import { createPredictionLookup, createPredictionSubmit, resultRows } from './predictions.js'
 import { resolveResultMode } from './prediction-results.js'
+import { fetchFileMetadata } from './files.js'
+import { formatBytes } from './top50.js'
 
 const props = defineProps({ dataset: { type: Object, default: null } })
 const emit = defineEmits(['run-loaded'])
@@ -20,6 +22,29 @@ const kind = ref('task')
 const id = ref('')
 const detailFile = ref(null)
 const detailAction = ref('details')
+const fileMetadata = ref({})
+const metadataBusy = ref(false)
+const metadataError = ref('')
+let metadataGeneration = 0
+watch(() => state.result?.runId, () => {
+  metadataGeneration++
+  fileMetadata.value = {}
+  metadataBusy.value = false
+  metadataError.value = ''
+  detailFile.value = null
+})
+async function loadFileSizes() {
+  if (metadataBusy.value || state.result?.datasetSource !== 'REAL' || !rows.value.length) return
+  const generation = ++metadataGeneration
+  const run = state.result
+  metadataBusy.value = true
+  metadataError.value = ''
+  try {
+    const items = await fetchFileMetadata(run, rows.value.map(item => item.fileKey))
+    if (generation === metadataGeneration) fileMetadata.value = Object.fromEntries(items.map(item => [item.fileKey, item]))
+  } catch (error) { if (generation === metadataGeneration) metadataError.value = error.message }
+  finally { if (generation === metadataGeneration) metadataBusy.value = false }
+}
 function openDetail(item, action) { detailAction.value = action; detailFile.value = item }
 const rows = computed(() => state.result ? resultRows(state.result) : [])
 const resultMode = computed(() => state.result ? resolveResultMode(state.result) : null)
@@ -47,7 +72,7 @@ onMounted(() => {
   const params = new URLSearchParams(window.location.search)
   lookup.restore({ taskId: params.get('taskId'), runId: params.get('runId') })
 })
-onUnmounted(() => { lookup.dispose(); submission.dispose() })
+onUnmounted(() => { metadataGeneration++; lookup.dispose(); submission.dispose() })
 </script>
 
 <template>
@@ -110,7 +135,12 @@ onUnmounted(() => { lookup.dispose(); submission.dispose() })
         <div><dt>Top50 目标窗口累计流量</dt><dd>{{ state.result.top50PredictedBytes }} B</dd></div>
         <div><dt>热点流量占比</dt><dd>不可计算</dd><small>缺少已确认且匹配的全量流量分母；Mock 不作为真实算法效果指标。</small></div>
       </dl>
-      <Top50Table v-if="rows.length" :items="rows" show-exact-bytes show-actions><template #actions="{item}"><div class="row-actions"><button class="text-button" @click="openDetail(item,'preview')">预览</button><button class="text-button" @click="openDetail(item,'download')">下载</button><button class="text-button" @click="openDetail(item,'details')">查看详情</button><button class="text-button" @click="openDetail(item,'compression')">标记压缩</button></div></template></Top50Table>
+      <div v-if="state.result.datasetSource === 'REAL' && rows.length" class="file-size-tools"><button type="button" class="btn" :disabled="metadataBusy" @click="loadFileSizes">{{ metadataBusy ? '查询实际大小中…' : '查询 / 刷新实际文件大小' }}</button><span>从 CStore 按需查询；不改变预测快照。</span></div>
+      <p v-if="metadataError" class="lookup-message" role="alert">{{ metadataError }}</p>
+      <Top50Table v-if="rows.length" :items="rows" show-exact-bytes show-actions>
+        <template #file-size="{item}"><template v-if="fileMetadata[item.fileKey]?.status === 'READY'">{{ formatBytes(fileMetadata[item.fileKey].fileSizeBytes) }}<small class="exact-file-size">{{ fileMetadata[item.fileKey].fileSizeBytes }} B · {{ fileMetadata[item.fileKey].dataSource }}</small></template><span v-else>{{ fileMetadata[item.fileKey] ? '大小不可用' : state.result.datasetSource === 'REAL' ? '待查询' : formatBytes(item.fileSizeBytes) }}</span></template>
+        <template #actions="{item}"><div class="row-actions"><button class="text-button" @click="openDetail(item,'preview')">预览</button><button class="text-button" @click="openDetail(item,'download')">下载</button><button class="text-button" @click="openDetail(item,'details')">查看详情</button><button class="text-button" @click="openDetail(item,'compression')">标记压缩</button></div></template>
+      </Top50Table>
       <p v-else class="lookup-message">本次运行没有候选文件，实际展示 0 条；不会生成文件补足榜单。</p>
     </article>
     <FileDetailDialog :file="detailFile" :run="state.result" :action="detailAction" @close="detailFile=null" />
@@ -118,6 +148,8 @@ onUnmounted(() => { lookup.dispose(); submission.dispose() })
 </template>
 
 <style scoped>
+.file-size-tools { display:flex; align-items:center; gap:12px; margin:14px 0; flex-wrap:wrap; font-size:12px; color:#8499b2; }
+.exact-file-size { display:block; font-size:10px; margin-top:5px; overflow-wrap:anywhere; }
 .prediction-panel { margin: 1.5rem 0 2.5rem; padding: 1.5rem; border: 1px solid rgba(46, 211, 183, 0.3); background: #0a1f27; scroll-margin-top: 90px; min-width: 0; }
 .submission-form { padding: 1rem; margin-top: 1rem; background: #06151b; color: #8facad; font-size: 0.8rem; overflow-wrap: anywhere; }
 .submission-form fieldset { margin: 1rem 0; border: 1px solid rgba(122,167,167,0.2); padding: 1rem; }

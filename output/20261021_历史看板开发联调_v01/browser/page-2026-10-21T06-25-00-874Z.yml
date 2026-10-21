@@ -1,0 +1,20 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - list [ref=e5]:
+      - listitem [ref=e6] [cursor=pointer]:
+        - generic [ref=e7]: 问题反馈
+    - generic [ref=e8]:
+      - generic [ref=e9]:
+        - text: SEEWO软件质量中心
+        - generic [ref=e10]:
+          - generic [ref=e16]:
+            - 'generic "图标: user" [ref=e18]'
+            - textbox "域账号, 不是邮箱!!" [ref=e21]
+          - generic [ref=e27]:
+            - 'generic "图标: lock" [ref=e29]'
+            - textbox "密码" [ref=e32]
+          - button "登 录" [ref=e37] [cursor=pointer]
+      - generic [ref=e38]: Copyright © 2020 视睿产品质量部
+  - generic [ref=e40]:
+    - 'generic "icon: close-circle" [ref=e41]'
+    - text: 用户名有误

@@ -1,0 +1,321 @@
+- generic [ref=e3]:
+  - link "跳到主内容" [ref=e4] [cursor=pointer]:
+    - /url: "#main-content"
+  - banner [ref=e5]:
+    - link "CDN 系统首页" [ref=e6] [cursor=pointer]:
+      - /url: /overview
+      - generic [ref=e12]: CDN 热点文件动态预测与压缩降本系统
+    - generic [ref=e13]:
+      - generic [ref=e14]: 本地前端预览
+      - button "界面说明" [ref=e16] [cursor=pointer]
+      - generic [ref=e20]: UI
+      - generic [ref=e21]: 预览工作台
+  - complementary [ref=e22]:
+    - generic [ref=e23]:
+      - text: 运营工作台
+      - generic [ref=e24]: WORKSPACE
+    - navigation "主导航" [ref=e25]:
+      - link "业务总览" [ref=e26] [cursor=pointer]:
+        - /url: /overview
+      - link "热点预测" [ref=e30] [cursor=pointer]:
+        - /url: /prediction
+      - link "模型回测" [ref=e35] [cursor=pointer]:
+        - /url: /backtest
+      - link "压缩降本" [ref=e39] [cursor=pointer]:
+        - /url: /compression
+      - link "智能 Agent" [ref=e43] [cursor=pointer]:
+        - /url: /agent
+    - generic [ref=e47]:
+      - strong [ref=e52]: 从热点洞察到降本决策
+      - generic [ref=e53]: CDN OPERATIONS CONSOLE
+      - generic [ref=e54]: 前端 UI 预览 · v0.1
+  - main [ref=e55]:
+    - generic [ref=e56]:
+      - generic [ref=e57]: 工作台
+      - strong [ref=e60]: 热点预测
+      - generic [ref=e61]: CDN 流量运营
+    - generic [ref=e62]:
+      - generic [ref=e63]:
+        - generic [ref=e64]:
+          - heading "热点预测 Top50" [level=1] [ref=e65]
+          - paragraph [ref=e66]: 按 App 和日 / 周窗口查看热点文件，保留原有数据导入与预测任务流程。
+        - generic "预测页面数据来源" [ref=e67]:
+          - button "UI 演示" [pressed] [ref=e68] [cursor=pointer]
+          - button "接口数据 · 已有功能" [ref=e69] [cursor=pointer]
+      - generic [ref=e70]:
+        - generic "预测粒度" [ref=e71]:
+          - button "日榜预测" [ref=e72] [cursor=pointer]
+          - button "周榜预测" [ref=e73] [cursor=pointer]
+        - generic [ref=e74]: UI MOCK · 静态演示
+      - generic [ref=e75]:
+        - generic [ref=e76]:
+          - generic [ref=e77]: AppID
+          - combobox "AppID" [ref=e78] [cursor=pointer]:
+            - option "10350 · 内容分发" [selected]
+            - option "10066 · 应用资源"
+        - generic [ref=e79]:
+          - generic [ref=e80]: 预测截止日期
+          - textbox "预测截止日期" [ref=e81]: 2026-10-13
+        - generic [ref=e82]:
+          - generic [ref=e83]: 模型版本
+          - combobox "模型版本" [ref=e84] [cursor=pointer]:
+            - option "hotspot-simple-v1 · UI 样例" [selected]
+            - option "contract-demo-v1 · UI 样例"
+        - button "开始预测" [ref=e85] [cursor=pointer]
+      - generic [ref=e88]:
+        - article [ref=e89]:
+          - generic [ref=e90]: 候选文件总数
+          - strong [ref=e91]:
+            - text: "428"
+            - emphasis [ref=e92]: 个
+          - generic [ref=e93]: 静态样例
+        - article [ref=e94]:
+          - generic [ref=e95]: 返回 Top50 数量
+          - strong [ref=e96]:
+            - text: "50"
+            - emphasis [ref=e97]: 条
+          - generic [ref=e98]: 版式指标样例
+        - article [ref=e99]:
+          - generic [ref=e100]: 预测目标窗口 · 日榜
+          - strong [ref=e101]:
+            - text: 2026-10-14
+            - emphasis [ref=e102]: —
+            - text: 2026-10-14
+          - generic [ref=e103]: 截止日后的下一自然日
+        - article [ref=e104]:
+          - generic [ref=e105]: 预测耗时
+          - strong [ref=e106]: —
+          - generic [ref=e107]: 未执行真实任务
+        - article [ref=e108]:
+          - generic [ref=e109]: 任务状态
+          - generic [ref=e110]: UI 样例
+          - generic [ref=e112]: 无后台任务
+      - generic [ref=e113]:
+        - generic [ref=e114]:
+          - generic [ref=e115]:
+            - heading "Top50 预测结果" [level=2] [ref=e116]
+            - generic [ref=e117]: App 10350 · hotspot-simple-v1 · 日榜
+          - generic [ref=e118]: 静态展示数据
+        - generic "Top50 榜单，可横向滚动" [ref=e119]:
+          - table [ref=e120]:
+            - rowgroup [ref=e121]:
+              - row [ref=e122]:
+                - columnheader "排名" [ref=e123]
+                - columnheader "文件标识" [ref=e124]
+                - columnheader "类型" [ref=e125]
+                - columnheader "文件大小" [ref=e126]
+                - columnheader "预测流量" [ref=e127]
+                - columnheader "预测分数" [ref=e128]
+                - columnheader "推荐理由" [ref=e129]
+                - columnheader "最近实际流量" [ref=e130]
+                - columnheader "压缩状态" [ref=e131]
+                - columnheader "模型版本" [ref=e132]
+                - columnheader "预测窗口" [ref=e133]
+                - columnheader "操作" [ref=e134]
+            - rowgroup [ref=e135]:
+              - row [ref=e136]:
+                - cell [ref=e137]:
+                  - strong [ref=e139]: "#01"
+                - cell "/video/movie_20260928.mp4 APP 10350" [ref=e140]:
+                  - generic "/video/movie_20260928.mp4" [ref=e141]
+                  - generic [ref=e142]: APP 10350
+                - cell "视频" [ref=e143]
+                - cell "122 MB" [ref=e144]
+                - cell "801 GB" [ref=e145]
+                - cell "0.982" [ref=e146]
+                - cell [ref=e147]:
+                  - paragraph [ref=e148]: 历史流量集中，样例呈持续访问趋势
+                - cell "764 GB" [ref=e149]
+                - cell "待处理" [ref=e150]
+                - cell [ref=e152]:
+                  - code [ref=e153]: hotspot-simple-v1
+                - cell "2026-10-14 日预测" [ref=e154]:
+                  - strong [ref=e155]: 2026-10-14
+                  - generic [ref=e156]: 日预测
+                - cell [ref=e157]:
+                  - generic [ref=e158]:
+                    - button "预览" [ref=e159] [cursor=pointer]
+                    - button "下载" [ref=e160] [cursor=pointer]
+                    - button "查看详情" [ref=e161] [cursor=pointer]
+                    - button "标记压缩" [ref=e162] [cursor=pointer]
+              - row [ref=e163]:
+                - cell [ref=e164]:
+                  - strong [ref=e166]: "#02"
+                - cell "/images/banner_01.jpg APP 10350" [ref=e167]:
+                  - generic "/images/banner_01.jpg" [ref=e168]
+                  - generic [ref=e169]: APP 10350
+                - cell "图片" [ref=e170]
+                - cell "4.6 MB" [ref=e171]
+                - cell "196 GB" [ref=e172]
+                - cell "0.961" [ref=e173]
+                - cell [ref=e174]:
+                  - paragraph [ref=e175]: 活动资源近期访问增加
+                - cell "177 GB" [ref=e176]
+                - cell "已压缩" [ref=e177]
+                - cell [ref=e179]:
+                  - code [ref=e180]: hotspot-simple-v1
+                - cell "2026-10-14 日预测" [ref=e181]:
+                  - strong [ref=e182]: 2026-10-14
+                  - generic [ref=e183]: 日预测
+                - cell [ref=e184]:
+                  - generic [ref=e185]:
+                    - button "预览" [ref=e186] [cursor=pointer]
+                    - button "下载" [ref=e187] [cursor=pointer]
+                    - button "查看详情" [ref=e188] [cursor=pointer]
+                    - button "标记压缩" [ref=e189] [cursor=pointer]
+              - row [ref=e190]:
+                - cell [ref=e191]:
+                  - strong [ref=e193]: "#03"
+                - cell "/js/main.a7f3c2.js APP 10350" [ref=e194]:
+                  - generic "/js/main.a7f3c2.js" [ref=e195]
+                  - generic [ref=e196]: APP 10350
+                - cell "其他" [ref=e197]
+                - cell "1.1 MB" [ref=e198]
+                - cell "150 GB" [ref=e199]
+                - cell "0.947" [ref=e200]
+                - cell [ref=e201]:
+                  - paragraph [ref=e202]: 核心静态资源，重复请求较多
+                - cell "123 GB" [ref=e203]
+                - cell "待处理" [ref=e204]
+                - cell [ref=e206]:
+                  - code [ref=e207]: hotspot-simple-v1
+                - cell "2026-10-14 日预测" [ref=e208]:
+                  - strong [ref=e209]: 2026-10-14
+                  - generic [ref=e210]: 日预测
+                - cell [ref=e211]:
+                  - generic [ref=e212]:
+                    - button "预览" [ref=e213] [cursor=pointer]
+                    - button "下载" [ref=e214] [cursor=pointer]
+                    - button "查看详情" [ref=e215] [cursor=pointer]
+                    - button "标记压缩" [ref=e216] [cursor=pointer]
+              - row [ref=e217]:
+                - cell [ref=e218]:
+                  - strong [ref=e220]: "#04"
+                - cell "/images/product_123.png APP 10350" [ref=e221]:
+                  - generic "/images/product_123.png" [ref=e222]
+                  - generic [ref=e223]: APP 10350
+                - cell "图片" [ref=e224]
+                - cell "6.0 MB" [ref=e225]
+                - cell "91.4 GB" [ref=e226]
+                - cell "0.928" [ref=e227]
+                - cell [ref=e228]:
+                  - paragraph [ref=e229]: 产品图片具备体积优化空间
+                - cell "71.2 GB" [ref=e230]
+                - cell "待处理" [ref=e231]
+                - cell [ref=e233]:
+                  - code [ref=e234]: hotspot-simple-v1
+                - cell "2026-10-14 日预测" [ref=e235]:
+                  - strong [ref=e236]: 2026-10-14
+                  - generic [ref=e237]: 日预测
+                - cell [ref=e238]:
+                  - generic [ref=e239]:
+                    - button "预览" [ref=e240] [cursor=pointer]
+                    - button "下载" [ref=e241] [cursor=pointer]
+                    - button "查看详情" [ref=e242] [cursor=pointer]
+                    - button "标记压缩" [ref=e243] [cursor=pointer]
+              - row [ref=e244]:
+                - cell [ref=e245]:
+                  - strong [ref=e247]: "#05"
+                - cell "/video/intro.mp4 APP 10350" [ref=e248]:
+                  - generic "/video/intro.mp4" [ref=e249]
+                  - generic [ref=e250]: APP 10350
+                - cell "视频" [ref=e251]
+                - cell "49.7 MB" [ref=e252]
+                - cell "71.2 GB" [ref=e253]
+                - cell "0.902" [ref=e254]
+                - cell [ref=e255]:
+                  - paragraph [ref=e256]: 长期访问的视频内容
+                - cell "56.1 GB" [ref=e257]
+                - cell "处理中" [ref=e258]
+                - cell [ref=e260]:
+                  - code [ref=e261]: hotspot-simple-v1
+                - cell "2026-10-14 日预测" [ref=e262]:
+                  - strong [ref=e263]: 2026-10-14
+                  - generic [ref=e264]: 日预测
+                - cell [ref=e265]:
+                  - generic [ref=e266]:
+                    - button "预览" [ref=e267] [cursor=pointer]
+                    - button "下载" [ref=e268] [cursor=pointer]
+                    - button "查看详情" [ref=e269] [cursor=pointer]
+                    - button "标记压缩" [ref=e270] [cursor=pointer]
+              - row [ref=e271]:
+                - cell [ref=e272]:
+                  - strong [ref=e274]: "#06"
+                - cell "/css/style.202609.css APP 10350" [ref=e275]:
+                  - generic "/css/style.202609.css" [ref=e276]
+                  - generic [ref=e277]: APP 10350
+                - cell "其他" [ref=e278]
+                - cell "320 KB" [ref=e279]
+                - cell "59.9 GB" [ref=e280]
+                - cell "0.875" [ref=e281]
+                - cell [ref=e282]:
+                  - paragraph [ref=e283]: 稳定命中的样式资源
+                - cell "49.2 GB" [ref=e284]
+                - cell "待处理" [ref=e285]
+                - cell [ref=e287]:
+                  - code [ref=e288]: hotspot-simple-v1
+                - cell "2026-10-14 日预测" [ref=e289]:
+                  - strong [ref=e290]: 2026-10-14
+                  - generic [ref=e291]: 日预测
+                - cell [ref=e292]:
+                  - generic [ref=e293]:
+                    - button "预览" [ref=e294] [cursor=pointer]
+                    - button "下载" [ref=e295] [cursor=pointer]
+                    - button "查看详情" [ref=e296] [cursor=pointer]
+                    - button "标记压缩" [ref=e297] [cursor=pointer]
+              - row [ref=e298]:
+                - cell [ref=e299]:
+                  - strong [ref=e301]: "#07"
+                - cell "/docs/manual.pdf APP 10350" [ref=e302]:
+                  - generic "/docs/manual.pdf" [ref=e303]
+                  - generic [ref=e304]: APP 10350
+                - cell "其他" [ref=e305]
+                - cell "2.0 MB" [ref=e306]
+                - cell "49.1 GB" [ref=e307]
+                - cell "0.856" [ref=e308]
+                - cell [ref=e309]:
+                  - paragraph [ref=e310]: 重复访问的说明文档
+                - cell "35.9 GB" [ref=e311]
+                - cell "已压缩" [ref=e312]
+                - cell [ref=e314]:
+                  - code [ref=e315]: hotspot-simple-v1
+                - cell "2026-10-14 日预测" [ref=e316]:
+                  - strong [ref=e317]: 2026-10-14
+                  - generic [ref=e318]: 日预测
+                - cell [ref=e319]:
+                  - generic [ref=e320]:
+                    - button "预览" [ref=e321] [cursor=pointer]
+                    - button "下载" [ref=e322] [cursor=pointer]
+                    - button "查看详情" [ref=e323] [cursor=pointer]
+                    - button "标记压缩" [ref=e324] [cursor=pointer]
+              - row [ref=e325]:
+                - cell [ref=e326]:
+                  - strong [ref=e328]: "#08"
+                - cell "/images/icon.png APP 10350" [ref=e329]:
+                  - generic "/images/icon.png" [ref=e330]
+                  - generic [ref=e331]: APP 10350
+                - cell "图片" [ref=e332]
+                - cell "1.7 MB" [ref=e333]
+                - cell "44.9 GB" [ref=e334]
+                - cell "0.831" [ref=e335]
+                - cell [ref=e336]:
+                  - paragraph [ref=e337]: 高频使用的小型图片
+                - cell "32.7 GB" [ref=e338]
+                - cell "待处理" [ref=e339]
+                - cell [ref=e341]:
+                  - code [ref=e342]: hotspot-simple-v1
+                - cell "2026-10-14 日预测" [ref=e343]:
+                  - strong [ref=e344]: 2026-10-14
+                  - generic [ref=e345]: 日预测
+                - cell [ref=e346]:
+                  - generic [ref=e347]:
+                    - button "预览" [ref=e348] [cursor=pointer]
+                    - button "下载" [ref=e349] [cursor=pointer]
+                    - button "查看详情" [ref=e350] [cursor=pointer]
+                    - button "标记压缩" [ref=e351] [cursor=pointer]
+        - generic [ref=e352]:
+          - generic [ref=e353]: 展示 8 条 UI 版式样例；“返回 50 条”为静态指标示意，未运行预测
+          - generic [ref=e354]: UI MOCK · 与真实接口结果分离
+    - generic [ref=e355]:
+      - text: CDN 热点预测与压缩降本系统
+      - generic [ref=e356]: 页面演示与接口数据独立标识

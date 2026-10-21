@@ -14,7 +14,7 @@ const statusClass = value => Object.hasOwn(compressionStatusLabels, value) ? `st
           <td><div class="rank-cell" :style="{ '--rank-heat': `${Math.max(18, 104 - item.rank * 8)}%` }"><strong>#{{ String(item.rank).padStart(2, '0') }}</strong><span><i></i></span></div></td>
           <td><div class="file-key" :title="item.fileKey">{{ item.fileKey }}</div><small class="app-id">APP {{ item.appId }}</small></td>
           <td><span class="type-tag">{{ fileTypeLabels[item.fileType] || item.fileType || '未知' }}</span></td>
-          <td class="number-cell" :title="item.fileSizeBytes == null ? '大小未知' : `${item.fileSizeBytes} B`">{{ formatBytes(item.fileSizeBytes) }}</td>
+          <td class="number-cell" :title="item.fileSizeBytes == null ? '大小未知' : `${item.fileSizeBytes} B`"><slot name="file-size" :item="item">{{ formatBytes(item.fileSizeBytes) }}</slot></td>
           <td class="number-cell number-cell--primary" :title="`${item.predictedBytes} B（目标窗口累计）`">{{ formatBytes(item.predictedBytes) }}<small v-if="showExactBytes" class="exact-bytes">{{ item.predictedBytes }} B</small></td>
           <td class="score-cell">{{ formatScore(item.score) }}</td>
           <td><p class="reason" :title="item.reason || ''">{{ item.reason || '—' }}</p></td>
