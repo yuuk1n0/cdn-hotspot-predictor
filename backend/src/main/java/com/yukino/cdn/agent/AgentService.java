@@ -1,0 +1,302 @@
+package com.yukino.cdn.agent;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.yukino.cdn.operations.OperationsService;
+
+import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/** Only the six read-only business functions below are callable by the model. */
+public final class AgentService {
+    private static final ZoneId SHANGHAI = ZoneId.of("Asia/Shanghai");
+    private static final Set<String> TOOLS = Set.of("getTopHotspots", "explainFile", "getCompressionEffects",
+            "getModelMetrics", "getOverdueFiles", "getModelSuggestion");
+    private static final Set<String> ARGUMENTS = Set.of("appId", "businessDate", "horizonDays", "runId", "fileKey", "backtestId");
+    private static final Pattern NUMBER = Pattern.compile("(?<![\\p{L}\\d])(?:\\d+(?:\\.\\d+)?)(?:\\s*(?:%|[KMGTP]?B|元))?");
+    private static final ExecutorService DEADLINE_WORKERS = Executors.newVirtualThreadPerTaskExecutor();
+    private final OperationsService operations;
+    private final AgentModel model;
+    private final ObjectMapper mapper;
+    private final Clock clock;
+    private final AgentSettings settings;
+    private final Duration limit;
+
+    public AgentService(OperationsService operations, AgentModel model, ObjectMapper mapper, Clock clock,
+                        AgentSettings settings, Duration limit) {
+        this.operations = operations;
+        this.model = model;
+        this.mapper = mapper;
+        this.clock = clock;
+        this.settings = settings;
+        this.limit = limit;
+    }
+
+    public ObjectNode status() {
+        return mapper.createObjectNode().put("configured", settings.configured())
+                .put("model", settings.configured() ? settings.model() : "")
+                .put("maxModelRequests", 4);
+    }
+
+    public ObjectNode chat(JsonNode request) {
+        if (!settings.configured()) throw new AgentProblem(503, "AGENT_NOT_CONFIGURED", "Agent 模型服务未配置。");
+        ObjectNode context = context(request);
+        String question = request.path("message").asText("").trim();
+        if (question.isEmpty() || question.length() > 4000)
+            throw new AgentProblem(422, "AGENT_INVALID_REQUEST", "message 必须是非空且不超过4000字的文本。");
+        long deadline = System.nanoTime() + limit.toNanos();
+        ArrayNode messages = mapper.createArrayNode();
+        messages.add(mapper.createObjectNode().put("role", "system").put("content",
+                "你只能依据工具提供的实时事实回答。需要业务事实时必须先调用所列工具；无数据时明确未知。"+
+                "引用数据日期、App、跨度、运行与来源。不要臆造金额、百分比、排名或模型效果。今天/昨天按实际上海日期理解。"));
+        messages.add(mapper.createObjectNode().put("role", "user").put("content", question));
+        ArrayNode evidence = mapper.createArrayNode();
+        ArrayNode uncertainties = mapper.createArrayNode();
+        int noToolAnswers = 0;
+        for (int round = 0; round < 4; round++) {
+            ObjectNode body = mapper.createObjectNode().put("model", settings.model()).put("tool_choice", "auto");
+            body.set("messages", messages.deepCopy());
+            body.set("tools", toolDefinitions());
+            JsonNode result = bounded(() -> model.complete(body, remaining(deadline)), deadline, true);
+            if (result == null) throw new AgentProblem(503, "AGENT_MODEL_UNAVAILABLE", "模型响应格式无效。");
+            JsonNode reply = result.path("choices").path(0).path("message");
+            if (!reply.isObject()) throw new AgentProblem(503, "AGENT_MODEL_UNAVAILABLE", "模型响应格式无效。");
+            JsonNode calls = reply.path("tool_calls");
+            if (calls.isArray() && !calls.isEmpty()) {
+                if (calls.size() > 3) {
+                    uncertainties.add("单轮工具调用超过3个，已拒绝执行。");
+                    return response("无法确认业务事实。", context, evidence, uncertainties, "INSUFFICIENT_EVIDENCE");
+                }
+                for (JsonNode call : calls) {
+                    JsonNode args = parseArguments(call);
+                    if (call.path("id").asText("").isBlank() || !validArguments(call.path("function").path("name").asText(""), args, context)) {
+                        uncertainties.add("模型工具调用不在授权范围或参数与当前上下文冲突，已拒绝执行。");
+                        return response("无法确认业务事实。", context, evidence, uncertainties, "INSUFFICIENT_EVIDENCE");
+                    }
+                }
+                ObjectNode assistant = mapper.createObjectNode().put("role", "assistant");
+                assistant.set("content", reply.has("content") ? reply.get("content") : mapper.getNodeFactory().nullNode());
+                assistant.set("tool_calls", calls.deepCopy());
+                messages.add(assistant);
+                for (JsonNode call : calls) {
+                    String name = call.path("function").path("name").asText("");
+                    String id = call.path("id").asText("");
+                    JsonNode args = parseArguments(call);
+                    final JsonNode validated = args;
+                    ObjectNode item;
+                    try {
+                        item = bounded(() -> operations.evidence(name, context.deepCopy(), validated), deadline, false);
+                    } catch (AgentProblem problem) {
+                        if (problem.httpStatus() == 504) throw problem;
+                        uncertainties.add("业务工具暂时不可用：" + name);
+                        return response("无法确认业务事实。", context, evidence, uncertainties, "INSUFFICIENT_EVIDENCE");
+                    }
+                    if (!validEvidence(name, item, context)) {
+                        uncertainties.add("业务工具未返回与所选 App、日期、跨度和运行一致的数据：" + name);
+                        return response("无法确认业务事实。", context, evidence, uncertainties, "INSUFFICIENT_EVIDENCE");
+                    }
+                    evidence.add(item.deepCopy());
+                    JsonNode reasons = item.path("reasonCodes");
+                    if (reasons.isArray()) for (JsonNode reason : reasons)
+                        uncertainties.add("业务证据说明：" + reason.asText("UNKNOWN"));
+                    messages.add(mapper.createObjectNode().put("role", "tool").put("tool_call_id", id)
+                            .put("content", item.toString()));
+                }
+                continue;
+            }
+            String answer = reply.path("content").asText("").trim();
+            if (evidence.isEmpty()) {
+                if (++noToolAnswers < 2 && round < 3) {
+                    messages.add(mapper.createObjectNode().put("role", "assistant").put("content", answer));
+                    messages.add(mapper.createObjectNode().put("role", "system").put("content", "尚未调用工具，必须先调用相关工具，不能直接回答业务事实。"));
+                    continue;
+                }
+                uncertainties.add("模型未调用业务工具，没有可核验的实时证据。");
+                return response("无法确认业务事实。", context, evidence, uncertainties, "INSUFFICIENT_EVIDENCE");
+            }
+            if (answer.isEmpty() || unsupportedNumbers(answer, evidence)) {
+                uncertainties.add("模型回答中的数字缺少对应工具证据，已改为原始事实摘要。");
+                return response(factSummary(evidence), context, evidence, uncertainties, "FACT_SUMMARY");
+            }
+            return response(answer, context, evidence, uncertainties, "GROUNDED");
+        }
+        uncertainties.add("模型达到4轮请求上限，未得到可发布回答。");
+        return response("无法确认业务事实。", context, evidence, uncertainties, "INSUFFICIENT_EVIDENCE");
+    }
+
+    private ObjectNode context(JsonNode request) {
+        if (request == null || !request.isObject()) throw invalid();
+        String app = textValue(request, "appId");
+        if (app == null || app.isBlank()) throw invalid();
+        LocalDate today = LocalDate.now(clock.withZone(SHANGHAI));
+        LocalDate day = today;
+        String question = request.path("message").asText("");
+        boolean explicit = request.hasNonNull("businessDate");
+        if (explicit) {
+            try { day = LocalDate.parse(textValue(request, "businessDate")); }
+            catch (RuntimeException ignored) { throw invalid(); }
+        } else if (question.contains("昨天")) day = today.minusDays(1);
+        if (question.contains("今天") && !day.equals(today) || question.contains("昨天") && !day.equals(today.minusDays(1)))
+            throw new AgentProblem(422, "AGENT_DATE_CONFLICT", "问题中的今天或昨天与所选业务日不一致。");
+        int horizon = 1;
+        if (request.has("horizonDays")) {
+            JsonNode value = request.get("horizonDays");
+            if (!value.isIntegralNumber() || !value.canConvertToInt()) throw invalid();
+            horizon = value.intValue();
+        }
+        if (horizon != 1 && horizon != 7) throw invalid();
+        ObjectNode context = mapper.createObjectNode().put("appId", app).put("businessDate", day.toString()).put("horizonDays", horizon);
+        for (String key : new String[]{"runId", "fileKey", "backtestId"}) {
+            if (request.hasNonNull(key)) {
+                String value = textValue(request, key);
+                if (value == null || value.isBlank()) throw invalid();
+                context.put(key, value);
+            }
+        }
+        return context;
+    }
+
+    private String textValue(JsonNode node, String key) {
+        JsonNode value = node.get(key);
+        return value != null && value.isTextual() ? value.asText().trim() : null;
+    }
+
+    private AgentProblem invalid() { return new AgentProblem(422, "AGENT_INVALID_REQUEST", "Agent 请求上下文不合法。"); }
+
+    private JsonNode parseArguments(JsonNode call) {
+        try { return mapper.readTree(call.path("function").path("arguments").asText("")); }
+        catch (Exception ignored) { return null; }
+    }
+
+    private boolean validArguments(String name, JsonNode args, ObjectNode context) {
+        if (!TOOLS.contains(name) || args == null || !args.isObject()) return false;
+        Iterator<String> fields = args.fieldNames();
+        while (fields.hasNext()) {
+            String key = fields.next();
+            if (!ARGUMENTS.contains(key)) return false;
+            JsonNode given = args.get(key);
+            JsonNode locked = context.get(key);
+            if (locked == null || !given.equals(locked)) return false;
+        }
+        return true;
+    }
+
+    private boolean validEvidence(String name, ObjectNode item, ObjectNode context) {
+        if (item == null || !name.equals(item.path("tool").asText()) || !context.path("appId").equals(item.path("appId"))) return false;
+        JsonNode reported = item.path("context");
+        for (String field : new String[]{"appId", "businessDate", "horizonDays", "runId"}) {
+            if (context.has(field) && !context.get(field).equals(reported.get(field))) return false;
+        }
+        for (String field : new String[]{"fileKey", "backtestId"}) {
+            if (context.has(field) && reported.has(field) && !context.get(field).equals(reported.get(field))) return false;
+        }
+        JsonNode data = item.path("data");
+        return !data.isMissingNode() && !data.isNull() && !(data.isContainerNode() && data.isEmpty());
+    }
+
+    private <T> T bounded(Callable<T> operation, long deadline, boolean modelCall) {
+        Duration time = remaining(deadline);
+        Future<T> future = DEADLINE_WORKERS.submit(operation);
+        try { return future.get(time.toNanos(), TimeUnit.NANOSECONDS); }
+        catch (TimeoutException ignored) {
+            future.cancel(true);
+            throw new AgentProblem(504, "AGENT_TIMEOUT", "Agent 请求超过时间上限。");
+        } catch (InterruptedException ignored) {
+            future.cancel(true); Thread.currentThread().interrupt();
+            throw new AgentProblem(504, "AGENT_TIMEOUT", "Agent 请求中断。");
+        } catch (ExecutionException ignored) {
+            throw new AgentProblem(503, modelCall ? "AGENT_MODEL_UNAVAILABLE" : "AGENT_TOOL_UNAVAILABLE",
+                    modelCall ? "模型服务暂时不可用。" : "业务工具暂时不可用。");
+        }
+    }
+
+    private Duration remaining(long deadline) {
+        long nanos = deadline - System.nanoTime();
+        if (nanos <= 0) throw new AgentProblem(504, "AGENT_TIMEOUT", "Agent 请求超过时间上限。");
+        return Duration.ofNanos(nanos);
+    }
+
+    private ArrayNode toolDefinitions() {
+        ArrayNode tools = mapper.createArrayNode();
+        for (String name : TOOLS) {
+            ObjectNode function = mapper.createObjectNode().put("name", name)
+                    .put("description", "只读查询业务证据；所有参数必须与服务端锁定上下文一致。");
+            ObjectNode schema = mapper.createObjectNode().put("type", "object").put("additionalProperties", false);
+            ObjectNode properties = mapper.createObjectNode();
+            for (String key : ARGUMENTS) properties.set(key, mapper.createObjectNode().put("type", key.equals("horizonDays") ? "integer" : "string"));
+            schema.set("properties", properties);
+            function.set("parameters", schema);
+            tools.add(mapper.createObjectNode().put("type", "function").set("function", function));
+        }
+        return tools;
+    }
+
+    private ObjectNode response(String answer, ObjectNode context, ArrayNode evidence, ArrayNode uncertainties, String grounding) {
+        ObjectNode result = mapper.createObjectNode().put("answer", answer).put("groundingStatus", grounding);
+        result.set("context", context.deepCopy());
+        result.set("evidence", evidence.deepCopy());
+        result.set("uncertainties", uncertainties.deepCopy());
+        result.putNull("suggestionId");
+        for (JsonNode item : evidence) {
+            JsonNode id = item.path("data").path("suggestionId");
+            if (id.isTextual()) result.put("suggestionId", id.asText());
+        }
+        return result;
+    }
+
+    private String factSummary(ArrayNode evidence) {
+        StringBuilder summary = new StringBuilder("已取得业务工具事实：");
+        for (JsonNode item : evidence) summary.append(' ').append(item.path("tool").asText()).append(' ')
+                .append(item.path("data").toString()).append('；');
+        return summary.toString();
+    }
+
+    private boolean unsupportedNumbers(String answer, ArrayNode evidence) {
+        String cleaned = answer.replaceAll("\\d{4}-\\d{2}-\\d{2}", "");
+        Set<BigDecimal> facts = new HashSet<>();
+        for (JsonNode item : evidence) collectNumbers(item.path("data"), facts);
+        Matcher matcher = NUMBER.matcher(cleaned);
+        while (matcher.find()) {
+            String literal = matcher.group().replaceAll("[^0-9.]", "");
+            if (literal.isEmpty()) continue;
+            BigDecimal value;
+            try { value = new BigDecimal(literal).stripTrailingZeros(); } catch (NumberFormatException ignored) { continue; }
+            if (facts.contains(value)) continue;
+            String suffix = matcher.group().replaceAll("[0-9.\\s]", "");
+            if (suffix.equals("%") && facts.contains(value.movePointLeft(2))) continue;
+            BigDecimal divisor = switch (suffix.toUpperCase()) {
+                case "KB" -> BigDecimal.valueOf(1024);
+                case "MB" -> BigDecimal.valueOf(1024L * 1024);
+                case "GB" -> BigDecimal.valueOf(1024L * 1024 * 1024);
+                default -> BigDecimal.ONE;
+            };
+            if (facts.contains(value.multiply(divisor).stripTrailingZeros())) continue;
+            return true;
+        }
+        return false;
+    }
+
+    private void collectNumbers(JsonNode node, Set<BigDecimal> result) {
+        if (node.isNumber()) result.add(node.decimalValue().stripTrailingZeros());
+        else if (node.isTextual() && node.asText().matches("-?\\d+(?:\\.\\d+)?"))
+            result.add(new BigDecimal(node.asText()).stripTrailingZeros());
+        else if (node.isContainerNode()) node.forEach(child -> collectNumbers(child, result));
+    }
+}

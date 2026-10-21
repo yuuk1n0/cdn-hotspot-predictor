@@ -14,6 +14,7 @@ from .csv_import import ImportConfig, ImportProblem
 from .import_store import ImportStore
 from .prediction_store import PredictionStore
 from .history import observations
+from .model_evidence import model_evidence
 
 
 def create_app(data_dir=None, *, max_file_bytes=None, max_rows=None, prediction_mode=None,
@@ -98,6 +99,10 @@ def create_app(data_dir=None, *, max_file_bytes=None, max_rows=None, prediction_
     @app.get("/api/v1/health")
     async def health() -> dict[str, str]:
         return {"service": "predictor", "status": "UP"}
+
+    @app.get("/api/v1/models/{appId}/metrics")
+    async def get_model_metrics(appId: str, horizonDays: str = Query("1", pattern="^(1|7)$")):
+        return model_evidence(dict(predictions.execution), appId, int(horizonDays))
 
     @app.post("/api/v1/imports", status_code=202)
     async def submit_import(

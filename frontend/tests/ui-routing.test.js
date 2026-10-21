@@ -13,8 +13,8 @@ before(async()=>{
 })
 after(async()=>{await server?.close()})
 
-test('root defaults to overview, with five navigable pages and one current navigation link',async()=>{
-  for(const path of ['/','/prediction','/backtest','/compression','/agent']){
+test('root defaults to overview, with notification center and one current navigation link',async()=>{
+  for(const path of ['/','/prediction','/backtest','/compression','/notifications','/agent']){
     const router=createRouter(createMemoryHistory())
     await router.push(path)
     const expected=path==='/'?'overview':path.slice(1)
@@ -23,9 +23,9 @@ test('root defaults to overview, with five navigable pages and one current navig
     assert.ok(html.includes(`data-page="${expected}"`))
     const nav=html.match(/<nav aria-label="主导航">([\s\S]*?)<\/nav>/)?.[1]
     assert.ok(nav)
-    assert.equal((nav.match(/href=/g)||[]).length,5)
+    assert.equal((nav.match(/href=/g)||[]).length,6)
     assert.equal((nav.match(/aria-current="page"/g)||[]).length,1)
-    assert.ok(html.includes('UI MOCK'))
+    assert.ok(nav.includes('通知中心'))
   }
 })
 
@@ -38,6 +38,18 @@ test('legacy task and run links keep query identifiers and enter the existing AP
     assert.ok(html.includes('已有接口功能'))
     assert.ok(html.includes('CSV 上传'))
     assert.equal(router.currentRoute.value.fullPath,path.replace(/^\//,'/prediction'))
+  }
+})
+
+test('notification and agent routes render live workflow controls',async()=>{
+  for (const [path, labels] of [
+    ['/notifications', ['通知预览', '确认目标与内容后发送', '发送记录', 'App 通知配置']],
+    ['/agent', ['查询上下文', '运营问答', '模型配置与建议', '生成当前跨度建议']]
+  ]) {
+    const router=createRouter(createMemoryHistory())
+    await router.push(path)
+    const html=await renderToString(createSSRApp(App).use(router))
+    for (const label of labels) assert.ok(html.includes(label), `${path} should render ${label}`)
   }
 })
 

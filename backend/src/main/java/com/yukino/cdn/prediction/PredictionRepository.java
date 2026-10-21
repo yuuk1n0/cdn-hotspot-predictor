@@ -69,6 +69,17 @@ public class PredictionRepository {
         return values.stream().findFirst();
     }
 
+    List<Published> published(String appId, String runId, java.time.LocalDate businessDate, int horizonDays) {
+        var parameters = new MapSqlParameterSource("app", appId);
+        StringBuilder where = new StringBuilder(" WHERE t.app_id=:app AND t.status='SUCCEEDED' AND t.python_run_id=r.run_id");
+        if (runId != null) { where.append(" AND r.run_id=:run"); parameters.addValue("run", runId); }
+        if (businessDate != null) { where.append(" AND t.cutoff_date=:cutoff"); parameters.addValue("cutoff", businessDate.minusDays(1)); }
+        if (horizonDays != 0) { where.append(" AND t.horizon_days=:horizon"); parameters.addValue("horizon", horizonDays); }
+        return jdbc.query("SELECT r.snapshot_json,r.created_at_ms FROM prediction_run r JOIN prediction_task t ON t.task_id=r.task_id" + where + " ORDER BY r.created_at_ms DESC,r.run_id", parameters,
+                (rs, i) -> new Published(rs.getString(1), Instant.ofEpochMilli(rs.getLong(2))));
+    }
+    record Published(String json, Instant publishedAt) {}
+
     void publish(PredictionTask task, JsonNode snapshot, Clock clock) {
         try {
             transactions.executeWithoutResult(transaction -> {

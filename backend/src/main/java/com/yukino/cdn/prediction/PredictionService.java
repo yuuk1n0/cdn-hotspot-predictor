@@ -54,6 +54,21 @@ public class PredictionService {
         catch (JsonProcessingException exception) { throw new PredictionProblem(503, "RESULT_STORAGE_UNAVAILABLE", "已保存的榜单快照无法读取，未返回替代数据。"); }
     }
 
+    /** Current database read; old immutable snapshots are never rewritten with operational state. */
+    public java.util.List<com.fasterxml.jackson.databind.node.ObjectNode> published(String appId, String runId, java.time.LocalDate businessDate, int horizonDays) {
+        var results = new java.util.ArrayList<com.fasterxml.jackson.databind.node.ObjectNode>();
+        for (var value : repository.published(appId, runId, businessDate, horizonDays)) {
+            try {
+                JsonNode parsed = mapper.readTree(value.json());
+                if (!parsed.isObject() || !appId.equals(parsed.path("appId").asText())) continue;
+                var item = (com.fasterxml.jackson.databind.node.ObjectNode) parsed;
+                item.put("publishedAt", value.publishedAt().toString()).put("businessDate", item.path("predictionStartDate").asText());
+                results.add(item);
+            } catch (java.io.IOException invalid) { throw new PredictionProblem(503, "RESULT_STORAGE_UNAVAILABLE", "已保存的运行无法读取。"); }
+        }
+        return results;
+    }
+
     private Accepted existing(PredictionTask task, String hash) {
         if (!task.requestHash.equals(hash)) throw new PredictionProblem(409, "IDEMPOTENCY_CONFLICT", "同一幂等键已用于不同预测请求。");
         return new Accepted(task.taskId, task.status);
