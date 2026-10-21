@@ -19,6 +19,7 @@ import java.util.function.Predicate;
 
 @Component
 public class FeishuWebhookClient implements NotificationTransport {
+    private static final int MAX_PAYLOAD_BYTES = 20 * 1024;
     private final ObjectMapper mapper;
     private final Clock clock;
     private final Predicate<String> permits;
@@ -47,9 +48,12 @@ public class FeishuWebhookClient implements NotificationTransport {
                 body.put("timestamp", timestamp);
                 body.put("sign", Base64.getEncoder().encodeToString(mac.doFinal(new byte[0])));
             }
+            byte[] payload = mapper.writeValueAsBytes(body);
+            if (payload.length > MAX_PAYLOAD_BYTES)
+                return Outcome.failed("WEBHOOK_PAYLOAD_TOO_LARGE");
             var request = HttpRequest.newBuilder(destination.webhook()).timeout(Duration.ofSeconds(8))
                     .header("Content-Type", "application/json; charset=utf-8")
-                    .POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(body))).build();
+                    .POST(HttpRequest.BodyPublishers.ofByteArray(payload)).build();
             var response = http.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() >= 500) return Outcome.retryable("WEBHOOK_SERVER_ERROR");
             if (response.statusCode() != 200) return Outcome.failed("WEBHOOK_HTTP_ERROR");

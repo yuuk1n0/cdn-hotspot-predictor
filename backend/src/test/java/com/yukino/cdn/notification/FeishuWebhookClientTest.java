@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.jupiter.api.Assertions.*;
 
 class FeishuWebhookClientTest {
+    private static final int MAX_PAYLOAD_BYTES = 20 * 1024;
     final ObjectMapper mapper = new ObjectMapper();
     @Test void textAndOptionalSignatureMatchProtocolAndBusinessCodeIsRequired() throws Exception {
         var seen = new AtomicReference<String>();
@@ -134,5 +135,99 @@ class FeishuWebhookClientTest {
             assertEquals("LOCAL_RATE_LIMIT", outcome.code());
             assertEquals(0, requests.get());
         } finally { server.stop(0); }
+    }
+
+    @Test void unsignedAsciiPayloadAboveTwentyKilobytesIsRejectedWithoutHttpRequest() throws Exception {
+        var requests = new AtomicInteger();
+        var server = successServer(requests);
+        try {
+            var destination = destination(server, "");
+            var outcome = new FeishuWebhookClient(mapper, Clock.systemUTC())
+                    .send(destination, "a".repeat(MAX_PAYLOAD_BYTES));
+
+            assertEquals("FAILED", outcome.status());
+            assertEquals("WEBHOOK_PAYLOAD_TOO_LARGE", outcome.code());
+            assertFalse(outcome.retryable());
+            assertEquals(0, requests.get());
+        } finally { server.stop(0); }
+    }
+
+    @Test void multibyteTextIsLimitedByUtf8BytesInsteadOfJavaCharacterCount() throws Exception {
+        var requests = new AtomicInteger();
+        var server = successServer(requests);
+        try {
+            String text = "中".repeat(7000);
+            assertTrue(text.length() < MAX_PAYLOAD_BYTES);
+            assertTrue(payloadBytes(text, "", Clock.systemUTC()) > MAX_PAYLOAD_BYTES);
+
+            var outcome = new FeishuWebhookClient(mapper, Clock.systemUTC())
+                    .send(destination(server, ""), text);
+
+            assertEquals("WEBHOOK_PAYLOAD_TOO_LARGE", outcome.code());
+            assertFalse(outcome.retryable());
+            assertEquals(0, requests.get());
+        } finally { server.stop(0); }
+    }
+
+    @Test void signedPayloadAtLimitIsSentAndOneAdditionalByteIsRejected() throws Exception {
+        var requests = new AtomicInteger();
+        var server = successServer(requests);
+        var clock = Clock.fixed(Instant.parse("2026-10-21T01:00:00Z"), ZoneOffset.UTC);
+        String secret = "signed-secret";
+        try {
+            String exact = exactSizeAsciiText(MAX_PAYLOAD_BYTES, secret, clock);
+            assertEquals(MAX_PAYLOAD_BYTES, payloadBytes(exact, secret, clock));
+            var client = new FeishuWebhookClient(mapper, clock);
+            var destination = destination(server, secret);
+
+            assertEquals("SENT", client.send(destination, exact).status());
+            assertEquals(1, requests.get());
+
+            var oversized = client.send(destination, exact + "a");
+            assertEquals("FAILED", oversized.status());
+            assertEquals("WEBHOOK_PAYLOAD_TOO_LARGE", oversized.code());
+            assertFalse(oversized.retryable());
+            assertEquals(1, requests.get());
+        } finally { server.stop(0); }
+    }
+
+    private HttpServer successServer(AtomicInteger requests) throws Exception {
+        var server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/hook", exchange -> {
+            requests.incrementAndGet();
+            exchange.getRequestBody().readAllBytes();
+            byte[] body = "{\"code\":0}".getBytes(StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(200, body.length);
+            exchange.getResponseBody().write(body);
+            exchange.close();
+        });
+        server.start();
+        return server;
+    }
+
+    private NotificationSettings.Destination destination(HttpServer server, String secret) {
+        String values = "{\"business\":{\"webhook\":\"http://127.0.0.1:"
+                + server.getAddress().getPort() + "/hook\",\"secret\":\"" + secret
+                + "\",\"demoOnly\":false}}";
+        return new NotificationSettings(values, true, mapper).destination("business");
+    }
+
+    private String exactSizeAsciiText(int targetBytes, String secret, Clock clock) throws Exception {
+        int fixedBytes = payloadBytes("", secret, clock);
+        assertTrue(fixedBytes < targetBytes);
+        return "a".repeat(targetBytes - fixedBytes);
+    }
+
+    private int payloadBytes(String text, String secret, Clock clock) throws Exception {
+        var body = mapper.createObjectNode().put("msg_type", "text");
+        body.putObject("content").put("text", text);
+        if (!secret.isBlank()) {
+            String timestamp = Long.toString(clock.instant().getEpochSecond());
+            var hmac = Mac.getInstance("HmacSHA256");
+            hmac.init(new SecretKeySpec((timestamp + "\n" + secret).getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+            body.put("timestamp", timestamp);
+            body.put("sign", Base64.getEncoder().encodeToString(hmac.doFinal(new byte[0])));
+        }
+        return mapper.writeValueAsBytes(body).length;
     }
 }
