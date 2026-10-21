@@ -16,4 +16,5 @@ public interface OperationsService {
     ObjectNode overdue(String appId, String runId, String evidenceSource);
     ObjectNode evidence(String tool, JsonNode context, JsonNode arguments);
     ObjectNode suggestion(String appId, int horizonDays, String backtestId);
+    default ObjectNode switchModel(String appId, JsonNode body) { throw new UnsupportedOperationException("模型切换服务未实现。"); }
 }

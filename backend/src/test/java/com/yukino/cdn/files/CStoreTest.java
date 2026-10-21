@@ -96,6 +96,23 @@ class CStoreTest {
         server.verify();
     }
 
+    @Test void confirmedNoAuthSendsNoAuthorizationHeaderToEitherCStoreInterface() {
+        server.expect(requestTo("http://cstore-test/cstore/api/v2/file/meta"))
+                .andExpect(headerDoesNotExist("Authorization"))
+                .andExpect(headerDoesNotExist("X-API-Key"))
+                .andRespond(withSuccess("{\"code\":0,\"data\":[{\"fileKey\":\"f\",\"fSize\":1,\"error\":false}]}", MediaType.APPLICATION_JSON));
+        server.expect(requestTo("http://cstore-test/cstore/api/v3/downloadUrl"))
+                .andExpect(headerDoesNotExist("Authorization"))
+                .andExpect(headerDoesNotExist("X-API-Key"))
+                .andRespond(withSuccess("{\"code\":0,\"data\":[{\"fileKey\":\"f\",\"downloadUrl\":\"https://media.test/f\"}]}", MediaType.APPLICATION_JSON));
+        var settings = new CStoreSettings(env, mapper);
+        var client = new CStoreClient(settings, builder.build(), new CStoreLimiter(20, 2, System::nanoTime));
+        var mapping = settings.mapping("A");
+        assertEquals("1", client.metadata(mapping, List.of("f")).get("f").bytes());
+        assertEquals("https://media.test/f", client.access(mapping, "f"));
+        server.verify();
+    }
+
     @Test void fakeSnapshotsAndUnlistedFilesNeverCallCStore() {
         assertEquals("FILE_SOURCE_NOT_REAL", assertThrows(PredictionProblem.class, () -> service("FAKE", List.of("f")).access("run_one", "f", "PREVIEW")).code());
         assertEquals("FILE_CONTEXT_MISMATCH", assertThrows(PredictionProblem.class, () -> service("REAL", List.of("f")).access("run_one", "other", "PREVIEW")).code());

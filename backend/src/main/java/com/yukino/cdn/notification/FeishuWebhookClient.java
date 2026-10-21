@@ -15,17 +15,28 @@ import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.Base64;
+import java.util.function.Predicate;
 
 @Component
 public class FeishuWebhookClient implements NotificationTransport {
     private final ObjectMapper mapper;
     private final Clock clock;
+    private final Predicate<String> permits;
     private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).build();
 
-    @Autowired public FeishuWebhookClient(ObjectMapper mapper) { this(mapper, Clock.systemUTC()); }
-    public FeishuWebhookClient(ObjectMapper mapper, Clock clock) { this.mapper = mapper; this.clock = clock; }
+    @Autowired public FeishuWebhookClient(ObjectMapper mapper, NotificationSettings settings) {
+        this(mapper, Clock.systemUTC(),
+                new FeishuRateLimiter(settings.qps(), settings.perMinute(), System::nanoTime)::tryAcquire);
+    }
+    public FeishuWebhookClient(ObjectMapper mapper, Clock clock) { this(mapper, clock, ignored -> true); }
+    FeishuWebhookClient(ObjectMapper mapper, Clock clock, Predicate<String> permits) {
+        this.mapper = mapper;
+        this.clock = clock;
+        this.permits = permits;
+    }
 
     @Override public Outcome send(NotificationSettings.Destination destination, String text) {
+        if (!permits.test(destination.id())) return Outcome.retryable("LOCAL_RATE_LIMIT");
         try {
             ObjectNode body = mapper.createObjectNode().put("msg_type", "text");
             body.putObject("content").put("text", text);
