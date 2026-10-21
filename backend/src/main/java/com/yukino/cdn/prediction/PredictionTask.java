@@ -16,12 +16,14 @@ final class PredictionTask {
     View view() {
         return new View(taskId, status, stage, request.datasetId(), request.appId(), request.cutoffDate(),
                 request.horizonDays(), request.modelVersion(), datasetSource,
-                "SUCCEEDED".equals(status) ? predictionSource : null, "SUCCEEDED".equals(status) ? businessRunId : null,
+                "SUCCEEDED".equals(status) ? predictionSource : null,
+                "SUCCEEDED".equals(status) ? ("MODEL".equals(predictionSource) ? "REAL" : "MOCK") : null,
+                "SUCCEEDED".equals(status) ? businessRunId : null,
                 error, dependencyError, attemptCount, createdAt, updatedAt, deadlineAt, nextAttemptAt);
     }
 
     public record View(String taskId, String status, String stage, String datasetId, String appId, LocalDate cutoffDate,
-                       int horizonDays, String modelVersion, String datasetSource, String predictionSource, String runId,
+                       int horizonDays, String modelVersion, String datasetSource, String predictionSource, String resultMode, String runId,
                        PredictionProblem.Error error, PredictionProblem.Error lastDependencyError, int attemptCount,
                        Instant createdAt, Instant updatedAt, Instant deadlineAt, Instant nextAttemptAt) {}
 }

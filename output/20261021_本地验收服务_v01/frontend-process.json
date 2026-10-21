@@ -1,0 +1,15 @@
+{
+  "pid": 67618,
+  "command": [
+    "/home/yukino/.nvm/versions/node/v24.14.0/bin/node",
+    "/home/yukino/projects/work/cvte/cdn-hotspot-predictor/frontend/node_modules/vite/bin/vite.js",
+    "--host",
+    "127.0.0.1",
+    "--port",
+    "5173",
+    "--strictPort"
+  ],
+  "cwd": "/home/yukino/projects/work/cvte/cdn-hotspot-predictor/frontend",
+  "port": 5173,
+  "settings": {}
+}

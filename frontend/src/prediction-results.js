@@ -30,12 +30,21 @@ function isBytes(value) {
   return typeof value === 'string' && value.length <= 256 && /^(0|[1-9]\d*)(\.\d+)?$/.test(value)
 }
 
+export function resolveResultMode(value, allowUnresolved = false) {
+  const expectedMode = value.predictionSource === 'MOCK' ? 'MOCK' : value.predictionSource === 'MODEL' ? 'REAL' : null
+  if (!Object.hasOwn(value, 'resultMode')) return expectedMode
+  if (allowUnresolved && value.predictionSource == null && value.resultMode === null) return null
+  contract(expectedMode !== null && value.resultMode === expectedMode, '结果模式与预测来源不符。')
+  return value.resultMode
+}
+
 export function validatePredictionTask(value, expectedId) {
   contract(value && value.taskId === expectedId && isId(value.taskId), 'Java 任务编号不匹配。')
   contract(['PENDING', 'RUNNING', 'SUCCEEDED', 'FAILED'].includes(value.status), '未知任务状态。')
   metadata(value)
   if (value.datasetSource != null) contract(sources.has(value.datasetSource), '任务数据来源无效。')
   if (value.predictionSource != null) contract(predictionSources.has(value.predictionSource), '任务预测来源无效。')
+  resolveResultMode(value, value.status !== 'SUCCEEDED')
   if (value.status === 'SUCCEEDED') contract(isId(value.runId), '成功任务缺少有效 runId。')
   else contract(value.runId == null, '非成功任务不得暴露业务 runId。')
   if (value.status === 'FAILED') contract(typeof value.error?.code === 'string' && typeof value.error?.message === 'string', '失败任务缺少错误原因。')
@@ -47,6 +56,7 @@ export function validatePredictionResult(value, expectedId, task = null) {
   contract(value && isId(value.runId) && value.runId === expectedId, '榜单 runId 不匹配。')
   metadata(value)
   contract(sources.has(value.datasetSource) && predictionSources.has(value.predictionSource), '榜单缺少明确的数据或预测来源。')
+  resolveResultMode(value)
   contract(isDate(value.predictionStartDate) && isDate(value.predictionEndDate)
     && value.predictionStartDate === addDays(value.cutoffDate, 1)
     && value.predictionEndDate === addDays(value.cutoffDate, value.horizonDays), '榜单预测窗口与截止日及跨度不符。')

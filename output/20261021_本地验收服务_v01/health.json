@@ -1,0 +1,44 @@
+{
+  "http://127.0.0.1:8000/api/v1/health": {
+    "status": 200,
+    "service": "predictor",
+    "health": "UP",
+    "total": null,
+    "htmlBytes": null
+  },
+  "http://127.0.0.1:8080/api/v1/health": {
+    "status": 200,
+    "service": "backend",
+    "health": "UP",
+    "total": null,
+    "htmlBytes": null
+  },
+  "http://127.0.0.1:5173/": {
+    "status": 200,
+    "service": null,
+    "health": null,
+    "total": null,
+    "htmlBytes": 453
+  },
+  "http://127.0.0.1:5173/data-api/health": {
+    "status": 200,
+    "service": "predictor",
+    "health": "UP",
+    "total": null,
+    "htmlBytes": null
+  },
+  "http://127.0.0.1:5173/api/top50?page=1&pageSize=1": {
+    "status": 200,
+    "service": null,
+    "health": null,
+    "total": 32,
+    "htmlBytes": null
+  },
+  "http://127.0.0.1:5173/data-api/datasets?page=1&pageSize=1": {
+    "status": 200,
+    "service": null,
+    "health": null,
+    "total": 1,
+    "htmlBytes": null
+  }
+}

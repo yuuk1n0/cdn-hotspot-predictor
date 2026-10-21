@@ -19,6 +19,7 @@ import java.math.BigDecimal;
 import java.net.ServerSocket;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 
 import static com.yukino.cdn.prediction.PredictionProcessRestartTest.*;
@@ -28,6 +29,116 @@ import static org.junit.jupiter.api.Assertions.*;
 @EnabledIfEnvironmentVariable(named = "PREDICTOR_TEST_PYTHON", matches = ".+")
 class PredictionPythonIntegrationTest {
     private final ObjectMapper mapper = new ObjectMapper();
+
+    @Test
+    void realV1DailyAndWeeklyPublishPersistAndRejectUnsupportedRequests(@TempDir Path directory) throws Exception {
+        Path project = Path.of("").toAbsolutePath().getParent();
+        int pythonPort = freePort(), javaPort = freePort();
+        RestClient python = http(pythonPort), java = http(javaPort);
+        String database = "jdbc:h2:file:" + directory.resolve("business") + ";MODE=MySQL";
+        var source = new DriverManagerDataSource(database, "sa", "");
+        new ResourceDatabasePopulator(new ClassPathResource("prediction-test-schema.sql"),
+                new ClassPathResource("legacy-top50-test-schema.sql"), new ClassPathResource("data.sql")).execute(source);
+        Path pythonLog = directory.resolve("python.log"), javaLog = directory.resolve("java.log");
+        Process pythonProcess = startPython(project, directory, pythonPort, 0, pythonLog, "MODEL", "hotspot-simple-v1");
+        Process javaProcess = null;
+        try {
+            awaitStartup(pythonProcess, python, pythonLog);
+            var form = new LinkedMultiValueMap<String, Object>();
+            form.add("file", new FileSystemResource(project.resolve("datasets/10350.csv")));
+            form.add("mapping", "{\"fileKey\":\"文件标识\",\"date\":\"日期\",\"trafficBytes\":\"当日流量（B）\",\"appId\":\"AppID\"}");
+            form.add("datasetType", "FILE_DAILY"); form.add("datasetSource", "REAL"); form.add("sourceUnit", "B");
+            var receipt = python.post().uri("/api/v1/imports").header("Idempotency-Key", "model-v1-upload")
+                    .contentType(MediaType.MULTIPART_FORM_DATA).body(form).retrieve().toEntity(JsonNode.class);
+            assertEquals(202, receipt.getStatusCode().value());
+            JsonNode imported = awaitTerminal(python, "/api/v1/imports/" + receipt.getBody().path("importTaskId").textValue(), 20);
+            assertEquals("SUCCEEDED", imported.path("status").textValue(), imported.toString());
+            String datasetId = imported.path("datasetId").textValue();
+            javaProcess = start(database, javaPort, "http://127.0.0.1:" + pythonPort, javaLog);
+            awaitStartup(javaProcess, java, javaLog);
+            JsonNode fakeBefore = java.get().uri("/api/v1/top50?page=1&pageSize=50").retrieve().body(JsonNode.class);
+            assertEquals("FAKE", fakeBefore.path("dataSource").textValue());
+            assertEquals(32, fakeBefore.path("total").intValue());
+            ObjectNode body = mapper.createObjectNode().put("datasetId", datasetId).put("appId", "10350")
+                    .put("cutoffDate", "2026-10-06").put("horizonDays", 1).put("modelVersion", "hotspot-simple-v1");
+            String dailyId = submit(java, body, "model-v1-daily").path("taskId").textValue();
+            JsonNode dailyTask = awaitTerminal(java, "/api/v1/tasks/" + dailyId, 30);
+            JsonNode daily = assertRealSnapshot(java, python, dailyTask, "141981266508", "2026-10-07");
+            assertEquals(dailyId, submit(java, body, "model-v1-daily").path("taskId").textValue());
+            ObjectNode weeklyBody = body.deepCopy().put("horizonDays", 7);
+            String weeklyId = submit(java, weeklyBody, "model-v1-weekly").path("taskId").textValue();
+            JsonNode weeklyTask = awaitTerminal(java, "/api/v1/tasks/" + weeklyId, 30);
+            JsonNode weekly = assertRealSnapshot(java, python, weeklyTask, "993868865539", "2026-10-13");
+
+            String wrongModelId = submit(java, body.deepCopy().put("modelVersion", "unapproved-model"), "model-v1-wrong-model")
+                    .path("taskId").textValue();
+            assertFailedWithoutPublishedMode(awaitTerminal(java, "/api/v1/tasks/" + wrongModelId, 20), "MODEL_VERSION_UNSUPPORTED");
+            String wrongAppId = submit(java, body.deepCopy().put("appId", "10066"), "model-v1-wrong-app")
+                    .path("taskId").textValue();
+            assertFailedWithoutPublishedMode(awaitTerminal(java, "/api/v1/tasks/" + wrongAppId, 20), "APP_MISMATCH");
+            assertEquals(fakeBefore, java.get().uri("/api/v1/top50?page=1&pageSize=50").retrieve().body(JsonNode.class));
+
+            stop(pythonProcess); pythonProcess = null;
+            stop(javaProcess);
+            javaProcess = start(database, javaPort, "http://127.0.0.1:" + pythonPort, javaLog);
+            awaitStartup(javaProcess, java, javaLog);
+            assertEquals(daily, java.get().uri("/api/v1/predictions/{id}", dailyTask.path("runId").textValue()).retrieve().body(JsonNode.class));
+            assertEquals(weekly, java.get().uri("/api/v1/predictions/{id}", weeklyTask.path("runId").textValue()).retrieve().body(JsonNode.class));
+            assertEquals(dailyTask, java.get().uri("/api/v1/tasks/{id}", dailyId).retrieve().body(JsonNode.class));
+            assertEquals(weeklyTask, java.get().uri("/api/v1/tasks/{id}", weeklyId).retrieve().body(JsonNode.class));
+            assertEquals(dailyId, submit(java, body, "model-v1-daily").path("taskId").textValue());
+            assertEquals(weeklyId, submit(java, weeklyBody, "model-v1-weekly").path("taskId").textValue());
+            assertEquals(fakeBefore, java.get().uri("/api/v1/top50?page=1&pageSize=50").retrieve().body(JsonNode.class));
+            stop(javaProcess); javaProcess = null;
+            var jdbc = new org.springframework.jdbc.core.JdbcTemplate(source);
+            assertEquals(2L, jdbc.queryForObject("SELECT COUNT(*) FROM prediction_run WHERE prediction_source = 'MODEL'", Long.class));
+            assertEquals(2L, jdbc.queryForObject("SELECT COUNT(*) FROM prediction_run", Long.class));
+            assertEquals(4L, jdbc.queryForObject("SELECT COUNT(*) FROM prediction_task", Long.class));
+            System.out.println(mapper.writeValueAsString(Map.of("case", "real-java-python-v1", "datasetId", datasetId,
+                    "dailyTaskId", dailyId, "weeklyTaskId", weeklyId, "candidateCount", 190, "top50Count", 50,
+                    "dailyTop50PredictedBytes", daily.path("top50PredictedBytes").textValue(),
+                    "weeklyTop50PredictedBytes", weekly.path("top50PredictedBytes").textValue())));
+        } finally {
+            if (javaProcess != null) stop(javaProcess);
+            if (pythonProcess != null) stop(pythonProcess);
+        }
+    }
+
+    private JsonNode assertRealSnapshot(RestClient java, RestClient python, JsonNode task, String expectedBytes, String endDate) {
+        assertEquals("SUCCEEDED", task.path("status").textValue(), task.toString());
+        assertEquals("MODEL", task.path("predictionSource").textValue());
+        assertEquals("REAL", task.path("resultMode").textValue());
+        String runId = task.path("runId").textValue();
+        JsonNode result = java.get().uri("/api/v1/predictions/{id}", runId).retrieve().body(JsonNode.class);
+        JsonNode page = python.get().uri("/api/v1/predictions/{id}/items?page=1&pageSize=50", runId).retrieve().body(JsonNode.class);
+        assertEquals("MODEL", result.path("predictionSource").textValue());
+        assertEquals("REAL", result.path("resultMode").textValue());
+        assertEquals("REAL", result.path("datasetSource").textValue());
+        assertEquals("hotspot-simple-v1", result.path("modelVersion").textValue());
+        assertEquals(190, result.path("candidateCount").intValue());
+        assertEquals(50, result.path("top50Count").intValue());
+        assertEquals(expectedBytes, result.path("top50PredictedBytes").textValue());
+        assertEquals("2026-10-07", result.path("predictionStartDate").textValue());
+        assertEquals(endDate, result.path("predictionEndDate").textValue());
+        assertEquals(50, result.path("items").size());
+        for (int index = 0; index < 50; index++) {
+            JsonNode expected = page.path("items").get(index), actual = result.path("items").get(index);
+            for (String field : List.of("rank", "fileKey", "predictedBytes", "score", "reason")) {
+                assertEquals(expected.path(field), actual.path(field), "row " + index + " " + field);
+            }
+        }
+        assertTrue(result.path("hotspotTrafficRatio").path("value").isNull());
+        assertEquals("NO_MATCHING_TOTAL", result.path("hotspotTrafficRatio").path("reasonCode").textValue());
+        return result;
+    }
+
+    private void assertFailedWithoutPublishedMode(JsonNode task, String errorCode) {
+        assertEquals("FAILED", task.path("status").textValue(), task.toString());
+        assertEquals(errorCode, task.path("error").path("code").textValue());
+        assertTrue(task.path("runId").isNull());
+        assertTrue(task.path("predictionSource").isNull());
+        assertTrue(task.path("resultMode").isNull());
+    }
 
     @Test
     void realShortAndHundredSecondMockPublishTop50AndSurviveJavaRestart(@TempDir Path directory) throws Exception {
@@ -166,10 +277,14 @@ class PredictionPythonIntegrationTest {
     private static int freePort() throws Exception { try (var socket = new ServerSocket(0)) { return socket.getLocalPort(); } }
 
     private static Process startPython(Path project, Path directory, int port, int delay, Path log) throws Exception {
+        return startPython(project, directory, port, delay, log, "MOCK", "contract-demo-v1");
+    }
+
+    private static Process startPython(Path project, Path directory, int port, int delay, Path log, String mode, String version) throws Exception {
         var builder = new ProcessBuilder(System.getenv("PREDICTOR_TEST_PYTHON"), "-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", String.valueOf(port))
                 .directory(project.resolve("predictor").toFile()).redirectErrorStream(true).redirectOutput(ProcessBuilder.Redirect.appendTo(log.toFile()));
         builder.environment().put("PREDICTOR_DATA_DIR", directory.resolve("python-data").toString());
-        builder.environment().put("PREDICTION_MODE", "MOCK"); builder.environment().put("PREDICTION_MODEL_VERSION", "contract-demo-v1");
+        builder.environment().put("PREDICTION_MODE", mode); builder.environment().put("PREDICTION_MODEL_VERSION", version);
         builder.environment().put("MOCK_DELAY_SECONDS", String.valueOf(delay)); builder.environment().put("PREDICTION_TASK_TIMEOUT_SECONDS", "180");
         return builder.start();
     }

@@ -312,6 +312,20 @@ class PredictionFlowTest {
     }
 
     @Test
+    void historicalStoredSnapshotWithoutResultModeRemainsReadable() {
+        var accepted = service.submit(request(), "legacy-snapshot");
+        python.taskStatus = "SUCCEEDED";
+        worker.tick();
+        var historical = (ObjectNode) service.result("run_fixture");
+        historical.remove("resultMode");
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource).update(
+                "UPDATE prediction_run SET snapshot_json = ? WHERE run_id = ?", historical.toString(), "run_fixture");
+        assertEquals(historical, service.result("run_fixture"));
+        assertFalse(service.result("run_fixture").has("resultMode"));
+        assertEquals("MOCK", service.get(accepted.taskId()).resultMode());
+    }
+
+    @Test
     void successSnapshotSurvivesFileDatabaseReopenAndPythonGoingOffline(@TempDir Path directory) {
         var source = new DriverManagerDataSource("jdbc:h2:file:" + directory.resolve("snapshot") + ";MODE=MySQL", "sa", "");
         new ResourceDatabasePopulator(new ClassPathResource("prediction-test-schema.sql")).execute(source);

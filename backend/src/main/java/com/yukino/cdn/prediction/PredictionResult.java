@@ -32,6 +32,8 @@ final class PredictionResult {
         require(Set.of("REAL", "FAKE").contains(text(page, "datasetSource")), "数据来源无效。");
         String source = text(page, "predictionSource");
         require(Set.of("MOCK", "MODEL").contains(source), "预测来源无效。");
+        String resultMode = "MODEL".equals(source) ? "REAL" : "MOCK";
+        if (page.has("resultMode")) match(page, "resultMode", resultMode);
         try { Instant.parse(text(page, "generatedAt")); }
         catch (DateTimeParseException exception) { throw invalid("结果生成时间无效。"); }
         require(integer(page, "page") == 1 && integer(page, "pageSize") == 50, "结果分页不匹配。");
@@ -43,6 +45,7 @@ final class PredictionResult {
         for (String key : List.of("runId", "datasetId", "appId", "cutoffDate", "horizonDays", "modelVersion",
                 "predictionStartDate", "predictionEndDate", "datasetSource", "predictionSource", "generatedAt")) result.set(key, page.get(key));
         result.put("taskId", task.taskId).put("candidateCount", total).put("top50Count", items.size());
+        result.put("resultMode", resultMode);
         var selected = result.putArray("items");
         Set<String> identities = new HashSet<>();
         BigDecimal sum = BigDecimal.ZERO, previousBytes = null;

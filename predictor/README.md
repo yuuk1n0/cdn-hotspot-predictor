@@ -1,6 +1,8 @@
-# 第三阶段 Python：CSV 导入与异步 Mock
+# Python：CSV 导入、异步 Mock 与真实 v1 预测
 
-第②步的 CSV 导入能力原样保留，第④步增加 Python 异步计算任务和完整 Mock 结果。第①步前端可继续提交 multipart；收到 202 仍只显示“已接收”。本服务不回调 Java，不组织业务 Top50，不实现真实算法、回测、CStore、压缩或收益。
+> 2026-10-21 状态更正：Java获取结果与Top50快照已经实现，不能再按历史第④步停止点认定Java缺聚合。网页导入监控和预测提交仍待补齐，见[半天计划](../output/20261021_架构与半天开发规划_v01/development-plan.md)。本套规划默认Mock；工作区存在另行推进的真实算法适配，见[其独立计划](../output/20261021_真实算法集成实施计划_v01.md)，其测试/上线结论不由本次文档任务认领。
+
+保留 CSV 导入、持久化异步任务和完整候选结果，新增 `hotspot-simple-v1` 真实算法。默认仍为 Mock，真实模式需同时设置下面两个环境变量。本服务不回调 Java，Java 继续校验并保存业务 Top50。CStore、压缩、收益、在线回测指标和完整 Web 预测提交不在本次集成范围。
 
 ## 启动与验证
 
@@ -103,7 +105,7 @@ conda run -n cdn-predictor python -m pytest -q
 }
 ```
 
-以上是契约占位，需替换为实际导入返回的 READY datasetId 和 Java taskId。App 必须存在于数据集，截止日在该 App 的观测日期范围内；允许有缺日警告，不将缺日补零。格式错误直接 422，不创建任务；语义错误进入可查询的 FAILED，如 DATASET_NOT_FOUND、APP_MISMATCH、INVALID_CUTOFF_DATE、MODEL_VERSION_UNSUPPORTED、MODEL_NOT_IMPLEMENTED。重复失败任务仍返回原失败状态，需要新业务任务才能重做。
+以上是契约占位，需替换为实际导入返回的 READY datasetId 和 Java taskId。App 必须存在于数据集，截止日在该 App 的观测日期范围内；允许有缺日警告，不将缺日补零。格式错误直接 422，不创建任务；语义错误进入可查询的 FAILED，如 DATASET_NOT_FOUND、APP_MISMATCH、INVALID_CUTOFF_DATE、MODEL_VERSION_UNSUPPORTED、INSUFFICIENT_HISTORY、MODEL_ARTIFACT_CHANGED。重复失败任务仍返回原失败状态，需要新业务任务才能重做。
 
 首次接收返回 PENDING，后续幂等请求可返回现有状态。后台阶段为 WAITING / VALIDATING / COMPUTING / COMPLETED / FAILED。成功任务含 `runId`；完整结果先原子发布，随后才把任务置为 SUCCEEDED。Python 的成功不代表 Java 业务成功。
 
@@ -113,7 +115,7 @@ conda run -n cdn-predictor python -m pytest -q
 
 | 环境变量 | 默认值 | 作用 |
 | --- | --- | --- |
-| `PREDICTION_MODE` | `MOCK` | 仅允许 MOCK / MODEL；MODEL 明确失败，不静默回退 |
+| `PREDICTION_MODE` | `MOCK` | 仅允许 MOCK / MODEL；MODEL 执行真实 v1，失败不回退 Mock |
 | `PREDICTION_MODEL_VERSION` | `contract-demo-v1` | 精确匹配请求版本，不按版本前缀选 Mock |
 | `MOCK_DELAY_SECONDS` | `0` | 非负有限秒数；设置 100 可模拟长耗时，不影响 HTTP 查询 |
 | `PREDICTION_TASK_TIMEOUT_SECONDS` | `180` | 从接收起计算的总截止时限，包含队列等待；超时为 TASK_TIMEOUT |
@@ -147,7 +149,7 @@ runtime/predictor/
 
 重启后 PENDING 继续排队；RUNNING 如果有完整且契约匹配的已发布结果则补齐成功，否则明确为 EXECUTION_INTERRUPTED。损坏结果为 INVALID_RESULT，仅该任务失败，不阻断其他任务恢复。短暂存储异常返回503或形成明确计算失败；若成功写入响应丢失，使用原 taskId 重试不会创建第二份任务或结果。不存在完整运行返回404，不以空榜单掩盖失败。
 
-### 第④步验收
+### 回归验证
 
 ```bash
 cd predictor
@@ -158,4 +160,58 @@ conda run -n cdn-predictor python -m pytest -q --ignore=tests/test_prediction_ht
 
 完整测试包含真实 Uvicorn、10350.csv、实际100秒延迟和进程重启，因此耗时约两分钟；使用隔离临时目录及本机端口，不触碰现有运行数据、Java 或 MySQL。测试客户端已有的 Starlette/httpx 弃用警告仍保留，本轮不升级依赖。
 
-**第④步完成后停止。Java 第⑤步尚未实现，当前 Java 即使读到 Python SUCCEEDED，也会报告 AGGREGATION_NOT_IMPLEMENTED，不得据此宣称真实 Top50 闭环完成。** 本轮不修改 Java 或前端，不执行数据库迁移。
+Java 已实现结果校验、Top50 快照和 runId 查询。前端可查询已有 taskId/runId 并展示榜单，仍未新增导入质量报告、数据集选择、预测提交表单或模型评估看板。数据库无需新增迁移；测试不向现有业务 MySQL 写数据。
+
+## 真实 v1 模式
+
+从项目根目录进入 predictor，使用已有环境，不需要安装新依赖：
+
+```bash
+cd predictor
+PREDICTION_MODE=MODEL PREDICTION_MODEL_VERSION=hotspot-simple-v1 \
+  conda run --no-capture-output -n cdn-predictor \
+  python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+服务地址或端口被已有进程占用时，应由运行者停止原进程后以新配置重启；不要同时启动两个进程使用同一个持久目录。根目录 `.env` 不会自动加载。已有 Java、Vue 启动方式和代理不变。
+
+先按上面的 CSV 导入接口取得实际 READY datasetId，再向 Java 提交。以下 datasetId 是需替换的占位，任务请求不增加 resultMode 字段：
+
+```bash
+curl -i http://127.0.0.1:8080/api/v1/predictions \
+  -H 'Content-Type: application/json' \
+  -H 'Idempotency-Key: real-10350-h7-v1' \
+  -d '{"datasetId":"ds_replace_with_ready_dataset_id","appId":"10350","cutoffDate":"2026-10-06","horizonDays":7,"modelVersion":"hotspot-simple-v1"}'
+```
+
+将返回的 taskId 用于 `GET http://127.0.0.1:8080/api/v1/tasks/{taskId}`，仅业务状态 SUCCEEDED 后再查询 `GET http://127.0.0.1:8080/api/v1/predictions/{runId}`。Vue 可输入 taskId/runId，或打开 `http://localhost:5173/?taskId=实际编号#prediction`。日预测把 horizonDays 改为 1，并使用新的幂等键；参数改变不能复用旧键。
+
+新结果保留 `datasetSource=REAL/FAKE`、`predictionSource=MODEL/MOCK`，并增加 `resultMode=REAL/MOCK`。真实 CSV 也能用于 Mock，不能由 datasetSource 推断结果模式。旧结果缺少 resultMode 时按其既有 predictionSource 兼容读取，原文件和历史 Java 快照不被改写。
+
+真实实现从自己的 normalized.csv 读取指定 App，先裁剪至截止日，再处理疑似截断日、冷启动和参数选择。审阅配置的全部推广标签成熟后才可使用；更早的历史截止日以当时可见数据独立选型。候选使用近期自适应窗口，最多30日，按预测字节降序、精确文件标识稳定排序。输出所有候选，Java 只取前50，不凑数、不再次乘7。
+
+`predictedBytes` 是历史观测强度外推的窗口累计估计，**未经完整 CDN 流量校准**；不是实测流量或已实现降本。整天无观测不补零；某个有记录日期内文件未出现，会降低其观测强度，不能解释为已确认真实零流量。score 无可靠来源时保留 null，文件类型、大小和压缩状态继续未知。仅基于流量 CSV 无法预测从未出现的文件。
+
+Python 完整结果另保存 `modelInfo`：算法及配置摘要、选中方法和规格、参数来源、历史状态、选型证据及疑似截断日期。Java 仍保留原业务投影字段及 modelVersion；完整模型元信息可从 Python 的 `/api/v1/predictions/{runId}/items` 查询。新真实任务绑定服务启动时加载的算法/配置摘要；运行期间替换源文件后，新旧真实任务均失败为 MODEL_ARTIFACT_CHANGED，须重启服务后提交新任务，不把内存旧代码标成新文件摘要。重启后算法不同的旧排队任务同样失败；已成功快照仍可读取。无近期候选为 INSUFFICIENT_HISTORY；异常不产生 Mock 结果。
+
+服务仅批准 `hotspot-simple-v1`。纳入的 hotspot 源码保留同事的离线工具与其他实验版本，服务不开放 v2/v3；未安装 LightGBM、NumPy 或修改现有环境。离线滚动回测可在 predictor 目录运行：
+
+```bash
+python -m hotspot.cli backtest --input ../datasets/10350.csv --app-id 10350 \
+  --source-unit B --horizon-days 7 --model-version hotspot-simple-v1 \
+  --output ../output/20261021_真实算法周回测_v01.json
+```
+
+该命令应使用上面的 cdn-predictor 环境；输出文件存在时先改用新版本名。回测指标为未来观测集合上的代理指标：Recall@50、对数相关度 NDCG、观测流量覆盖率、候选覆盖率，不等同于完整真实 Top50、设计中的线性 NDCG 或真实热点占比。没有接入在线评估接口和 Vue 指标展示。
+
+### 回退 Mock
+
+停止当前 Python 进程后，仍在 predictor 目录启动：
+
+```bash
+PREDICTION_MODE=MOCK PREDICTION_MODEL_VERSION=contract-demo-v1 \
+  conda run --no-capture-output -n cdn-predictor \
+  python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+新请求使用 `modelVersion=contract-demo-v1` 和新幂等键。已接收任务沿用其持久化策略，不因环境切换改模式；已成功的真实结果仍可查询，不删除数据。Mock 的 resultMode=MOCK，真实模型失败不会触发这一步操作。

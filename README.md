@@ -1,10 +1,12 @@
 # cdn-hotspot-predictor
 
+> 2026-10-21 文档核对：架构、现状边界和后续21个单服务编码任务见[开发计划](output/20261021_架构与半天开发规划_v01/development-plan.md)、[模块矩阵](output/20261021_架构与半天开发规划_v01/module-boundaries.md)及[架构](output/20261021_架构与半天开发规划_v01/architecture.md)。本次只更新文档，未执行功能开发或数据库迁移。
+
 基于历史 CDN 流量数据，实现热点文件日/周 Top50 动态预测、时间滚动回测与模型评估，结合压缩率、转码成本、存储成本及 CDN 流量费用进行预期净收益分析，并围绕数据看板、压缩效果追踪、飞书通知和 AI Agent 构建完整的降本业务闭环。
 
 ## 当前阶段
 
-阶段 2 已实现 Top50 数据看板最小闭环：Vue 通过 Spring Boot API 查询 MySQL 中明确标识的 Fake 预测结果，并支持日期范围、App ID、日/周粒度、模型和压缩状态筛选。
+已实现Python真实CSV导入、质量检查、持久异步Mock，以及Java持久任务、主动查询Python、结果校验和Top50事务快照。Vue可上传取得回执，或输入taskId/runId查询结果；导入监控、质量报告、数据集选择和预测提交表单仍待补齐。旧Fake筛选看板独立保留。真实算法适配另有未提交工作，本轮只记录进行中状态，不声明其已验收。
 
 | 应用 | 技术栈 | 默认地址 | 健康检查 |
 |---|---|---|---|
@@ -25,7 +27,7 @@ mysqld --no-defaults \
   --bind-address=127.0.0.1
 ```
 
-Spring Boot 启动时会通过 `schema.sql` 和 `data.sql` 重建本阶段的 Fake 数据。根目录 `.env` 不会被 Java、Python 或 Vite 自动读取。
+当前 `spring.sql.init.mode=never`，启动不自动执行 `schema.sql`、`data.sql` 或003/004迁移。旧 `data.sql` 含清理种子行为，不应为重启服务而重播。目标库需先核对既有表和已批准迁移；本轮不执行任何迁移。根目录 `.env` 不会被 Java、Python 或 Vite 自动读取。
 
 ## 启动预测服务
 
@@ -76,7 +78,7 @@ npm install
 npm run dev
 ```
 
-打开 `http://localhost:5173`，页面会通过 Vite 代理调用 Java 的 Top50 API。FastAPI 不参与阶段 2 数据链路。
+打开 `http://localhost:5173`。旧Fake榜单仍查询Java/MySQL；CSV经 `/data-api` 直接进入Python，任务/榜单经 `/api` 查询Java。Java直接主动请求Python，文件不经过Java。
 
 ## Top50 API
 
@@ -94,6 +96,6 @@ npm run dev
 
 ## 服务边界
 
-- 后续 CSV 上传与导入状态查询由 Vue 直接访问 Python，文件不经过 Java。
-- 后续预测任务由 Vue 提交给 Java，再由 Java 主动请求 Python。
-- 当前只实现 Top50 查询看板，不实现详情、压缩操作、CStore、Python 预测、收益、通知或 Agent。
+- CSV上传已由Vue直接访问Python；Python已有导入状态、报告和数据集API，网页监控待T01补齐。
+- Java已经接收预测任务并主动提交、轮询Python和保存快照；网页预测提交表单待T02补齐。
+- 详情、压缩业务、CStore、历史看板、回测业务界面、收益、通知及Agent属于后续独立模块；以模块矩阵区分已实现、拟议和正式验收缺口。

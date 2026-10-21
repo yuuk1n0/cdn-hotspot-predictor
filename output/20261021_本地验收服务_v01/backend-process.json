@@ -1,0 +1,19 @@
+{
+  "pid": 67617,
+  "command": [
+    "/home/yukino/.sdkman/candidates/java/current/bin/java",
+    "-jar",
+    "/home/yukino/projects/work/cvte/cdn-hotspot-predictor/backend/target/cdn-hotspot-backend-0.1.0-SNAPSHOT.jar"
+  ],
+  "cwd": "/home/yukino/projects/work/cvte/cdn-hotspot-predictor/backend",
+  "port": 8080,
+  "settings": {
+    "MYSQL_HOST": "127.0.0.1",
+    "MYSQL_PORT": "13306",
+    "MYSQL_DATABASE": "cdn_hotspot",
+    "MYSQL_USER": "cdn",
+    "PYTHON_BASE_URL": "http://127.0.0.1:8000",
+    "BACKEND_PORT": "8080",
+    "SPRING_SQL_INIT_MODE": "never"
+  }
+}

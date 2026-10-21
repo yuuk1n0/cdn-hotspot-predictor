@@ -38,6 +38,45 @@ class PredictionResultTest {
     }
 
     @Test
+    void derivesResultModeForHistoricalPagesAndPreservesValidExplicitModes() {
+        for (var mapping : List.of(new String[]{"MOCK", "MOCK"}, new String[]{"MODEL", "REAL"})) {
+            var task = task();
+            var page = page(task, 2).put("predictionSource", mapping[0]);
+            assertEquals(mapping[1], PredictionResult.build(page, task).path("resultMode").textValue());
+            page.put("resultMode", mapping[1]);
+            assertEquals(mapping[1], PredictionResult.build(page, task).path("resultMode").textValue());
+        }
+    }
+
+    @Test
+    void rejectsExplicitNullWrongTypeUnknownOrMismatchedResultModes() {
+        List<Consumer<ObjectNode>> changes = List.of(
+                p -> p.putNull("resultMode"), p -> p.put("resultMode", 1),
+                p -> p.put("resultMode", true), p -> p.putObject("resultMode"),
+                p -> p.put("resultMode", "MODEL"), p -> p.put("resultMode", "REAL"),
+                p -> p.put("predictionSource", "MODEL").put("resultMode", "MOCK"));
+        for (var change : changes) {
+            var task = task(); var page = page(task, 2); change.accept(page);
+            assertEquals("INVALID_RESULT", assertThrows(PredictionProblem.class,
+                    () -> PredictionResult.build(page, task)).code(), page.toString());
+        }
+    }
+
+    @Test
+    void taskExposesDerivedModeOnlyAfterSuccess() {
+        var task = task();
+        for (var mapping : List.of(new String[]{"MOCK", "MOCK"}, new String[]{"MODEL", "REAL"})) {
+            task.predictionSource = mapping[0];
+            for (String status : List.of("PENDING", "RUNNING", "FAILED")) {
+                task.status = status;
+                assertTrue(MAPPER.valueToTree(task.view()).path("resultMode").isNull());
+            }
+            task.status = "SUCCEEDED";
+            assertEquals(mapping[1], MAPPER.valueToTree(task.view()).path("resultMode").textValue());
+        }
+    }
+
+    @Test
     void selectsOnlyFirstFiftyAndSumsExactWindowBytesWithoutMultiplyingSevenAgain() {
         var task = task();
         var result = PredictionResult.build(page(task, 930), task);

@@ -1,0 +1,41 @@
+{
+  "artifactVersion": 1,
+  "appId": "10350",
+  "horizonDays": 1,
+  "modelVersion": "hotspot-simple-v1",
+  "selectedMethod": "last_day",
+  "selectedSpec": {
+    "method": "last_day",
+    "window": 1,
+    "halfLife": null
+  },
+  "selectionEndDate": "2026-08-01",
+  "selectionMean": {
+    "recallAt50": 0.7496672264721039,
+    "ndcgAt50": 0.7129175151249045,
+    "observedTrafficCoverageAt50": 0.8626301376864978,
+    "candidateCoverageAt50": 0.7787862787978193
+  },
+  "testStartDate": "2026-08-03",
+  "testEndDate": "2026-10-12",
+  "testCutoffCount": 71,
+  "testMean": {
+    "recallAt50": 0.7161262971733849,
+    "ndcgAt50": 0.764299016325421,
+    "observedTrafficCoverageAt50": 0.909742670839791,
+    "candidateCoverageAt50": 0.7558863781216942
+  },
+  "sourceFile": "dataset/10350 (1).csv",
+  "excludedLastDays": 0,
+  "trafficUnitStatus": "declared B",
+  "metricScope": "observed-future-proxy; completeness not established",
+  "trainingSelectedMethod": "last_day",
+  "legacyMethod": "mean_7",
+  "legacyTestMean": {
+    "recallAt50": 0.6776189588822349,
+    "ndcgAt50": 0.7112638009384264,
+    "observedTrafficCoverageAt50": 0.9066519291157399,
+    "candidateCoverageAt50": 0.7637362551617122
+  },
+  "deploymentDecision": "promoted"
+}

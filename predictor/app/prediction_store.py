@@ -15,9 +15,11 @@ from pathlib import Path
 from .csv_import import ImportProblem
 from .import_store import json_bytes, now, read_json, replace_json, sync_directory, write_bytes
 from .prediction import PredictionRequest, mock_items
+from .algorithm_adapter import MODEL_VERSION, LOADED_ALGORITHM_FINGERPRINT, algorithm_fingerprint, predict_real
 
 
 logger = logging.getLogger(__name__)
+RESULT_MODES = {"MOCK": "MOCK", "MODEL": "REAL"}
 
 
 class PredictionStore:
@@ -63,6 +65,8 @@ class PredictionStore:
                 "execution": dict(self.execution), "createdAt": created.isoformat().replace("+00:00", "Z"),
                 "updatedAt": now(), "deadlineAt": (created + timedelta(seconds=self.execution["timeoutSeconds"])).isoformat().replace("+00:00", "Z"),
             }
+            if self.execution["mode"] == "MODEL":
+                task["execution"]["algorithmFingerprint"] = LOADED_ALGORITHM_FINGERPRINT
             staging = self.tasks / f".task-{uuid.uuid4().hex}"
             staging.mkdir()
             write_bytes(staging / "task.json", json_bytes(task))
@@ -81,7 +85,7 @@ class PredictionStore:
     def _view(task):
         fields = ("taskId", "status", "stage", "datasetId", "appId", "cutoffDate", "horizonDays", "modelVersion",
                   "datasetSource", "predictionSource", "runId", "error", "createdAt", "updatedAt", "deadlineAt")
-        return {key: task[key] for key in fields}
+        return {**{key: task[key] for key in fields}, "resultMode": RESULT_MODES.get(task["predictionSource"])}
 
     def get_items(self, run_id, page, page_size):
         if not re.fullmatch(r"run_[0-9a-f]{64}", run_id) or not (self.runs / run_id / "result.json").is_file():
@@ -111,6 +115,15 @@ class PredictionStore:
                         or not re.fullmatch(r"(?:0|[1-9]\d*)(?:\.\d+)?", item["predictedBytes"]):
                     raise ValueError
                 identities.add(item["fileKey"])
+            expected_mode = RESULT_MODES[result["predictionSource"]]
+            if "resultMode" in result and result["resultMode"] != expected_mode:
+                raise ValueError
+            if result["predictionSource"] == "MODEL":
+                info = result.get("modelInfo")
+                if not isinstance(info, dict) or not isinstance(info.get("algorithmFingerprint"), str) \
+                        or not re.fullmatch(r"[0-9a-f]{64}", info["algorithmFingerprint"]):
+                    raise ValueError
+            result.setdefault("resultMode", expected_mode)
             return result
         except (ValueError, TypeError, KeyError, ImportProblem):
             raise ImportProblem("INVALID_RESULT", "已发布结果损坏或不符合计算结果契约，不能作为成功结果读取。") from None
@@ -125,7 +138,7 @@ class PredictionStore:
         try:
             await asyncio.to_thread(self._validate_input, task)
             self._check_deadline(task)
-            delay = task["execution"]["delaySeconds"]
+            delay = task["execution"]["delaySeconds"] if task["execution"]["mode"] == "MOCK" else 0
             if delay:
                 try:
                     await asyncio.wait_for(stop.wait(), timeout=min(delay, self._remaining(task)))
@@ -169,27 +182,47 @@ class PredictionStore:
         if not interval["start"] <= task["cutoffDate"] <= interval["end"]:
             raise ImportProblem("INVALID_CUTOFF_DATE", "截止日超出该 App 的已观测日期范围。")
         policy = task["execution"]
-        if policy["mode"] == "MODEL":
-            raise ImportProblem("MODEL_NOT_IMPLEMENTED", "真实算法模式尚未实现；不会自动改用 Mock。")
         if task["modelVersion"] != policy["modelVersion"]:
             raise ImportProblem("MODEL_VERSION_UNSUPPORTED", "请求模型版本未配置，不能替换为其他模型或 Mock。")
-        self._update(task, stage="COMPUTING", datasetSource=metadata["datasetSource"], predictionSource="MOCK")
+        if policy["mode"] == "MODEL":
+            if task["modelVersion"] != MODEL_VERSION:
+                raise ImportProblem("MODEL_VERSION_UNSUPPORTED", "当前真实模式仅批准 hotspot-simple-v1。")
+            self._check_algorithm(task)
+        self._update(task, stage="COMPUTING", datasetSource=metadata["datasetSource"], predictionSource=policy["mode"])
+
+    @staticmethod
+    def _check_algorithm(task):
+        if task["execution"].get("algorithmFingerprint") != LOADED_ALGORITHM_FINGERPRINT \
+                or algorithm_fingerprint() != LOADED_ALGORITHM_FINGERPRINT:
+            raise ImportProblem("MODEL_ARTIFACT_CHANGED", "算法或参数文件已变化；不改变已接收任务的执行语义，请重启服务后提交新任务。")
 
     def _compute_publish(self, task):
         self._check_deadline(task)
         request = PredictionRequest.from_json({key: task[key] for key in PredictionRequest.__dataclass_fields__})
         # The service reads its own immutable normalized input, never the original CSV again.
+        model_info = None
         with (self.imports.datasets / request.datasetId / "normalized.csv").open(encoding="utf-8", newline="") as stream:
-            items = mock_items(csv.DictReader(stream), request)
+            if task["execution"]["mode"] == "MOCK":
+                items = mock_items(csv.DictReader(stream), request)
+            else:
+                self._check_algorithm(task)
+                computed = predict_real(csv.DictReader(stream), request)
+                items, model_info = computed["items"], computed["modelInfo"]
+                self._check_algorithm(task)
+                if model_info["algorithmFingerprint"] != task["execution"]["algorithmFingerprint"]:
+                    raise ImportProblem("MODEL_ARTIFACT_CHANGED", "计算结果的算法摘要与已接收任务不一致。")
         self._check_deadline(task)
         run_id = self._run_id(task["taskId"])
         cutoff = date.fromisoformat(task["cutoffDate"])
         result = {
-            **request.as_dict(), "runId": run_id, "datasetSource": task["datasetSource"], "predictionSource": "MOCK",
+            **request.as_dict(), "runId": run_id, "datasetSource": task["datasetSource"],
+            "predictionSource": task["execution"]["mode"], "resultMode": RESULT_MODES[task["execution"]["mode"]],
             "predictionStartDate": (cutoff + timedelta(days=1)).isoformat(),
             "predictionEndDate": (cutoff + timedelta(days=request.horizonDays)).isoformat(),
             "generatedAt": now(), "total": len(items), "items": items,
         }
+        if model_info is not None:
+            result["modelInfo"] = model_info
         staging = self.runs / f".run-{uuid.uuid4().hex}"
         staging.mkdir()
         write_bytes(staging / "result.json", json_bytes(result))
@@ -209,6 +242,8 @@ class PredictionStore:
         expected = {key: task[key] for key in PredictionRequest.__dataclass_fields__}
         if any(result.get(key) != value for key, value in expected.items()) \
                 or result["predictionSource"] != task["execution"]["mode"] \
+                or (result["predictionSource"] == "MODEL" and
+                    result.get("modelInfo", {}).get("algorithmFingerprint") != task["execution"].get("algorithmFingerprint")) \
                 or (task["datasetSource"] is not None and result["datasetSource"] != task["datasetSource"]):
             raise ImportProblem("INVALID_RESULT", "已发布结果与任务不匹配，不能标记成功。")
         return result

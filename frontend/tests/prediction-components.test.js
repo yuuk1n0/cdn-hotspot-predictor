@@ -22,6 +22,30 @@ test('query panel initially offers task/run lookup without inventing task succes
   assert.match(html, /type="submit" disabled/)
 })
 
+test('run panel labels explicit and legacy result modes without changing the original source', async () => {
+  const { default: Panel } = await server.ssrLoadModule('/src/PredictionPanel.vue')
+  for (const [predictionSource, resultMode] of [['MOCK', 'MOCK'], ['MODEL', 'REAL']]) {
+    for (const explicitMode of [false, true]) {
+      const snapshot = Object.freeze({
+        runId: 'run_one', datasetId: 'ds_one', appId: '10350', cutoffDate: '2026-10-06',
+        horizonDays: 1, modelVersion: 'baseline-v1', predictionStartDate: '2026-10-07', predictionEndDate: '2026-10-07',
+        datasetSource: 'REAL', predictionSource, candidateCount: 0, top50Count: 0, top50PredictedBytes: '0', items: [],
+        ...(explicitMode ? { resultMode } : {})
+      })
+      const WithSnapshot = { ...Panel, setup(props, context) {
+        const exposed = Panel.setup(props, context)
+        exposed.state.result = snapshot
+        exposed.state.resultIsCurrent = true
+        return exposed
+      } }
+      const html = await renderToString(createSSRApp(WithSnapshot))
+      assert.match(html, new RegExp(`结果模式：${resultMode}`))
+      assert.match(html, new RegExp(`${predictionSource} ·`))
+      assert.equal(Object.hasOwn(snapshot, 'resultMode'), explicitMode)
+    }
+  }
+})
+
 test('real snapshot table preserves exact byte strings, escapes file keys and shows unknown fields honestly', async () => {
   const { default: Table } = await server.ssrLoadModule('/src/Top50Table.vue')
   const html = await renderToString(createSSRApp(Table, { showExactBytes: true, items: [{

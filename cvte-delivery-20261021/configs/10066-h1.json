@@ -1,0 +1,41 @@
+{
+  "artifactVersion": 1,
+  "appId": "10066",
+  "horizonDays": 1,
+  "modelVersion": "hotspot-simple-v1",
+  "selectedMethod": "last_day",
+  "selectedSpec": {
+    "method": "last_day",
+    "window": 1,
+    "halfLife": null
+  },
+  "selectionEndDate": "2026-03-12",
+  "selectionMean": {
+    "recallAt50": 0.604225352112676,
+    "ndcgAt50": 0.8845633487982187,
+    "observedTrafficCoverageAt50": 0.18962973696292443,
+    "candidateCoverageAt50": 0.8873239436619719
+  },
+  "testStartDate": "2026-03-14",
+  "testEndDate": "2026-04-14",
+  "testCutoffCount": 32,
+  "testMean": {
+    "recallAt50": 0.693125,
+    "ndcgAt50": 0.9519124455964271,
+    "observedTrafficCoverageAt50": 0.229307751993135,
+    "candidateCoverageAt50": 0.963125
+  },
+  "sourceFile": "dataset/10066 (1).csv",
+  "excludedLastDays": 1,
+  "trafficUnitStatus": "unconfirmed",
+  "metricScope": "observed-future-proxy; completeness not established",
+  "trainingSelectedMethod": "decay_3_half_0_5",
+  "legacyMethod": "last_day",
+  "legacyTestMean": {
+    "recallAt50": 0.693125,
+    "ndcgAt50": 0.9519124455964271,
+    "observedTrafficCoverageAt50": 0.229307751993135,
+    "candidateCoverageAt50": 0.963125
+  },
+  "deploymentDecision": "retained legacy: training winner lost held-out recall and observed traffic coverage"
+}

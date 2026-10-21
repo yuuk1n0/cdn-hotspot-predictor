@@ -83,7 +83,7 @@ def test_all_candidates_are_persisted_and_paged_with_global_stable_ranks(tmp_pat
     ({"appId": "10066"}, {}, "APP_MISMATCH"),
     ({"cutoffDate": "2026-01-04"}, {}, "INVALID_CUTOFF_DATE"),
     ({"modelVersion": "mock-unknown"}, {}, "MODEL_VERSION_UNSUPPORTED"),
-    ({}, {"mode": "MODEL"}, "MODEL_NOT_IMPLEMENTED"),
+    ({}, {"mode": "MODEL"}, "MODEL_VERSION_UNSUPPORTED"),
 ])
 def test_semantic_errors_are_durable_failures_without_results(tmp_path, changes, settings, code):
     store, body = prepared(tmp_path, **settings)

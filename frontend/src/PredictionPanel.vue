@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import Top50Table from './Top50Table.vue'
 import { createPredictionLookup, resultRows } from './predictions.js'
+import { resolveResultMode } from './prediction-results.js'
 
 let storage = null
 try { storage = window.localStorage } catch {}
@@ -10,6 +11,7 @@ const { state } = lookup
 const kind = ref('task')
 const id = ref('')
 const rows = computed(() => state.result ? resultRows(state.result) : [])
+const resultMode = computed(() => state.result ? resolveResultMode(state.result) : null)
 const statusLabels = { PENDING: '等待处理', RUNNING: '处理中', SUCCEEDED: '业务任务成功', FAILED: '业务任务失败' }
 const phaseLabels = { QUERYING: '正在查询', POLLING: '自动查询中', LOADING_RESULT: '正在读取榜单', READY: '榜单已读取', PAUSED: '查询已暂停', QUERY_ERROR: '查询失败', TASK_FAILED: '业务任务失败', IDLE: '等待编号' }
 
@@ -57,7 +59,7 @@ onUnmounted(lookup.dispose)
 
     <article v-if="state.result" class="run-snapshot" aria-labelledby="snapshot-title">
       <p v-if="!state.resultIsCurrent" class="lookup-message">以下保留的是上一份已读取榜单（runId：{{ state.result.runId }}），不是本次查询结果。</p>
-      <header class="snapshot-heading"><h3 id="snapshot-title">{{ state.resultIsCurrent ? '本次查询榜单' : '上一份榜单' }}</h3><div class="source-tags"><span>{{ state.result.datasetSource }} · {{ state.result.datasetSource === 'REAL' ? '真实数据' : '演示数据' }}</span><span :class="{ 'source-mock': state.result.predictionSource === 'MOCK' }">{{ state.result.predictionSource }} · {{ state.result.predictionSource === 'MOCK' ? '仅模拟计算，非真实算法效果' : '模型计算' }}</span></div></header>
+      <header class="snapshot-heading"><h3 id="snapshot-title">{{ state.resultIsCurrent ? '本次查询榜单' : '上一份榜单' }}</h3><div class="source-tags"><span>{{ state.result.datasetSource }} · {{ state.result.datasetSource === 'REAL' ? '真实数据' : '演示数据' }}</span><span :class="{ 'source-mock': resultMode === 'MOCK' }">结果模式：{{ resultMode }}</span><span :class="{ 'source-mock': state.result.predictionSource === 'MOCK' }">{{ state.result.predictionSource }} · {{ state.result.predictionSource === 'MOCK' ? '仅模拟计算，非真实算法效果' : '模型计算' }}</span></div></header>
       <dl class="identity-grid">
         <div><dt>runId <a :href="`?runId=${encodeURIComponent(state.result.runId)}#prediction`">固定链接</a></dt><dd>{{ state.result.runId }}</dd></div>
         <div><dt>datasetId / App</dt><dd>{{ state.result.datasetId }} / {{ state.result.appId }}</dd></div>

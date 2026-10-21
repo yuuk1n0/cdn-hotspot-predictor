@@ -110,7 +110,7 @@ def test_real_mode_never_silently_executes_a_mock(tmp_path):
         assert client.post("/api/v1/predictions", json=body).status_code == 202
         task = prediction_terminal(client, body["taskId"])
         assert task["status"] == "FAILED"
-        assert task["error"]["code"] == "MODEL_NOT_IMPLEMENTED"
+        assert task["error"]["code"] == "MODEL_VERSION_UNSUPPORTED"
         assert task["runId"] is None
 
 
