@@ -1,0 +1,841 @@
+{
+  "status": "PASSED",
+  "importReceipt": {
+    "importTaskId": "imp_71d8ea67a11f0b4c020a727053efd0496599c0b36c235d5defa101ac4eb029e3",
+    "status": "PENDING"
+  },
+  "importTask": {
+    "importTaskId": "imp_71d8ea67a11f0b4c020a727053efd0496599c0b36c235d5defa101ac4eb029e3",
+    "status": "SUCCEEDED",
+    "datasetId": "ds_3c527ca3b91b481adf2b64f1090650b97b493a70504a8168706abebe097388cf",
+    "error": null,
+    "quality": null,
+    "createdAt": "2026-10-21T05:26:50.238745Z",
+    "updatedAt": "2026-10-21T05:26:50.299741Z"
+  },
+  "metadata": {
+    "appDateRanges": {
+      "A": {
+        "end": "2026-01-04",
+        "start": "2026-01-01"
+      },
+      "B": {
+        "end": "2026-01-07",
+        "start": "2026-01-01"
+      }
+    },
+    "appId": null,
+    "appIds": [
+      "A",
+      "B"
+    ],
+    "completeness": "UNKNOWN",
+    "createdAt": "2026-10-21T05:26:50.294749Z",
+    "datasetId": "ds_3c527ca3b91b481adf2b64f1090650b97b493a70504a8168706abebe097388cf",
+    "datasetSource": "FAKE",
+    "datasetType": "FILE_DAILY",
+    "dateRange": {
+      "end": "2026-01-07",
+      "start": "2026-01-01"
+    },
+    "identityMappingVersion": "opaque-v1",
+    "importTaskId": "imp_71d8ea67a11f0b4c020a727053efd0496599c0b36c235d5defa101ac4eb029e3",
+    "mapping": {
+      "appId": "appId",
+      "date": "date",
+      "fileKey": "fileKey",
+      "trafficBytes": "trafficBytes"
+    },
+    "parserVersion": "file-daily-v1",
+    "rowCount": 6,
+    "sha256": "1e7ba4ec71caf5d693df2e9928e445b87e20e8f66391ee4a81c49dde36b71ff1",
+    "sourceUnit": "B",
+    "status": "READY",
+    "unitConfirmationSource": "UPLOAD_DECLARATION"
+  },
+  "checks": [
+    {
+      "name": "weekly_A_exact_large_bytes_and_missing_days",
+      "status": "PASSED",
+      "response": {
+        "datasetId": "ds_3c527ca3b91b481adf2b64f1090650b97b493a70504a8168706abebe097388cf",
+        "appId": "A",
+        "datasetSource": "FAKE",
+        "startDate": "2026-01-01",
+        "endDate": "2026-01-07",
+        "granularity": "WEEKLY",
+        "scope": "OBSERVED_FILES",
+        "completeness": "UNKNOWN",
+        "observedTrafficBytes": "10000000000000061",
+        "days": [
+          {
+            "date": "2026-01-01",
+            "observedTrafficBytes": "10000000000000021",
+            "fileCount": 2,
+            "status": "OBSERVED"
+          },
+          {
+            "date": "2026-01-02",
+            "observedTrafficBytes": "0",
+            "fileCount": 1,
+            "status": "OBSERVED"
+          },
+          {
+            "date": "2026-01-03",
+            "observedTrafficBytes": null,
+            "fileCount": 0,
+            "status": "NO_OBSERVATION"
+          },
+          {
+            "date": "2026-01-04",
+            "observedTrafficBytes": "40",
+            "fileCount": 1,
+            "status": "OBSERVED"
+          },
+          {
+            "date": "2026-01-05",
+            "observedTrafficBytes": null,
+            "fileCount": 0,
+            "status": "NO_OBSERVATION"
+          },
+          {
+            "date": "2026-01-06",
+            "observedTrafficBytes": null,
+            "fileCount": 0,
+            "status": "NO_OBSERVATION"
+          },
+          {
+            "date": "2026-01-07",
+            "observedTrafficBytes": null,
+            "fileCount": 0,
+            "status": "NO_OBSERVATION"
+          }
+        ],
+        "missingDates": [
+          "2026-01-03",
+          "2026-01-05",
+          "2026-01-06",
+          "2026-01-07"
+        ],
+        "items": [
+          {
+            "rank": 1,
+            "fileKey": "a&b?#c",
+            "observedTrafficBytes": "10000000000000001",
+            "observedDays": 2
+          },
+          {
+            "rank": 2,
+            "fileKey": "b.mp4",
+            "observedTrafficBytes": "60",
+            "observedDays": 2
+          }
+        ],
+        "hotspotTrafficRatio": {
+          "value": null,
+          "reasonCode": "NO_CONFIRMED_APP_TOTAL"
+        }
+      }
+    },
+    {
+      "name": "weekly_B_same_key_isolation",
+      "status": "PASSED",
+      "response": {
+        "datasetId": "ds_3c527ca3b91b481adf2b64f1090650b97b493a70504a8168706abebe097388cf",
+        "appId": "B",
+        "datasetSource": "FAKE",
+        "startDate": "2026-01-01",
+        "endDate": "2026-01-07",
+        "granularity": "WEEKLY",
+        "scope": "OBSERVED_FILES",
+        "completeness": "UNKNOWN",
+        "observedTrafficBytes": "907",
+        "days": [
+          {
+            "date": "2026-01-01",
+            "observedTrafficBytes": "900",
+            "fileCount": 1,
+            "status": "OBSERVED"
+          },
+          {
+            "date": "2026-01-02",
+            "observedTrafficBytes": null,
+            "fileCount": 0,
+            "status": "NO_OBSERVATION"
+          },
+          {
+            "date": "2026-01-03",
+            "observedTrafficBytes": null,
+            "fileCount": 0,
+            "status": "NO_OBSERVATION"
+          },
+          {
+            "date": "2026-01-04",
+            "observedTrafficBytes": null,
+            "fileCount": 0,
+            "status": "NO_OBSERVATION"
+          },
+          {
+            "date": "2026-01-05",
+            "observedTrafficBytes": null,
+            "fileCount": 0,
+            "status": "NO_OBSERVATION"
+          },
+          {
+            "date": "2026-01-06",
+            "observedTrafficBytes": null,
+            "fileCount": 0,
+            "status": "NO_OBSERVATION"
+          },
+          {
+            "date": "2026-01-07",
+            "observedTrafficBytes": "7",
+            "fileCount": 1,
+            "status": "OBSERVED"
+          }
+        ],
+        "missingDates": [
+          "2026-01-02",
+          "2026-01-03",
+          "2026-01-04",
+          "2026-01-05",
+          "2026-01-06"
+        ],
+        "items": [
+          {
+            "rank": 1,
+            "fileKey": "a&b?#c",
+            "observedTrafficBytes": "900",
+            "observedDays": 1
+          },
+          {
+            "rank": 2,
+            "fileKey": "z.png",
+            "observedTrafficBytes": "7",
+            "observedDays": 1
+          }
+        ],
+        "hotspotTrafficRatio": {
+          "value": null,
+          "reasonCode": "NO_CONFIRMED_APP_TOTAL"
+        }
+      }
+    },
+    {
+      "name": "exact_special_fileKey_and_file_vs_App_gaps",
+      "status": "PASSED",
+      "response": {
+        "datasetId": "ds_3c527ca3b91b481adf2b64f1090650b97b493a70504a8168706abebe097388cf",
+        "appId": "A",
+        "datasetSource": "FAKE",
+        "startDate": "2026-01-01",
+        "endDate": "2026-01-07",
+        "granularity": "WEEKLY",
+        "scope": "OBSERVED_FILES",
+        "completeness": "UNKNOWN",
+        "observedTrafficBytes": "10000000000000001",
+        "days": [
+          {
+            "date": "2026-01-01",
+            "observedTrafficBytes": "10000000000000001",
+            "fileCount": 1,
+            "status": "OBSERVED"
+          },
+          {
+            "date": "2026-01-02",
+            "observedTrafficBytes": "0",
+            "fileCount": 1,
+            "status": "OBSERVED"
+          },
+          {
+            "date": "2026-01-03",
+            "observedTrafficBytes": null,
+            "fileCount": 0,
+            "status": "NO_OBSERVATION"
+          },
+          {
+            "date": "2026-01-04",
+            "observedTrafficBytes": null,
+            "fileCount": 0,
+            "status": "NO_OBSERVATION"
+          },
+          {
+            "date": "2026-01-05",
+            "observedTrafficBytes": null,
+            "fileCount": 0,
+            "status": "NO_OBSERVATION"
+          },
+          {
+            "date": "2026-01-06",
+            "observedTrafficBytes": null,
+            "fileCount": 0,
+            "status": "NO_OBSERVATION"
+          },
+          {
+            "date": "2026-01-07",
+            "observedTrafficBytes": null,
+            "fileCount": 0,
+            "status": "NO_OBSERVATION"
+          }
+        ],
+        "missingDates": [
+          "2026-01-03",
+          "2026-01-05",
+          "2026-01-06",
+          "2026-01-07"
+        ],
+        "items": [
+          {
+            "rank": 1,
+            "fileKey": "a&b?#c",
+            "observedTrafficBytes": "10000000000000001",
+            "observedDays": 2
+          }
+        ],
+        "hotspotTrafficRatio": {
+          "value": null,
+          "reasonCode": "NO_CONFIRMED_APP_TOTAL"
+        }
+      }
+    },
+    {
+      "name": "single_day_not_week_average",
+      "status": "PASSED",
+      "response": {
+        "datasetId": "ds_3c527ca3b91b481adf2b64f1090650b97b493a70504a8168706abebe097388cf",
+        "appId": "A",
+        "datasetSource": "FAKE",
+        "startDate": "2026-01-01",
+        "endDate": "2026-01-01",
+        "granularity": "DAILY",
+        "scope": "OBSERVED_FILES",
+        "completeness": "UNKNOWN",
+        "observedTrafficBytes": "10000000000000021",
+        "days": [
+          {
+            "date": "2026-01-01",
+            "observedTrafficBytes": "10000000000000021",
+            "fileCount": 2,
+            "status": "OBSERVED"
+          }
+        ],
+        "missingDates": [],
+        "items": [
+          {
+            "rank": 1,
+            "fileKey": "a&b?#c",
+            "observedTrafficBytes": "10000000000000001",
+            "observedDays": 1
+          },
+          {
+            "rank": 2,
+            "fileKey": "b.mp4",
+            "observedTrafficBytes": "20",
+            "observedDays": 1
+          }
+        ],
+        "hotspotTrafficRatio": {
+          "value": null,
+          "reasonCode": "NO_CONFIRMED_APP_TOTAL"
+        }
+      }
+    },
+    {
+      "name": "topK_reaches_backend",
+      "status": "PASSED",
+      "response": {
+        "datasetId": "ds_3c527ca3b91b481adf2b64f1090650b97b493a70504a8168706abebe097388cf",
+        "appId": "A",
+        "datasetSource": "FAKE",
+        "startDate": "2026-01-01",
+        "endDate": "2026-01-07",
+        "granularity": "WEEKLY",
+        "scope": "OBSERVED_FILES",
+        "completeness": "UNKNOWN",
+        "observedTrafficBytes": "10000000000000061",
+        "days": [
+          {
+            "date": "2026-01-01",
+            "observedTrafficBytes": "10000000000000021",
+            "fileCount": 2,
+            "status": "OBSERVED"
+          },
+          {
+            "date": "2026-01-02",
+            "observedTrafficBytes": "0",
+            "fileCount": 1,
+            "status": "OBSERVED"
+          },
+          {
+            "date": "2026-01-03",
+            "observedTrafficBytes": null,
+            "fileCount": 0,
+            "status": "NO_OBSERVATION"
+          },
+          {
+            "date": "2026-01-04",
+            "observedTrafficBytes": "40",
+            "fileCount": 1,
+            "status": "OBSERVED"
+          },
+          {
+            "date": "2026-01-05",
+            "observedTrafficBytes": null,
+            "fileCount": 0,
+            "status": "NO_OBSERVATION"
+          },
+          {
+            "date": "2026-01-06",
+            "observedTrafficBytes": null,
+            "fileCount": 0,
+            "status": "NO_OBSERVATION"
+          },
+          {
+            "date": "2026-01-07",
+            "observedTrafficBytes": null,
+            "fileCount": 0,
+            "status": "NO_OBSERVATION"
+          }
+        ],
+        "missingDates": [
+          "2026-01-03",
+          "2026-01-05",
+          "2026-01-06",
+          "2026-01-07"
+        ],
+        "items": [
+          {
+            "rank": 1,
+            "fileKey": "a&b?#c",
+            "observedTrafficBytes": "10000000000000001",
+            "observedDays": 2
+          }
+        ],
+        "hotspotTrafficRatio": {
+          "value": null,
+          "reasonCode": "NO_CONFIRMED_APP_TOTAL"
+        }
+      }
+    },
+    {
+      "name": "outside_observed_range_is_null",
+      "status": "PASSED",
+      "response": {
+        "datasetId": "ds_3c527ca3b91b481adf2b64f1090650b97b493a70504a8168706abebe097388cf",
+        "appId": "A",
+        "datasetSource": "FAKE",
+        "startDate": "2026-01-08",
+        "endDate": "2026-01-08",
+        "granularity": "DAILY",
+        "scope": "OBSERVED_FILES",
+        "completeness": "UNKNOWN",
+        "observedTrafficBytes": null,
+        "days": [
+          {
+            "date": "2026-01-08",
+            "observedTrafficBytes": null,
+            "fileCount": 0,
+            "status": "NO_OBSERVATION"
+          }
+        ],
+        "missingDates": [
+          "2026-01-08"
+        ],
+        "items": [],
+        "hotspotTrafficRatio": {
+          "value": null,
+          "reasonCode": "NO_CONFIRMED_APP_TOTAL"
+        }
+      }
+    },
+    {
+      "name": "wrong_App",
+      "status": "PASSED",
+      "httpStatus": 422,
+      "response": {
+        "error": {
+          "code": "APP_MISMATCH",
+          "message": "所选数据集不包含该App。"
+        }
+      }
+    },
+    {
+      "name": "invalid_week",
+      "status": "PASSED",
+      "httpStatus": 422,
+      "response": {
+        "error": {
+          "code": "INVALID_DATE_RANGE",
+          "message": "日期范围无效：日最多366天、周必须七天，topK为1至50。"
+        }
+      }
+    },
+    {
+      "name": "existing_REAL_10350_read_only",
+      "status": "PASSED",
+      "response": {
+        "datasetId": "ds_a2740c2769b0e4e56d95c5a6f7022457391aa48479b1eed8c3b00e231c057c3a",
+        "appId": "10350",
+        "datasetSource": "REAL",
+        "startDate": "2026-10-07",
+        "endDate": "2026-10-13",
+        "granularity": "WEEKLY",
+        "scope": "OBSERVED_FILES",
+        "completeness": "UNKNOWN",
+        "observedTrafficBytes": "1587483853261",
+        "days": [
+          {
+            "date": "2026-10-07",
+            "observedTrafficBytes": "49559369318",
+            "fileCount": 5,
+            "status": "OBSERVED"
+          },
+          {
+            "date": "2026-10-08",
+            "observedTrafficBytes": "358181636731",
+            "fileCount": 30,
+            "status": "OBSERVED"
+          },
+          {
+            "date": "2026-10-09",
+            "observedTrafficBytes": "349145531112",
+            "fileCount": 22,
+            "status": "OBSERVED"
+          },
+          {
+            "date": "2026-10-10",
+            "observedTrafficBytes": "159892269428",
+            "fileCount": 34,
+            "status": "OBSERVED"
+          },
+          {
+            "date": "2026-10-11",
+            "observedTrafficBytes": "126870709581",
+            "fileCount": 9,
+            "status": "OBSERVED"
+          },
+          {
+            "date": "2026-10-12",
+            "observedTrafficBytes": "374118460918",
+            "fileCount": 43,
+            "status": "OBSERVED"
+          },
+          {
+            "date": "2026-10-13",
+            "observedTrafficBytes": "169715876173",
+            "fileCount": 21,
+            "status": "OBSERVED"
+          }
+        ],
+        "missingDates": [],
+        "items": [
+          {
+            "rank": 1,
+            "fileKey": "seewo-training/uwiwmulqhjvwnhlxhynixvyyyohhihhh.mp4",
+            "observedTrafficBytes": "401549938491",
+            "observedDays": 7
+          },
+          {
+            "rank": 2,
+            "fileKey": "seewo-training/uwiwhvxwhjvwnhlxhynixvzoqophihhh.mp4",
+            "observedTrafficBytes": "149815675160",
+            "observedDays": 7
+          },
+          {
+            "rank": 3,
+            "fileKey": "seewo-training/uwiwvyqihjvwnhlxhynixvyminphihhh.mp4",
+            "observedTrafficBytes": "126104431180",
+            "observedDays": 6
+          },
+          {
+            "rank": 4,
+            "fileKey": "seewo-training/uwiwwhqwhjvwnhlxhynloqzupzphihhh.mp4",
+            "observedTrafficBytes": "124692497518",
+            "observedDays": 7
+          },
+          {
+            "rank": 5,
+            "fileKey": "seewo-training/uwiwizvihjvwnhlxhymzpjkijhphihhh.mp4",
+            "observedTrafficBytes": "90804072290",
+            "observedDays": 6
+          },
+          {
+            "rank": 6,
+            "fileKey": "seewo-training/uwixjmmuhjvwnhlxhynixwhpxxhhihhh.mp4",
+            "observedTrafficBytes": "56029388251",
+            "observedDays": 6
+          },
+          {
+            "rank": 7,
+            "fileKey": "seewo-training/uwiwpomlhjvwnhlxhynhhknlwihhihhh.mp4",
+            "observedTrafficBytes": "54978432731",
+            "observedDays": 6
+          },
+          {
+            "rank": 8,
+            "fileKey": "seewo-training/uwiwnhqxhjvwnhlxhynlowkjnlhhihhh.mp4",
+            "observedTrafficBytes": "54251416760",
+            "observedDays": 5
+          },
+          {
+            "rank": 9,
+            "fileKey": "seewo-training/uwiwmpkphjvwnhlxhyozykmluvhhihhh.mp4",
+            "observedTrafficBytes": "53856504513",
+            "observedDays": 1
+          },
+          {
+            "rank": 10,
+            "fileKey": "seewo-training/uwiwlnunhjvwnhlxhymzwininqphihhh.mp4",
+            "observedTrafficBytes": "48371994968",
+            "observedDays": 6
+          },
+          {
+            "rank": 11,
+            "fileKey": "seewo-training/uwiwkhojhjvwnhlxhymzuipomnhhihhh.mp4",
+            "observedTrafficBytes": "39878549576",
+            "observedDays": 6
+          },
+          {
+            "rank": 12,
+            "fileKey": "seewo-training/uwixjovhhjvwnhlxhymzuvlnovphihhh.mp4",
+            "observedTrafficBytes": "39770154909",
+            "observedDays": 5
+          },
+          {
+            "rank": 13,
+            "fileKey": "seewo-training/uwiwiqhphjvwnhlxhynlowkvqphhihhh.mp4",
+            "observedTrafficBytes": "39662552080",
+            "observedDays": 5
+          },
+          {
+            "rank": 14,
+            "fileKey": "seewo-training/uwiwkznxhjvwnhlxhynixvzzxiphihhh.mp4",
+            "observedTrafficBytes": "36560915957",
+            "observedDays": 5
+          },
+          {
+            "rank": 15,
+            "fileKey": "seewo-training/uwixizpxhjvwnhlxhymzvkqzppphihhh.mp4",
+            "observedTrafficBytes": "28088485243",
+            "observedDays": 5
+          },
+          {
+            "rank": 16,
+            "fileKey": "seewo-training/uwiwizvihjvwnhlxhymzvmhkvpphihhh.mp4",
+            "observedTrafficBytes": "26285220047",
+            "observedDays": 4
+          },
+          {
+            "rank": 17,
+            "fileKey": "seewo-training/uwiwkwqqhjvwnhlxhymzvqkhyyhhihhh.mp4",
+            "observedTrafficBytes": "25622806396",
+            "observedDays": 5
+          },
+          {
+            "rank": 18,
+            "fileKey": "seewo-training/uwiwplwqhjvwnhlxhynlouojmuhhihhh.mp4",
+            "observedTrafficBytes": "21549948052",
+            "observedDays": 3
+          },
+          {
+            "rank": 19,
+            "fileKey": "seewo-training/uwiwkhojhjvwnhlxhymzwjwmxqphihhh.mp4",
+            "observedTrafficBytes": "20465552640",
+            "observedDays": 4
+          },
+          {
+            "rank": 20,
+            "fileKey": "seewo-training/uwixinqihjvwnhlxhymzyxzhwxphihhh.mp4",
+            "observedTrafficBytes": "13023165179",
+            "observedDays": 3
+          },
+          {
+            "rank": 21,
+            "fileKey": "seewo-training/uwiwlqqyhjvwnhlxhynhllvjnwhhihhh.mp4",
+            "observedTrafficBytes": "11045611110",
+            "observedDays": 1
+          },
+          {
+            "rank": 22,
+            "fileKey": "seewo-training/uwixiyonhjvwnhlxhynjioxhwxphihhh.mp4",
+            "observedTrafficBytes": "10982567952",
+            "observedDays": 2
+          },
+          {
+            "rank": 23,
+            "fileKey": "seewo-training/uwixinqihjvwnhlxhymzxxkonjphihhh.mp4",
+            "observedTrafficBytes": "10867531821",
+            "observedDays": 3
+          },
+          {
+            "rank": 24,
+            "fileKey": "seewo-training/uwiwloowhjvwnhlxhymzxjilvhhhihhh.mp4",
+            "observedTrafficBytes": "8567887981",
+            "observedDays": 2
+          },
+          {
+            "rank": 25,
+            "fileKey": "seewo-training/uwiwmwqlhjvwnhlxhymzymqlihphihhh.mp4",
+            "observedTrafficBytes": "7785094935",
+            "observedDays": 2
+          },
+          {
+            "rank": 26,
+            "fileKey": "seewo-training/uwiwlqqyhjvwnhlxhynhhlwquzphihhh.mp4",
+            "observedTrafficBytes": "6896099644",
+            "observedDays": 1
+          },
+          {
+            "rank": 27,
+            "fileKey": "seewo-training/uwiwykuohjvwnhlxhymzzlypyqphihhh.mp4",
+            "observedTrafficBytes": "6487628471",
+            "observedDays": 2
+          },
+          {
+            "rank": 28,
+            "fileKey": "seewo-training/uwiwkipqhjvwnhlxhymzxunyqyhhihhh.mp4",
+            "observedTrafficBytes": "6232021224",
+            "observedDays": 1
+          },
+          {
+            "rank": 29,
+            "fileKey": "seewo-training/uwiwlxkyhjvwnhlxhynhhumwljhhihhh.mp4",
+            "observedTrafficBytes": "6173071953",
+            "observedDays": 1
+          },
+          {
+            "rank": 30,
+            "fileKey": "seewo-training/uwiwnhqxhjvwnhlxhynozymnniphihhh.mp4",
+            "observedTrafficBytes": "5955856314",
+            "observedDays": 1
+          },
+          {
+            "rank": 31,
+            "fileKey": "seewo-training/uwiwplwqhjvwnhlxhynjiowlmjhhihhh.mp4",
+            "observedTrafficBytes": "5765577724",
+            "observedDays": 1
+          },
+          {
+            "rank": 32,
+            "fileKey": "seewo-training/uwixjovhhjvwnhlxhynhmlvkuphhihhh.mp4",
+            "observedTrafficBytes": "4456466322",
+            "observedDays": 1
+          },
+          {
+            "rank": 33,
+            "fileKey": "seewo-training/uwiwlqqyhjvwnhlxhynhhoqjxwhhihhh.mp4",
+            "observedTrafficBytes": "4294757189",
+            "observedDays": 1
+          },
+          {
+            "rank": 34,
+            "fileKey": "seewo-training/uwiwlqqyhjvwnhlxhymzylhjpkhhihhh.mp4",
+            "observedTrafficBytes": "4169180354",
+            "observedDays": 1
+          },
+          {
+            "rank": 35,
+            "fileKey": "seewo-training/uwiwqonuhjvwnhlxhynhpuzuxjphihhh.mp4",
+            "observedTrafficBytes": "4023943089",
+            "observedDays": 1
+          },
+          {
+            "rank": 36,
+            "fileKey": "seewo-training/uwiwqooyhjvwnhlxhynjjhviuwhhihhh.mp4",
+            "observedTrafficBytes": "3601346085",
+            "observedDays": 1
+          },
+          {
+            "rank": 37,
+            "fileKey": "seewo-training/uwiwhzwihjvwnhlxhynhljizkuphihhh.mp4",
+            "observedTrafficBytes": "3583230509",
+            "observedDays": 1
+          },
+          {
+            "rank": 38,
+            "fileKey": "seewo-training/uwiwqmoxhjvwnhlxhymzvhxokzhhihhh.mp4",
+            "observedTrafficBytes": "3556126034",
+            "observedDays": 1
+          },
+          {
+            "rank": 39,
+            "fileKey": "seewo-training/uwiwlnunhjvwnhlxhymzupowkpphihhh.mp4",
+            "observedTrafficBytes": "3326655506",
+            "observedDays": 1
+          },
+          {
+            "rank": 40,
+            "fileKey": "seewo-training/uwiwvwnqhjvwnhlxhynhmpyhophhihhh.mp4",
+            "observedTrafficBytes": "3316186492",
+            "observedDays": 1
+          },
+          {
+            "rank": 41,
+            "fileKey": "seewo-training/uwiwhzwihjvwnhlxhymzxyqvvnphihhh.mp4",
+            "observedTrafficBytes": "3263194131",
+            "observedDays": 1
+          },
+          {
+            "rank": 42,
+            "fileKey": "seewo-training/uwiwijxvhjvwnhlxhymzzuovwzphihhh.mp4",
+            "observedTrafficBytes": "3223914266",
+            "observedDays": 1
+          },
+          {
+            "rank": 43,
+            "fileKey": "seewo-training/uwiwxmzhhjvwnhlxhynzqzknynphihhh.mp4",
+            "observedTrafficBytes": "2951809252",
+            "observedDays": 1
+          },
+          {
+            "rank": 44,
+            "fileKey": "seewo-training/uwiwlzpnhjvwnhlxhynhmullxhphihhh.mp4",
+            "observedTrafficBytes": "2833141522",
+            "observedDays": 1
+          },
+          {
+            "rank": 45,
+            "fileKey": "seewo-training/uwiwmizyhjvwnhlxhynyyxqoxpphihhh.mp4",
+            "observedTrafficBytes": "2698702948",
+            "observedDays": 1
+          },
+          {
+            "rank": 46,
+            "fileKey": "seewo-training/uwiyoylohkkhnhoxhyumiqionphhihhh",
+            "observedTrafficBytes": "19800376",
+            "observedDays": 1
+          },
+          {
+            "rank": 47,
+            "fileKey": "seewo-training/uwiynwvlhkkhnhoxhmoxwqvwxihhihhh",
+            "observedTrafficBytes": "8467740",
+            "observedDays": 2
+          },
+          {
+            "rank": 48,
+            "fileKey": "seewo-training/uwiyoylohkkhnhoxhyumiqmqjxphihhh",
+            "observedTrafficBytes": "7726763",
+            "observedDays": 1
+          },
+          {
+            "rank": 49,
+            "fileKey": "seewo-training/uwiynilwhkkhnhoxhmoxwqvymzphihhh",
+            "observedTrafficBytes": "5936984",
+            "observedDays": 2
+          },
+          {
+            "rank": 50,
+            "fileKey": "seewo-training/uwiymmnxhkkhnhoxhpuvnupopnphihhh",
+            "observedTrafficBytes": "4550354",
+            "observedDays": 2
+          }
+        ],
+        "hotspotTrafficRatio": {
+          "value": null,
+          "reasonCode": "NO_CONFIRMED_APP_TOTAL"
+        }
+      }
+    }
+  ],
+  "note": "实际本地HTTP链路；FAKE输入仅用于手算验证。REAL快照只读，未发预测任务或数据库写入。"
+}

@@ -1,12 +1,22 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 
-import { createCsvImport } from './imports.js'
+import { createCsvImport, createImportMonitor } from './imports.js'
+
+const emit = defineEmits(['dataset-selected'])
 
 let storage = null
 try { storage = window.localStorage } catch {}
 const upload = createCsvImport({ storage })
 const { state } = upload
+const monitor = createImportMonitor()
+const progress = monitor.state
+const datasetId = ref('')
+const appId = ref('')
+const chosenContext = ref(null)
+const report = computed(() => progress.phase === 'FAILED' ? progress.quality : progress.selectedQuality || progress.quality)
+const reportMetadata = computed(() => progress.phase === 'FAILED' ? null : progress.selectedDataset || progress.dataset)
+const progressLabels = { IDLE: '等待导入', QUERYING: '查询导入', POLLING: '导入处理中', SUCCEEDED: '导入成功', FAILED: '导入失败', PAUSED: '查询暂停', QUERY_ERROR: '查询失败' }
 const fileInput = ref(null)
 const locked = computed(() => state.busy || state.phase === 'ACCEPTED')
 const phaseLabel = computed(() => ({
@@ -14,12 +24,33 @@ const phaseLabel = computed(() => ({
 })[state.phase])
 
 function reset() {
+  monitor.dispose()
   upload.reset()
   if (fileInput.value) fileInput.value.value = ''
 }
 
-onMounted(upload.restore)
-onUnmounted(upload.dispose)
+watch(() => state.importTaskId, taskId => { if (taskId) monitor.queryTask(taskId) })
+watch(() => progress.dataset, dataset => {
+  if (dataset) { datasetId.value = dataset.datasetId; chooseDataset() }
+})
+
+async function chooseDataset() {
+  appId.value = ''
+  chosenContext.value = null
+  emit('dataset-selected', null)
+  const dataset = await monitor.selectDataset(datasetId.value)
+  if (dataset?.appIds.length === 1) appId.value = dataset.appIds[0]
+}
+
+function useDataset() {
+  const dataset = progress.selectedDataset
+  if (!dataset || dataset.datasetId !== datasetId.value || !dataset.appIds.includes(appId.value)) return
+  chosenContext.value = { datasetId: dataset.datasetId, appId: appId.value, datasetSource: dataset.datasetSource, dateRange: dataset.dateRange, appDateRanges: dataset.appDateRanges }
+  emit('dataset-selected', chosenContext.value)
+}
+
+onMounted(() => { upload.restore(); monitor.loadDatasets() })
+onUnmounted(() => { upload.dispose(); monitor.dispose() })
 </script>
 
 <template>
@@ -28,7 +59,7 @@ onUnmounted(upload.dispose)
       <div>
         <p class="section-code">CSV / 数据上传</p>
         <h2 id="csv-upload-title">上传流量观测文件</h2>
-        <p>提交文件后保留导入任务编号。接收成功不代表数据导入完成。</p>
+        <p>CSV直传数据服务；接收后查询导入进度、真实质量报告和 READY 数据集。</p>
       </div>
       <span class="upload-state" :class="`upload-state--${state.phase.toLowerCase()}`" role="status">{{ phaseLabel }}</span>
     </header>
@@ -82,24 +113,60 @@ onUnmounted(upload.dispose)
         <strong>{{ state.file ? '上传请求已接收' : '已恢复上次上传的接收记录' }}</strong>
         <p>导入任务编号（importTaskId）</p>
         <code>{{ state.importTaskId }}</code>
-        <p>该编号已在当前页面保留；浏览器存储可用时也会保存在本机。导入状态待后续查询，当前不表示导入完成或数据集可用。</p>
+        <p>状态：{{ progressLabels[progress.phase] }}<template v-if="progress.task"> · {{ progress.task.status }}</template>。202仅代表接收，导入成功以状态及 READY 元数据为准。</p>
+        <p v-if="progress.dataset">本次数据集：<code>{{ progress.dataset.datasetId }}</code></p>
+        <p v-if="progress.error" role="alert">{{ progress.error }}</p>
+        <p v-if="progress.notice" role="status">{{ progress.notice }}</p>
+        <button v-if="progress.busy" type="button" class="button button--ghost" @click="monitor.pause()">暂停状态查询</button>
+        <button v-else type="button" class="button button--ghost" @click="monitor.resume">重查原导入任务</button>
       </div>
 
       <footer class="upload-actions">
         <p v-if="state.busy" aria-live="polite">正在上传，请等待接收回执…</p>
         <p v-else-if="state.phase !== 'ACCEPTED'">文件仅提交给数据导入服务，不改变下方演示榜单。</p>
-        <p v-else>本次仅完成上传提交。</p>
+        <p v-else>刷新后会重新 GET 原任务；查询失败不会重新上传文件。</p>
         <button v-if="state.phase === 'ACCEPTED'" class="button button--ghost" type="button" @click="reset">选择另一份文件</button>
         <button v-else class="button button--primary" type="submit" :disabled="state.busy || !state.file">
           {{ state.busy ? '提交中…' : state.phase === 'FAILED' ? '重试上传' : '上传 CSV' }}
         </button>
       </footer>
     </form>
+
+    <section class="dataset-selection" aria-labelledby="dataset-title">
+      <h3 id="dataset-title">READY 数据集与 App</h3>
+      <p v-if="chosenContext" class="upload-hint">当前使用：{{ chosenContext.datasetId }} / {{ chosenContext.appId }}。这是已确认的选择；新的失败导入不会生成数据集。</p>
+      <p v-if="progress.phase === 'FAILED' && chosenContext" class="upload-hint">保留的是此前选择，不是本次失败导入的输出。</p>
+      <p v-if="progress.listError" class="upload-error" role="alert">{{ progress.listError }}</p>
+      <div class="upload-options">
+        <label><span>数据集（第 {{ progress.page }} 页 / 共 {{ progress.total }} 份）</span><select v-model="datasetId" :disabled="progress.listBusy" @change="chooseDataset"><option value="">选择 READY 数据集</option><option v-for="dataset in progress.datasets" :key="dataset.datasetId" :value="dataset.datasetId">{{ dataset.datasetSource }} · {{ dataset.datasetId }} · {{ dataset.rowCount }}行</option></select></label>
+        <label><span>业务 App</span><select v-model="appId" :disabled="progress.selectionBusy || !progress.selectedDataset" @change="emit('dataset-selected', null); chosenContext = null"><option value="">选择 App</option><option v-for="app in progress.selectedDataset?.appIds || []" :key="app" :value="app">{{ app }}</option></select></label>
+        <button class="button button--primary" type="button" :disabled="!appId || progress.selectionBusy" @click="useDataset">使用所选数据集和 App</button>
+      </div>
+      <div class="upload-actions">
+        <button class="button button--ghost" type="button" :disabled="progress.listBusy" @click="monitor.loadDatasets(progress.page)">刷新数据集列表</button>
+        <button class="button button--ghost" type="button" :disabled="progress.listBusy || progress.page <= 1" @click="monitor.loadDatasets(progress.page - 1)">上一页数据集</button>
+        <button class="button button--ghost" type="button" :disabled="progress.listBusy || progress.page * 20 >= progress.total" @click="monitor.loadDatasets(progress.page + 1)">下一页数据集</button>
+      </div>
+      <p v-if="progress.selectionError" class="upload-error" role="alert">{{ progress.selectionError }}</p>
+      <article v-if="report" class="quality-report" aria-labelledby="quality-title">
+        <h3 id="quality-title">{{ progress.phase !== 'FAILED' && progress.selectedDataset ? '所选数据集' : '本次导入' }}质量报告</h3>
+        <p v-if="reportMetadata">{{ reportMetadata.datasetId }} · {{ reportMetadata.datasetSource }} · 完整性 {{ reportMetadata.completeness }} · 单位来源 {{ reportMetadata.unitConfirmationSource }}</p>
+        <dl><dt>总行数 / 有效行数 / 重复行 / 冲突行 / 错误行</dt><dd>{{ report.totalRows ?? '未知' }} / {{ report.validRows ?? '未知' }} / {{ report.duplicateRows ?? '未知' }} / {{ report.conflictRows ?? '未知' }} / {{ report.invalidRows ?? '未知' }}</dd><dt>编码 / 缺失日期数</dt><dd>{{ report.encoding ?? '未知' }} / {{ report.missingDateCount ?? '未知' }}</dd><dt>数据日期范围</dt><dd>{{ report.dateRange?.start ?? '未知' }} — {{ report.dateRange?.end ?? '未知' }}</dd><dt>App日期范围</dt><dd v-for="(range, app) in report.appDateRanges || reportMetadata?.appDateRanges || {}" :key="app">{{ app }}：{{ range.start }} — {{ range.end }}</dd></dl>
+        <ul><li v-for="warning in report.warnings || []" :key="warning">{{ warning }}</li></ul>
+        <details v-if="report.missingDates?.length"><summary>缺失日期（{{ report.missingDatesTruncated ? '仅前1000条' : '已返回明细' }}）</summary><p v-for="missing in report.missingDates" :key="`${missing.appId}-${missing.date}`">{{ missing.appId }} / {{ missing.date }}：无观测，未补零</p></details>
+        <details v-if="report.dailyRows?.length"><summary>每日观测行数</summary><p v-for="day in report.dailyRows" :key="`${day.appId}-${day.date}`">{{ day.appId }} / {{ day.date }}：{{ day.rowCount }}行</p></details>
+      </article>
+    </section>
   </section>
 </template>
 
 <style scoped>
 .upload-panel { margin-bottom: 1.5rem; border: 1px solid rgba(122, 167, 167, 0.25); background: #0a1f27; }
+.dataset-selection { padding: 1.5rem; border-top: 1px solid rgba(122, 167, 167, 0.25); }
+.dataset-selection h3 { color: #d8e9e7; }
+.quality-report { padding: 1rem; background: #06151b; overflow-wrap: anywhere; color: #8facad; font-size: 0.8rem; line-height: 1.8; }
+.quality-report dd { margin: 0 0 0.8rem; color: #d8e9e7; }
+.quality-report li { color: #ffb178; }
 .upload-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; padding: 1.5rem; border-bottom: 1px solid rgba(122, 167, 167, 0.18); }
 .upload-heading h2 { margin: 0 0 0.65rem; color: #d8e9e7; font-size: 1.5rem; }
 .upload-heading > div > p:last-child { margin: 0; color: #8facad; font-size: 0.85rem; line-height: 1.6; }

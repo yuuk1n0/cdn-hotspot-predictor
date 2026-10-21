@@ -1,0 +1,25 @@
+{
+  "browser": {
+    "browserName": "chromium",
+    "isolated": true,
+    "launchOptions": {
+      "executablePath": "/tmp/cdn-browser-acceptance/browsers/chromium-1247/chrome-linux64/chrome",
+      "headless": true,
+      "env": {
+        "FONTCONFIG_FILE": "/tmp/cdn-browser-acceptance/fonts.conf"
+      }
+    },
+    "contextOptions": {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      }
+    }
+  },
+  "outputDir": "/home/yukino/projects/work/cvte/cdn-hotspot-predictor/output/20261021_历史看板开发联调_v01/browser",
+  "outputMode": "file",
+  "timeouts": {
+    "action": 10000,
+    "navigation": 30000
+  }
+}

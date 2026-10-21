@@ -1,0 +1,156 @@
+- main [ref=e3]:
+  - generic [ref=e4]:
+    - link "返回 Top50 看板顶部" [ref=e5] [cursor=pointer]:
+      - /url: "#top50"
+      - generic [ref=e10]:
+        - strong [ref=e11]: CDN HOTSET
+        - generic [ref=e12]: 预测与降本控制台
+    - generic [ref=e13]: 本地验证环境
+  - region [ref=e15]:
+    - generic [ref=e16]:
+      - generic [ref=e17]:
+        - paragraph [ref=e18]: MODULE 03 / TOP50 RADAR
+        - heading "热点文件预测看板" [level=1] [ref=e19]
+        - paragraph [ref=e20]: 按预测窗口与业务维度检索热点候选，优先识别高流量、高压缩价值文件。
+      - status [ref=e21]:
+        - generic [ref=e22]: REAL / FAKE · MOCK / MODEL
+        - strong [ref=e23]: 任务榜单与原型独立展示
+        - generic [ref=e24]: 来源明确标注 · 不混用预测结果
+    - region [ref=e25]:
+      - generic [ref=e26]:
+        - generic [ref=e27]:
+          - paragraph [ref=e28]: CSV / 数据上传
+          - heading "上传流量观测文件" [level=2] [ref=e29]
+          - paragraph [ref=e30]: CSV直传数据服务；接收后查询导入进度、真实质量报告和 READY 数据集。
+        - status [ref=e31]: 等待选择与提交
+      - form "CSV 上传" [ref=e32]:
+        - group "文件与导入配置" [ref=e33]:
+          - generic [ref=e35]:
+            - generic [ref=e36]: CSV 文件
+            - button "CSV 文件" [ref=e37]
+            - paragraph [ref=e38]: 上限 5 MiB，支持 UTF-8 / GB18030，由导入服务解析。请先确认实际表头及单位。
+          - generic [ref=e39]:
+            - generic [ref=e40]:
+              - generic [ref=e41]: 数据来源
+              - combobox "数据来源" [ref=e42] [cursor=pointer]:
+                - option "真实业务数据 · REAL" [selected]
+                - option "演示数据 · FAKE"
+            - generic [ref=e43]:
+              - generic [ref=e44]: 流量单位
+              - combobox "流量单位" [ref=e45] [cursor=pointer]:
+                - option "请选择已确认的单位" [selected]
+                - option "B · 已确认是字节"
+            - generic [ref=e46]:
+              - generic [ref=e47]: 默认 App ID（无 App 列时必填）
+              - textbox "默认 App ID（无 App 列时必填）" [ref=e48]:
+                - /placeholder: 不从文件名推断
+          - group [ref=e49]:
+            - generic "CSV 字段映射 · 按文件实际列名填写" [ref=e50] [cursor=pointer]
+            - generic [ref=e51]:
+              - generic [ref=e52]:
+                - generic [ref=e53]: 文件标识列
+                - textbox "文件标识列" [ref=e54]: 文件标识
+              - generic [ref=e55]:
+                - generic [ref=e56]: 日期列
+                - textbox "日期列" [ref=e57]: 日期
+              - generic [ref=e58]:
+                - generic [ref=e59]: 流量列
+                - textbox "流量列" [ref=e60]: 当日流量（B）
+              - generic [ref=e61]:
+                - generic [ref=e62]: App ID 列（可留空）
+                - textbox "App ID 列（可留空）" [ref=e63]: AppID
+            - paragraph [ref=e64]: 数据类型：文件日流量（FILE_DAILY）。默认映射适用于“文件标识、日期、当日流量（B）、AppID”四列。
+        - generic [ref=e65]:
+          - paragraph [ref=e66]: 文件仅提交给数据导入服务，不改变下方演示榜单。
+          - button "上传 CSV" [disabled] [ref=e67]
+      - region [ref=e68]:
+        - heading "READY 数据集与 App" [level=3] [ref=e69]
+        - generic [ref=e70]:
+          - generic [ref=e71]:
+            - generic [ref=e72]: 数据集（第 1 页 / 共 1 份）
+            - combobox "数据集（第 1 页 / 共 1 份）" [ref=e73] [cursor=pointer]:
+              - option "选择 READY 数据集" [selected]
+              - option "REAL · ds_a2740c2769b0e4e56d95c5a6f7022457391aa48479b1eed8c3b00e231c057c3a · 4478行"
+          - generic [ref=e74]:
+            - generic [ref=e75]: 业务 App
+            - combobox "业务 App" [disabled] [ref=e76]:
+              - option "选择 App" [selected]
+          - button "使用所选数据集和 App" [disabled] [ref=e77]
+        - generic [ref=e78]:
+          - button "刷新数据集列表" [ref=e79] [cursor=pointer]
+          - button "上一页数据集" [disabled] [ref=e80]
+          - button "下一页数据集" [disabled] [ref=e81]
+    - region [ref=e82]:
+      - generic [ref=e83]:
+        - generic [ref=e84]:
+          - paragraph [ref=e85]: TASK → RUN → SNAPSHOT
+          - heading "预测任务与本次榜单" [level=2] [ref=e86]
+        - status [ref=e87]: 等待编号
+      - paragraph [ref=e88]: 查询已有的 Java 任务；仅在业务任务成功后读取对应榜单。这里不会提交新预测，也不会用下方演示数据替代结果。
+      - form "查询预测任务或榜单" [ref=e89]:
+        - generic [ref=e90]:
+          - generic [ref=e91]: 查询方式
+          - combobox "查询方式" [ref=e92] [cursor=pointer]:
+            - option "taskId · 跟踪任务" [selected]
+            - option "runId · 读取榜单"
+        - generic [ref=e93]:
+          - generic [ref=e94]: Java taskId
+          - textbox "Java taskId" [ref=e95]:
+            - /placeholder: 输入已有预测任务编号
+        - button "查询" [disabled] [ref=e96]
+      - paragraph [ref=e97]: 每 2 秒查询一次，自动查询最多持续 5 分钟；暂停或网络失败不会取消后台任务。刷新后重新查询最近编号。
+    - form "Top50 筛选条件" [ref=e98]:
+      - generic [ref=e99]:
+        - generic [ref=e100]:
+          - generic [ref=e101]: FAKE DATA / 第二阶段原型
+          - strong [ref=e102]: 筛选演示预测结果
+        - paragraph [ref=e103]: 全部条件由 Spring Boot 转换为 MySQL 查询
+      - generic [ref=e104]:
+        - generic [ref=e105]:
+          - generic [ref=e106]: 开始日期
+          - textbox "开始日期" [ref=e107]: 2026-10-20
+        - generic [ref=e108]:
+          - generic [ref=e109]: 结束日期
+          - textbox "结束日期" [ref=e110]: 2026-10-20
+        - generic [ref=e111]:
+          - generic [ref=e112]: App ID
+          - combobox "App ID" [ref=e113] [cursor=pointer]:
+            - option "全部 App" [selected]
+            - option "10066"
+            - option "10350"
+        - generic [ref=e114]:
+          - generic [ref=e115]: 预测粒度
+          - combobox "预测粒度" [ref=e116] [cursor=pointer]:
+            - option "日 / 周" [selected]
+            - option "日预测"
+            - option "周预测"
+        - generic [ref=e117]:
+          - generic [ref=e118]: 预测模型
+          - combobox "预测模型" [ref=e119] [cursor=pointer]:
+            - option "全部模型" [selected]
+            - option "ewma_v1"
+            - option "last_day_v1"
+            - option "rolling_7d_v1"
+        - generic [ref=e120]:
+          - generic [ref=e121]: 压缩状态
+          - combobox "压缩状态" [ref=e122] [cursor=pointer]:
+            - option "全部状态" [selected]
+            - option "已压缩"
+            - option "待处理"
+            - option "处理中"
+      - generic [ref=e123]:
+        - button "重置条件" [disabled] [ref=e124]
+        - button "查询中" [disabled] [ref=e125]:
+          - generic [aria-hidden] [ref=e127]: ↗
+    - region [ref=e128]:
+      - generic [ref=e129]:
+        - generic [ref=e130]:
+          - paragraph [ref=e131]: LIVE QUERY RESULT
+          - heading "Top50 候选序列" [level=2] [ref=e132]
+        - generic [ref=e133]:
+          - generic [ref=e134]: 0 条命中
+          - generic [ref=e135]: 当前显示 0
+          - generic [ref=e136]: 最多返回 Top50
+      - generic [ref=e139]:
+        - strong [ref=e140]: 正在扫描热点候选
+        - paragraph [ref=e141]: 查询条件已发送至 Spring Boot，正在等待 MySQL 返回结果。

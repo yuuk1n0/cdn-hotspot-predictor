@@ -1,0 +1,254 @@
+- generic [ref=e3]:
+  - link "跳到主内容" [ref=e4] [cursor=pointer]:
+    - /url: "#main-content"
+  - banner [ref=e5]:
+    - link "CDN 系统首页" [ref=e6] [cursor=pointer]:
+      - /url: /overview
+      - generic [ref=e12]: CDN 热点文件动态预测与压缩降本系统
+    - generic [ref=e13]:
+      - generic [ref=e14]: 本地前端预览
+      - button "界面说明" [ref=e16] [cursor=pointer]
+      - generic [ref=e20]: UI
+      - generic [ref=e21]: 预览工作台
+  - complementary [ref=e22]:
+    - generic [ref=e23]:
+      - text: 运营工作台
+      - generic [ref=e24]: WORKSPACE
+    - navigation "主导航" [ref=e25]:
+      - link "业务总览" [ref=e26] [cursor=pointer]:
+        - /url: /overview
+      - link "热点预测" [ref=e31] [cursor=pointer]:
+        - /url: /prediction
+      - link "模型回测" [ref=e35] [cursor=pointer]:
+        - /url: /backtest
+      - link "压缩降本" [ref=e39] [cursor=pointer]:
+        - /url: /compression
+      - link "智能 Agent" [ref=e43] [cursor=pointer]:
+        - /url: /agent
+    - generic [ref=e47]:
+      - strong [ref=e52]: 从热点洞察到降本决策
+      - generic [ref=e53]: CDN OPERATIONS CONSOLE
+      - generic [ref=e54]: 前端 UI 预览 · v0.1
+  - main [ref=e55]:
+    - generic [ref=e56]:
+      - generic [ref=e57]: 工作台
+      - strong [ref=e60]: 业务总览
+      - generic [ref=e61]: CDN 流量运营
+    - generic [ref=e62]:
+      - generic [ref=e63]:
+        - generic [ref=e64]:
+          - heading "业务总览" [level=1] [ref=e65]
+          - paragraph [ref=e66]: 按 App 洞察流量与热点，把预测结果转化为可追踪的压缩降本决策。
+        - generic [ref=e67]:
+          - generic "业务总览数据来源" [ref=e68]:
+            - button "UI 演示" [pressed] [ref=e69] [cursor=pointer]
+            - button "历史观测 · 接口数据" [ref=e70] [cursor=pointer]
+          - generic [ref=e71]: UI MOCK · 静态演示
+          - link "进入热点预测" [ref=e72] [cursor=pointer]:
+            - /url: /prediction
+      - region "业务总览筛选" [ref=e75]:
+        - generic [ref=e76]:
+          - generic [ref=e77]: AppID
+          - combobox "AppID" [ref=e78] [cursor=pointer]:
+            - option "10350 · 内容分发" [selected]
+            - option "10066 · 应用资源"
+        - generic [ref=e79]:
+          - generic [ref=e80]: 历史日期
+          - generic [ref=e81]:
+            - textbox "历史开始日期" [ref=e82]: 2026-10-01
+            - generic [ref=e83]: —
+            - textbox "历史结束日期" [ref=e84]: 2026-10-13
+        - generic [ref=e85]:
+          - button "近7天" [ref=e86] [cursor=pointer]
+          - button "近30天" [ref=e87] [cursor=pointer]
+          - button "近半年" [ref=e88] [cursor=pointer]
+        - generic "预测榜单粒度" [ref=e89]:
+          - button "日榜" [pressed] [ref=e90] [cursor=pointer]
+          - button "周榜" [ref=e91] [cursor=pointer]
+      - generic [ref=e92]:
+        - generic [ref=e93]: App 10350 · 历史趋势按日期展示，预测摘要按日榜 / 周榜展示
+        - generic [ref=e94]: 样例截止日期 2026-10-13
+      - region "业务总览核心指标" [ref=e95]:
+        - article [ref=e96]:
+          - generic [ref=e97]: 总流量
+          - generic [ref=e102]: 12.34TB
+          - generic [ref=e103]: 固定样例窗口累计 · UI Mock
+        - article [ref=e105]:
+          - generic [ref=e106]: 热点流量占比
+          - generic [ref=e111]: 68.2%
+          - generic [ref=e112]: 完整分母场景的 UI 示例
+        - article [ref=e114]:
+          - generic [ref=e115]: 待压缩文件数
+          - generic [ref=e120]: 32个
+          - generic [ref=e121]: UI 示例 · 非真实待办数量
+        - article [ref=e123]:
+          - generic [ref=e124]: 预计节省金额
+          - generic [ref=e129]: ¥ 25,320
+          - generic [ref=e130]: 预测情景演示 · 未产生实际收益
+      - generic [ref=e132]:
+        - generic [ref=e133]:
+          - generic [ref=e134]:
+            - heading "总流量与热点流量趋势" [level=2] [ref=e135]
+            - generic [ref=e136]: 历史每日流量
+          - generic [ref=e137]:
+            - generic [ref=e138]:
+              - generic [ref=e139]: 总流量 · 样例
+              - generic [ref=e141]: 热点流量 · 样例
+            - generic [ref=e143]: 流量 / GB
+            - generic "UI Mock 总流量与热点流量历史趋势" [ref=e144]:
+              - img "UI Mock 总流量与热点流量历史趋势" [ref=e145]:
+                - generic [ref=e146]: "0"
+                - generic [ref=e148]: "225"
+                - generic [ref=e150]: "450"
+                - generic [ref=e152]: "675"
+                - generic [ref=e154]: "900"
+                - generic [ref=e156]: 10-01
+                - generic [ref=e158]: 10-03
+                - generic [ref=e160]: 10-05
+                - generic [ref=e162]: 10-07
+                - generic [ref=e164]: 10-09
+                - generic [ref=e166]: 10-11
+                - generic [ref=e168]: 10-13
+          - generic [ref=e201]: UI Mock · 样例覆盖 2026-10-01 至 2026-10-13，空白日期不补零。
+        - generic [ref=e202]:
+          - generic [ref=e203]:
+            - heading "流量类型分布" [level=2] [ref=e204]
+            - generic [ref=e205]: App 10350
+          - generic [ref=e206]:
+            - img "UI Mock 文件类型分布：视频文件 46.2%，图片文件 24.8%，脚本 / 样式 13.6%，文档文件 8.9%，其他 6.5%" [ref=e207]:
+              - generic [ref=e208]:
+                - strong [ref=e209]: 12.34 TB
+                - generic [ref=e210]: UI Mock 样例流量
+            - list [ref=e211]:
+              - listitem [ref=e212]:
+                - generic [ref=e214]: 视频文件
+                - generic [ref=e215]: 46.2%
+              - listitem [ref=e216]:
+                - generic [ref=e218]: 图片文件
+                - generic [ref=e219]: 24.8%
+              - listitem [ref=e220]:
+                - generic [ref=e222]: 脚本 / 样式
+                - generic [ref=e223]: 13.6%
+              - listitem [ref=e224]:
+                - generic [ref=e226]: 文档文件
+                - generic [ref=e227]: 8.9%
+              - listitem [ref=e228]:
+                - generic [ref=e230]: 其他
+                - generic [ref=e231]: 6.5%
+          - generic [ref=e232]: 固定样例窗口累计分布 · UI Mock
+      - generic [ref=e233]:
+        - generic [ref=e234]:
+          - generic [ref=e235]:
+            - heading "Top50 热点预测摘要 日榜" [level=2] [ref=e236]
+            - link "查看全部" [ref=e237] [cursor=pointer]:
+              - /url: /prediction
+          - table [ref=e241]:
+            - rowgroup [ref=e242]:
+              - row [ref=e243]:
+                - columnheader "排名" [ref=e244]
+                - columnheader "文件路径（FileKey）" [ref=e245]
+                - columnheader "类型" [ref=e246]
+                - columnheader "预测流量" [ref=e247]
+                - columnheader "压缩状态" [ref=e248]
+            - rowgroup [ref=e249]:
+              - row [ref=e250]:
+                - cell "1" [ref=e251]
+                - cell "/video/movie_20260928.mp4" [ref=e253]
+                - cell "视频" [ref=e255]
+                - cell "801 GB" [ref=e257]
+                - cell "待处理" [ref=e258]
+              - row [ref=e260]:
+                - cell "2" [ref=e261]
+                - cell "/images/banner_01.jpg" [ref=e263]
+                - cell "图片" [ref=e265]
+                - cell "196 GB" [ref=e267]
+                - cell "已压缩" [ref=e268]
+              - row [ref=e270]:
+                - cell "3" [ref=e271]
+                - cell "/js/main.a7f3c2.js" [ref=e273]
+                - cell "其他" [ref=e275]
+                - cell "150 GB" [ref=e277]
+                - cell "待处理" [ref=e278]
+              - row [ref=e280]:
+                - cell "4" [ref=e281]
+                - cell "/images/product_123.png" [ref=e283]
+                - cell "图片" [ref=e285]
+                - cell "91.4 GB" [ref=e287]
+                - cell "待处理" [ref=e288]
+              - row [ref=e290]:
+                - cell "5" [ref=e291]
+                - cell "/video/intro.mp4" [ref=e293]
+                - cell "视频" [ref=e295]
+                - cell "71.2 GB" [ref=e297]
+                - cell "处理中" [ref=e298]
+              - row [ref=e300]:
+                - cell "6" [ref=e301]
+                - cell "/css/style.202609.css" [ref=e303]
+                - cell "其他" [ref=e305]
+                - cell "59.9 GB" [ref=e307]
+                - cell "待处理" [ref=e308]
+              - row [ref=e310]:
+                - cell "7" [ref=e311]
+                - cell "/docs/manual.pdf" [ref=e313]
+                - cell "其他" [ref=e315]
+                - cell "49.1 GB" [ref=e317]
+                - cell "已压缩" [ref=e318]
+              - row [ref=e320]:
+                - cell "8" [ref=e321]
+                - cell "/images/icon.png" [ref=e323]
+                - cell "图片" [ref=e325]
+                - cell "44.9 GB" [ref=e327]
+                - cell "待处理" [ref=e328]
+          - generic [ref=e330]:
+            - generic [ref=e331]: 展示 8 条静态版式样例 · UI MOCK
+            - generic [ref=e332]: 模型版本 hotspot-simple-v1 · 仅用于界面展示
+        - generic [ref=e333]:
+          - generic [ref=e334]:
+            - generic [ref=e335]:
+              - heading "实际流量与预测流量对比" [level=2] [ref=e336]
+              - generic [ref=e337]: 历史样例窗口
+            - generic [ref=e338]:
+              - generic [ref=e339]:
+                - generic [ref=e340]: 实际流量 · 样例
+                - generic [ref=e342]: 预测流量 · 样例
+              - generic [ref=e344]: 流量 / GB
+              - generic "UI Mock 历史实际流量与预测流量对比" [ref=e345]:
+                - img "UI Mock 历史实际流量与预测流量对比" [ref=e346]:
+                  - generic [ref=e347]: "0"
+                  - generic [ref=e349]: "150"
+                  - generic [ref=e351]: "300"
+                  - generic [ref=e353]: "450"
+                  - generic [ref=e355]: "600"
+                  - generic [ref=e357]: 10-01
+                  - generic [ref=e359]: 10-03
+                  - generic [ref=e361]: 10-05
+                  - generic [ref=e363]: 10-07
+                  - generic [ref=e365]: 10-09
+                  - generic [ref=e367]: 10-11
+                  - generic [ref=e369]: 10-13
+          - generic [ref=e402]:
+            - generic [ref=e403]:
+              - heading "压缩降本情况" [level=2] [ref=e404]
+              - link "查看详情" [ref=e405] [cursor=pointer]:
+                - /url: /compression
+            - generic [ref=e408]:
+              - generic [ref=e412]:
+                - generic [ref=e413]: 预计节省金额 · UI Mock
+                - strong [ref=e414]: ¥ 25,320
+              - generic [ref=e415]: 预测情景
+            - generic [ref=e416]:
+              - generic [ref=e417]:
+                - generic [ref=e418]: 预计节省流量
+                - strong [ref=e419]: 1.82 TB
+              - generic [ref=e420]:
+                - generic [ref=e421]: 示例已压缩数
+                - strong [ref=e422]:
+                  - text: "12"
+                  - emphasis [ref=e423]: 个
+              - generic [ref=e424]:
+                - generic [ref=e425]: 实际节省金额
+                - strong [ref=e426]: —
+            - paragraph [ref=e427]: 实际收益需完成压缩登记、成熟访问观测与成本核验后计算。
+    - generic [ref=e428]:
+      - text: CDN 热点预测与压缩降本系统
+      - generic [ref=e429]: 页面演示与接口数据独立标识

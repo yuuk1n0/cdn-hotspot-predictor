@@ -13,6 +13,7 @@ from fastapi.responses import JSONResponse
 from .csv_import import ImportConfig, ImportProblem
 from .import_store import ImportStore
 from .prediction_store import PredictionStore
+from .history import observations
 
 
 def create_app(data_dir=None, *, max_file_bytes=None, max_rows=None, prediction_mode=None,
@@ -139,6 +140,12 @@ def create_app(data_dir=None, *, max_file_bytes=None, max_rows=None, prediction_
     @app.get("/api/v1/datasets/{datasetId}/quality")
     def get_quality(datasetId: str):
         return store.get_quality(datasetId)
+
+    @app.get("/api/v1/datasets/{datasetId}/observations")
+    def get_observations(datasetId: str, appId: str, startDate: str, endDate: str,
+                         granularity: str = 'DAILY', fileKey: str | None = None,
+                         topK: int = Query(50, ge=1, le=50)):
+        return observations(store, datasetId, appId, startDate, endDate, granularity, fileKey, topK)
 
     @app.post("/api/v1/predictions", status_code=202)
     def submit_prediction(body: dict = Body(...)):

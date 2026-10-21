@@ -17,9 +17,25 @@ test('query panel initially offers task/run lookup without inventing task succes
   assert.match(html, /Java taskId/)
   assert.match(html, /runId · 读取榜单/)
   assert.match(html, /等待编号/)
-  assert.match(html, /不会提交新预测/)
+  assert.match(html, /提交日周预测/)
+  assert.match(html, /请先在上方使用 READY 数据集和 App/)
   assert.doesNotMatch(html, /<tbody>/)
   assert.match(html, /type="submit" disabled/)
+})
+
+test('a manual lookup cannot replace or race the automatic handoff while a submission is in flight', async () => {
+  const { default: Panel } = await server.ssrLoadModule('/src/PredictionPanel.vue')
+  const SubmittingPanel = { ...Panel, setup(props, context) {
+    const exposed = Panel.setup(props, context)
+    exposed.submitState.busy = true
+    exposed.id.value = 'task_manual'
+    exposed.query()
+    assert.equal(exposed.state.id, '')
+    assert.equal(exposed.state.phase, 'IDLE')
+    return exposed
+  } }
+  const html = await renderToString(createSSRApp(SubmittingPanel))
+  assert.match(html, /type="submit" disabled[^>]*>查询/)
 })
 
 test('run panel labels explicit and legacy result modes without changing the original source', async () => {

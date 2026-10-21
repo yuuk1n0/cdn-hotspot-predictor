@@ -1,5 +1,25 @@
 # CSV 上传（第三阶段第①步）
 
+> 2026-10-21 T05 功能恢复：业务总览新增“历史观测 · 接口数据”。先在热点预测的“接口数据 · 已有功能”中选 READY 数据集和 App，点击“使用所选数据集和 App”，再通过左侧导航返回业务总览。选择 App、历史日/七天窗口、可选精确 FileKey 和 TopK 后点击查询。条件改变立即清空旧结果；缺日显示 null，显式 0B 保留。图表是近似值，下方精确 B 表为准；观测合计不是权威 App 总量，热点占比仍不可计算。全量前端72项通过；Python→Java→Vite→浏览器历史链路及真实依赖故障/恢复已验收，详见 [T05验收说明](../output/20261021_历史看板开发联调_v01/20261021_T05验收说明_v01.md)。此前 history.js 缺失已在本卡解决；下文 UI 阶段的基线失败说明为历史记录。
+
+> 2026-10-21 UI 重构：当前默认首页为 `/overview`，提供业务总览、热点预测、模型回测、压缩降本、智能 Agent 五个一级页面。根目录两张 PNG 是本轮视觉参考。已有接口功能在 `/prediction` 的“接口数据 · 已有功能”中；其下保留 CSV 导入、READY 选择、预测提交/查询和原 FAKE 筛选分页。下文早期阶段记录按其日期阅读，不代表当前页面仍缺这些入口。
+
+本轮新增 Vue Router 4.6.3；没有 UI 框架或图表库，图表使用 SVG。`src/ui/mock-data.js` 只提供 UI Mock，默认五页可在业务服务未启动时预览，不将其作为接口失败的替代数据。页面静态数字不代表预测准确率、真实压缩记录或实际收益。
+
+```bash
+cd /home/yukino/projects/work/cvte/cdn-hotspot-predictor/frontend
+export PATH=/home/yukino/.nvm/versions/node/v24.14.0/bin:$PATH
+npm run dev -- --strictPort
+```
+
+打开 `http://localhost:5173`。本轮独立 UI 验收使用 `http://localhost:5175`，没有启动后端进行联调。使用已有接口功能时仍需原 Java/Python/MySQL 环境及其 `localhost:5173` 来源配置；5175 仅用于本轮静态 UI 预览。
+
+路由使用 HTML5 history；部署时应将页面路径回退到 `index.html`。原 `/?taskId=...`、`/?runId=...#prediction`、`/#top50` 会保留参数跳转到预测页相应区域。
+
+回测、压缩登记、CStore 下载与预览、效果观测、LLM/Agent 工具调用本轮均未接入；相关按钮只显示未接入说明或打开 UI 详情，不执行真实业务操作。Agent 消息仅存在本页内存。
+
+本轮范围及实际验收见 [UI 重构验收说明](../output/20261021_第三阶段UI重构_v01/20261021_UI重构验收说明_v01.md)。此前暂停遗留 `tests/history.test.js` 依赖不存在的业务模块，仍是已知基线失败；不通过补写历史业务逻辑扩大 UI 阶段范围。
+
 > 2026-10-21 状态更正：Python导入及异步Mock、Java任务与Top50快照接口已经实现；当前网页仍缺导入状态/质量报告/数据集选择和预测提交。先执行[T01导入监控](../output/20261021_架构与半天开发规划_v01/modules/01-data-import.md)，再执行[T02预测提交](../output/20261021_架构与半天开发规划_v01/modules/03-prediction-task.md)。完整浏览器链路尚未在本轮验收。
 
 在 `frontend/` 运行 `npm run dev`，打开 `http://localhost:5173`。使用现有看板中的“上传流量观测文件”面板：选择不超过 5 MiB 的非空 `.csv`，确认数据来源、字节单位 B 和实际列名后，点击“上传 CSV”。默认映射对应仓库 `datasets/10350.csv` 的实际表头；不从文件名推断 App ID。其他文件按实际表头修改，无 App 列时清空该列映射并填写默认 App ID。
