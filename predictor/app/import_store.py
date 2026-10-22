@@ -1,5 +1,6 @@
 """Single-instance durable import receipts and immutable dataset snapshots."""
 
+import csv
 import hashlib
 import json
 import logging
@@ -156,20 +157,74 @@ class ImportStore:
         return {key: task[key] for key in ("importTaskId", "status", "datasetId", "error", "quality", "createdAt", "updatedAt")}
 
     def get_dataset(self, dataset_id):
+        if self.data_store is not None:
+            return self.data_store.get_dataset(dataset_id)
         path = self._path(self.datasets, dataset_id, "ds_")
         if path is None or not self._complete(path):
             raise ImportProblem("DATASET_NOT_FOUND", "READY 数据集不存在。", 404)
         return read_json(path / "metadata.json")
 
     def get_quality(self, dataset_id):
+        if self.data_store is not None:
+            return self.data_store.get_quality(dataset_id)
         self.get_dataset(dataset_id)
         return read_json(self.datasets / dataset_id / "quality.json")
 
     def list_datasets(self, page, page_size):
+        if self.data_store is not None:
+            return self.data_store.list_datasets(page, page_size)
         items = [read_json(path / "metadata.json") for path in self.datasets.glob("ds_*") if self._complete(path)]
         items.sort(key=lambda item: (item["createdAt"], item["datasetId"]), reverse=True)
         start = (page - 1) * page_size
         return {"page": page, "pageSize": page_size, "total": len(items), "items": items[start:start + page_size]}
+
+    def latest_dataset(self, app_id, dataset_type):
+        if self.data_store is not None:
+            return self.data_store.latest_dataset(app_id, dataset_type)
+        items = [read_json(path / "metadata.json") for path in self.datasets.glob("ds_*") if self._complete(path)]
+        candidates = [
+            item for item in items
+            if item.get("datasetSource") == "REAL" and item.get("datasetType") == dataset_type
+            and app_id in item.get("appIds", [])
+        ]
+        return max(candidates, key=lambda item: (item["createdAt"], item["datasetId"]), default=None)
+
+    def observations_window(self, dataset_id, app_id, start_date, end_date, file_key=None):
+        if self.data_store is not None:
+            yield from self.data_store.observations_window(
+                dataset_id, app_id, start_date, end_date, file_key,
+            )
+            return
+        path = self._path(self.datasets, dataset_id, "ds_")
+        if path is None or not self._complete(path):
+            raise ImportProblem("DATASET_NOT_FOUND", "READY 数据集不存在。", 404)
+        with (path / "normalized.csv").open(encoding="utf-8", newline="") as stream:
+            for row in csv.DictReader(stream):
+                if row["appId"] != app_id or not start_date <= row["date"] <= end_date:
+                    continue
+                if file_key is not None and row["fileKey"] != file_key:
+                    continue
+                yield {
+                    "fileKey": row["fileKey"], "date": row["date"],
+                    "trafficBytes": row["trafficBytes"],
+                }
+
+    def app_daily_totals(self, dataset_id, app_id, start_date, end_date):
+        if self.data_store is not None:
+            yield from self.data_store.app_daily_totals(dataset_id, app_id, start_date, end_date)
+            return
+        path = self._path(self.datasets, dataset_id, "ds_")
+        if path is None or not self._complete(path):
+            raise ImportProblem("DATASET_NOT_FOUND", "READY 数据集不存在。", 404)
+        metadata = read_json(path / "metadata.json")
+        with (path / "normalized.csv").open(encoding="utf-8", newline="") as stream:
+            for row in csv.DictReader(stream):
+                if row["appId"] != app_id or not start_date <= row["date"] <= end_date:
+                    continue
+                yield {
+                    "date": row["date"], "totalTrafficBytes": row["totalTrafficBytes"],
+                    "unit": metadata["sourceUnit"],
+                }
 
     def process_next(self):
         with self.lock:

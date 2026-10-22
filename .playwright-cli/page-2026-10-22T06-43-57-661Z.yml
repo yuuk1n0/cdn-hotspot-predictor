@@ -1,0 +1,123 @@
+- generic [ref=f3e3]:
+  - link "跳到主内容" [ref=f3e4] [cursor=pointer]:
+    - /url: "#main-content"
+  - banner [ref=f3e5]:
+    - link "CDN 系统首页" [ref=f3e6] [cursor=pointer]:
+      - /url: /overview
+      - generic [ref=f3e12]: CDN 热点文件动态预测与压缩降本系统
+    - generic [ref=f3e13]:
+      - generic "全局 AppID 切换" [ref=f3e14]:
+        - generic [ref=f3e15]: AppID
+        - combobox "AppID" [ref=f3e16] [cursor=pointer]:
+          - option "10350"
+          - option "10066" [selected]
+      - generic [ref=f3e17]: 本地前端预览
+      - button "界面说明" [ref=f3e19] [cursor=pointer]
+      - generic [ref=f3e23]: UI
+      - generic [ref=f3e24]: 预览工作台
+  - complementary [ref=f3e25]:
+    - generic [ref=f3e26]:
+      - text: 运营工作台
+      - generic [ref=f3e27]: WORKSPACE
+    - navigation "主导航" [ref=f3e28]:
+      - link "业务总览" [ref=f3e29] [cursor=pointer]:
+        - /url: /overview
+      - link "热点预测" [ref=f3e33] [cursor=pointer]:
+        - /url: /prediction
+      - link "模型回测" [ref=f3e37] [cursor=pointer]:
+        - /url: /backtest
+      - link "压缩降本" [ref=f3e41] [cursor=pointer]:
+        - /url: /compression
+      - link "通知中心" [ref=f3e45] [cursor=pointer]:
+        - /url: /notifications
+      - link "智能 Agent" [ref=f3e49] [cursor=pointer]:
+        - /url: /agent
+    - generic [ref=f3e54]:
+      - strong [ref=f3e59]: 从热点洞察到降本决策
+      - generic [ref=f3e60]: CDN OPERATIONS CONSOLE
+      - generic [ref=f3e61]: 业务工作台
+  - main [ref=f3e62]:
+    - generic [ref=f3e63]:
+      - generic [ref=f3e64]: 工作台
+      - strong [ref=f3e67]: CDN 智能运营助手
+      - generic [ref=f3e68]: CDN 流量运营
+    - generic [ref=f3e69]:
+      - generic [ref=f3e70]:
+        - generic [ref=f3e71]:
+          - heading "CDN 智能运营助手" [level=1] [ref=f3e72]
+          - paragraph [ref=f3e73]: 使用服务端模型和业务工具查询事实；回答附带服务端证据与不确定项。
+        - generic [ref=f3e74]: 实时接口 · 按上下文隔离
+      - generic [ref=f3e75]:
+        - complementary [ref=f3e76]:
+          - heading "查询上下文" [level=2] [ref=f3e77]
+          - generic [ref=f3e78]:
+            - text: App
+            - combobox "App" [ref=f3e79] [cursor=pointer]:
+              - option "10350 · 内容分发"
+              - option "10066 · 应用资源" [selected]
+          - generic [ref=f3e80]:
+            - text: 业务日（上海）
+            - textbox "业务日（上海）" [ref=f3e81]: 2026-10-22
+          - generic [ref=f3e82]:
+            - text: 跨度
+            - combobox "跨度" [ref=f3e83] [cursor=pointer]:
+              - option "1 天" [selected]
+              - option "7 天"
+          - generic [ref=f3e84]:
+            - text: 历史运行 runId（可选）
+            - textbox "历史运行 runId（可选）" [ref=f3e85]:
+              - /placeholder: 留空按业务日查询
+          - generic [ref=f3e86]:
+            - text: 文件标识（可选）
+            - textbox "文件标识（可选）" [ref=f3e87]:
+              - /placeholder: 精确 fileKey
+          - generic [ref=f3e88]:
+            - text: 回测编号（可选）
+            - textbox "回测编号（可选）" [ref=f3e89]:
+              - /placeholder: backtestId
+          - paragraph [ref=f3e90]: 未指定运行时只查询所选业务日与跨度；历史运行按其原日期显示。切换上下文保留本页原对话，迟到回答不会插入新对话。
+          - heading "示例问题" [level=3] [ref=f3e91]
+          - button "当前 AppID 最新成功预测的 Top5 待压缩文件有哪些？" [ref=f3e92] [cursor=pointer]
+          - button "所选业务日的 Top10 热点是什么？" [ref=f3e93] [cursor=pointer]
+          - button "有哪些文件逾期未处理？" [ref=f3e94] [cursor=pointer]
+          - button "当前模型有哪些可验证的改进建议？" [ref=f3e95] [cursor=pointer]
+        - region "Agent 对话" [ref=f3e96]:
+          - generic [ref=f3e97]:
+            - generic [ref=f3e101]:
+              - heading "运营问答" [level=2] [ref=f3e102]
+              - paragraph [ref=f3e103]: App 10066 · 2026-10-22 · 1 天
+            - generic [ref=f3e104]: 模型 deepseek-flash
+          - log [ref=f3e105]:
+            - article [ref=f3e132]:
+              - generic [ref=f3e133]: 你
+              - paragraph [ref=f3e134]: 当前 AppID 最新成功预测的 Top5 待压缩文件有哪些？
+            - article [ref=f3e135]:
+              - generic [ref=f3e136]: 运营助手
+              - paragraph [ref=f3e137]: 当前 App 10066 最新成功预测 runId=run_3ed97fd12794dcdb654dcf19a8affcce0521e050cee0f4f24d1facf1328a679d，数据截止 2026-04-15，窗口 2026-04-16 至 2026-04-16，模型 hotspot-simple-v1，来源 REAL/MODEL。待压缩 Top5：1. easinote/uwixmovwhhpljhhvhmlwxjwkmphhihhi，预测窗口累计 910778697366 B，状态 PENDING；2. easinote/encloud-1649238127781baa22af0，预测窗口累计 862981813767 B，状态 PENDING；3. easinote/uwixjqpnhhpljhhvhwuxmwwlxohhihjk，预测窗口累计 798960341931 B，状态 PENDING；4. easinote/uwizuhohhhpljhhvhwilpijlvqphihjh，预测窗口累计 664701763384 B，状态 PENDING；5. easinote/uwixkjoyhhpljhhvhwuyxkmjzihhihhj，预测窗口累计 661239803692 B，状态 PENDING。
+              - generic [ref=f3e138]: 2026-10-22 · 1 天 · 模型版本未提供
+              - group [ref=f3e139]:
+                - generic "证据 1 · getTopHotspots · 2026-10-22T06:43:56.651074956Z" [ref=f3e140] [cursor=pointer]
+              - group [ref=f3e141]:
+                - generic "证据 2 · getPendingFiles · 查询时间未提供" [ref=f3e142] [cursor=pointer]
+              - paragraph [ref=f3e143]: 待确认：核心问题使用只读业务事实模板；未推测压缩收益或质量。
+          - generic [ref=f3e107]:
+            - text: 输入运营问题
+            - textbox "输入运营问题" [ref=f3e108]:
+              - /placeholder: 输入问题，Enter 发送，Shift + Enter 换行
+            - generic [ref=f3e109]:
+              - generic [ref=f3e110]: 问题与回答仅保留在本页内存
+              - button "发送" [disabled] [ref=f3e111]
+      - region [ref=f3e114]:
+        - generic [ref=f3e115]:
+          - generic [ref=f3e116]:
+            - heading "模型配置与建议" [level=2] [ref=f3e117]
+            - paragraph [ref=f3e118]: 建议来自服务端证据。切换模型需要独立确认与配置版本校验。
+          - button "生成当前跨度建议" [ref=f3e119] [cursor=pointer]
+        - generic [ref=f3e127]:
+          - generic [ref=f3e128]: 日模型：hotspot-simple-v1
+          - generic [ref=f3e129]: 周模型：hotspot-simple-v1
+          - generic [ref=f3e130]: 可用模型：hotspot-simple-v1
+          - generic [ref=f3e131]: 配置版本：1
+    - generic [ref=f3e125]:
+      - text: CDN 热点预测与压缩降本系统
+      - generic [ref=f3e126]: 界面样例与接口数据均标明来源

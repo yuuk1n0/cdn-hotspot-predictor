@@ -1,71 +1,136 @@
 <script setup>
-import { computed, inject, ref } from 'vue'
+import { computed, inject, onBeforeUnmount, ref, watch } from 'vue'
 import AppIcon from '../components/AppIcon.vue'
 import MetricCard from '../components/MetricCard.vue'
 import LineChart from '../components/LineChart.vue'
 import DonutChart from '../components/DonutChart.vue'
 import HistoryPanel from '../HistoryPanel.vue'
+import { historyChartData } from '../history.js'
+import { operationsApi, ratioReason, ratioText } from '../operations.js'
+import { resultRows } from '../prediction-results.js'
+import { formatBytes, compressionStatusLabels, fileTypeLabels } from '../top50.js'
 import { uiContextKey } from '../ui/context.js'
 import { appOptions, chartDates, getMockFiles, mockApps, mockDateRange } from '../ui/mock-data.js'
-import { compressionStatusLabels, fileTypeLabels, formatBytes } from '../top50.js'
 
 const { previewAppId, selectedDataset } = inject(uiContextKey, { previewAppId: ref('10350'), selectedDataset: ref(null) })
-const mode = ref(selectedDataset.value ? 'api' : 'mock')
+const mode = ref('real')
 const granularity = ref('DAILY')
-const startDate = ref(mockDateRange.start)
-const endDate = ref(mockDateRange.end)
-const quick = ref('')
+const windowDays = ref(7)
+const run = ref(null)
+const pending = ref(null)
+const effects = ref(null)
+const history = ref(null)
+const metrics = ref(null)
+const loading = ref(false)
+const error = ref('')
+const historyError = ref('')
+const effectsError = ref('')
+const metricsError = ref('')
+let generation = 0
+let controller
+
 const app = computed(() => mockApps[previewAppId.value])
-const items = computed(() => getMockFiles(previewAppId.value, granularity.value))
-const indices = computed(() => chartDates.flatMap((label, i) => `2026-${label}` >= startDate.value && `2026-${label}` <= endDate.value ? [i] : []))
-const labels = computed(() => indices.value.map(i => chartDates[i]))
-const trendSeries = computed(() => [
-  { name: '总流量 · 样例', color: '#1677ff', values: indices.value.map(i => app.value.totalSeries[i]), fill: true },
-  { name: '热点流量 · 样例', color: '#ff9d45', values: indices.value.map(i => app.value.hotspotSeries[i]), dashed: true }
-])
-const comparisonSeries = computed(() => [
-  { name: '实际流量 · 样例', color: '#1677ff', values: indices.value.map(i => app.value.hotspotSeries[i]), fill: true },
-  { name: '预测流量 · 样例', color: '#ff9d45', values: indices.value.map(i => app.value.predictedSeries[i]), dashed: true }
-])
-function setQuick(days) {
-  quick.value = String(days)
-  const date = new Date(`${mockDateRange.end}T00:00:00Z`)
-  date.setUTCDate(date.getUTCDate() - days + 1)
-  startDate.value = date.toISOString().slice(0,10)
-  endDate.value = mockDateRange.end
+const mockRows = computed(() => getMockFiles(previewAppId.value, granularity.value).slice(0, 8))
+const realRows = computed(() => run.value ? resultRows(run.value).slice(0, 8) : [])
+const chart = computed(() => historyChartData(history.value?.days || []))
+const chartSeries = computed(() => [{ name: '已观测文件流量', color: '#1677ff', values: chart.value.values, fill: true }])
+const ratio = computed(() => history.value?.hotspotTrafficRatio || null)
+const ratioValue = computed(() => ratio.value?.value == null ? '不可计算' : ratio.value.value)
+const pendingCount = computed(() => pending.value?.itemCount ?? null)
+const compressionRecords = computed(() => effects.value?.recordCount ?? null)
+const compressionObservations = computed(() => effects.value?.observationCount ?? null)
+const predictedTop50Metric = computed(() => metrics.value?.actualPredictedTop50 || null)
+const actualTop50Metric = computed(() => metrics.value?.actualTop50 || null)
+const topShares = computed(() => {
+  const result = history.value
+  const total = Number(result?.observedTrafficBytes)
+  if (!result?.items?.length || !Number.isFinite(total) || total <= 0) return []
+  const colors = ['#1677ff', '#36c6a3', '#8f7eda', '#f4b953', '#a2b2c9']
+  return result.items.slice(0, 5).map((item, index) => ({
+    name: item.fileKey.split('/').at(-1) || item.fileKey,
+    value: Number((Number(item.observedTrafficBytes) * 100 / total).toFixed(1)),
+    color: colors[index]
+  }))
+})
+
+function observedRange() {
+  const range = selectedDataset.value?.appDateRanges?.[previewAppId.value]
+  if (!range?.end) return null
+  const end = new Date(`${range.end}T00:00:00Z`)
+  end.setUTCDate(end.getUTCDate() - windowDays.value + 1)
+  return { start: end.toISOString().slice(0, 10), end: range.end }
 }
+
+async function load() {
+  generation++
+  controller?.abort()
+  const current = generation
+  const abort = new AbortController()
+  controller = abort
+  loading.value = true
+  error.value = historyError.value = effectsError.value = metricsError.value = ''
+  run.value = pending.value = effects.value = history.value = metrics.value = null
+  try {
+    const horizon = granularity.value === 'WEEKLY' ? 7 : 1
+    const runResult = await operationsApi.latest(previewAppId.value, horizon, fetch, abort.signal)
+    if (current !== generation || abort.signal.aborted) return
+    run.value = runResult
+    try { metrics.value = await operationsApi.metrics(runResult.runId, fetch, abort.signal) }
+    catch (metricError) { if (current === generation) metricsError.value = metricError.message || 'Top50 实际流量占比查询失败。' }
+    try { pending.value = await operationsApi.pending(previewAppId.value, runResult.runId, fetch, abort.signal) }
+    catch (pendingError) { if (current === generation) error.value = pendingError.message || '待压缩文件查询失败。' }
+  } catch (runError) {
+    if (current === generation && !abort.signal.aborted) error.value = runError.status === 404 ? '尚无匹配跨度的真实成功预测运行。' : runError.message
+  }
+  try { effects.value = await operationsApi.effects(previewAppId.value, fetch, abort.signal) }
+  catch (effectError) { if (current === generation) effectsError.value = effectError.message || '压缩效果查询失败。' }
+  const range = observedRange()
+  if (range) {
+    try {
+      history.value = await operationsApi.history({ datasetId: selectedDataset.value.datasetId, appId: previewAppId.value, startDate: range.start, endDate: range.end, granularity: 'DAILY', topK: 50 }, fetch, abort.signal)
+    } catch (historicalError) { if (current === generation) historyError.value = historicalError.message || '历史观测查询失败。' }
+  } else if (current === generation) historyError.value = '没有该 App 的 READY 历史数据集。'
+  if (current === generation) loading.value = false
+}
+
+watch([previewAppId, granularity, windowDays, () => selectedDataset.value?.datasetId], load, { immediate: true })
+onBeforeUnmount(() => { generation++; controller?.abort() })
 </script>
 
 <template>
   <div class="overview-view" data-page="overview">
-    <header class="page-heading"><div><h1>业务总览</h1><p>按 App 洞察流量与热点，把预测结果转化为可追踪的压缩降本决策。</p></div><div class="heading-actions"><div class="segmented segmented--plain" aria-label="业务总览数据来源"><button :class="{active:mode==='mock'}" :aria-pressed="mode==='mock'" @click="mode='mock'">UI 演示</button><button :class="{active:mode==='api'}" :aria-pressed="mode==='api'" @click="mode='api'">历史观测 · 接口数据</button></div><span v-if="mode==='mock'" class="source-badge">UI MOCK · 静态演示</span><RouterLink class="btn btn-primary" to="/prediction"><AppIcon name="chart" :size="15"/>进入热点预测</RouterLink></div></header>
-    <HistoryPanel v-if="mode==='api'" :dataset="selectedDataset"/>
-    <template v-else>
-    <section class="card filter-card" aria-label="业务总览筛选">
-      <div class="filter-field"><label for="overview-app">AppID</label><select id="overview-app" v-model="previewAppId"><option v-for="option in appOptions" :key="option.id" :value="option.id">{{ option.label }}</option></select></div>
-      <div class="filter-field"><label for="overview-start">历史日期</label><div class="date-range"><input id="overview-start" v-model="startDate" type="date" aria-label="历史开始日期" @change="quick = ''"><span class="date-separator">—</span><input v-model="endDate" type="date" aria-label="历史结束日期" @change="quick = ''"></div></div>
-      <div class="quick-dates"><button v-for="days in [7,30,180]" :key="days" :class="{active:quick===String(days)}" @click="setQuick(days)">{{ days === 180 ? '近半年' : `近${days}天` }}</button></div>
-      <div class="segmented filter-spacer" aria-label="预测榜单粒度"><button :class="{active:granularity==='DAILY'}" :aria-pressed="granularity==='DAILY'" @click="granularity='DAILY'">日榜</button><button :class="{active:granularity==='WEEKLY'}" :aria-pressed="granularity==='WEEKLY'" @click="granularity='WEEKLY'">周榜</button></div>
-    </section>
-    <div class="context-note"><span>App {{ previewAppId }} · 历史趋势按日期展示，预测摘要按日榜 / 周榜展示</span><span>样例截止日期 2026-10-13</span></div>
-    <section class="metric-grid" aria-label="业务总览核心指标">
-      <MetricCard label="总流量" :value="app.totalTraffic" :unit="app.totalUnit" icon="file" note="固定样例窗口累计 · UI Mock"/>
-      <MetricCard label="热点流量占比" :value="app.hotspotRatio" unit="%" icon="pie" note="完整分母场景的 UI 示例"/>
-      <MetricCard label="待压缩文件数" :value="app.pending" unit="个" icon="compression" note="UI 示例 · 非真实待办数量"/>
-      <MetricCard label="预计节省金额" :value="`¥ ${app.forecastSaving}`" icon="money" tone="green" note="预测情景演示 · 未产生实际收益"/>
-    </section>
-    <div class="chart-grid">
-      <section class="card"><header class="card-heading"><h2>总流量与热点流量趋势</h2><small>历史每日流量</small></header><LineChart v-if="labels.length" :labels="labels" :series="trendSeries" aria-label="UI Mock 总流量与热点流量历史趋势"/><div v-else class="chart-empty">所选范围没有 UI 样例数据</div><div class="chart-foot">UI Mock · 样例覆盖 2026-10-01 至 2026-10-13，空白日期不补零。</div></section>
-      <section class="card"><header class="card-heading"><h2>流量类型分布</h2><small>App {{ previewAppId }}</small></header><DonutChart :items="app.distribution" :total="app.totalTraffic"/><div class="chart-foot">固定样例窗口累计分布 · UI Mock</div></section>
-    </div>
-    <div class="content-grid overview-bottom">
-      <section class="card table-card"><header class="card-heading"><h2>Top50 热点预测摘要 <span class="small-title">{{ granularity === 'DAILY' ? '日榜' : '周榜' }}</span></h2><RouterLink class="card-action" to="/prediction">查看全部 <AppIcon name="chevron" :size="13"/></RouterLink></header><div class="table-scroll"><table><thead><tr><th>排名</th><th>文件路径（FileKey）</th><th>类型</th><th>预测流量</th><th>压缩状态</th></tr></thead><tbody><tr v-for="item in items" :key="item.fileKey"><td><span class="overview-rank" :class="{'overview-rank--top':item.rank<=3}">{{ item.rank }}</span></td><td><div class="file-key" :title="item.fileKey">{{ item.fileKey }}</div></td><td><span class="file-subtitle">{{ fileTypeLabels[item.fileType] }}</span></td><td class="text-blue">{{ formatBytes(item.predictedBytes) }}</td><td><span class="status-pill" :class="`status-pill--${item.compressionStatus.toLowerCase()}`">{{ compressionStatusLabels[item.compressionStatus] }}</span></td></tr></tbody></table></div><footer class="table-footer"><span>展示 8 条静态版式样例 · UI MOCK</span><span>模型版本 hotspot-simple-v1 · 仅用于界面展示</span></footer></section>
-      <div class="stack">
-        <section class="card"><header class="card-heading"><h2>实际流量与预测流量对比</h2><small>历史样例窗口</small></header><LineChart v-if="labels.length" :labels="labels" :series="comparisonSeries" aria-label="UI Mock 历史实际流量与预测流量对比"/><div v-else class="chart-empty">所选范围没有 UI 样例数据</div></section>
-        <section class="card saving-summary"><header class="card-heading"><h2>压缩降本情况</h2><RouterLink class="card-action" to="/compression">查看详情 <AppIcon name="chevron" :size="13"/></RouterLink></header><div class="saving-highlight"><span class="saving-icon"><AppIcon name="money" :size="24"/></span><div><small>预计节省金额 · UI Mock</small><strong>¥ {{ app.forecastSaving }}</strong></div><span class="status-pill status-pill--success">预测情景</span></div><div class="saving-facts"><div><small>预计节省流量</small><strong>{{ app.savedTraffic }} TB</strong></div><div><small>示例已压缩数</small><strong>{{ app.completed }} <em>个</em></strong></div><div><small>实际节省金额</small><strong class="text-muted">—</strong></div></div><p class="chart-foot">实际收益需完成压缩登记、成熟访问观测与成本核验后计算。</p></section>
+    <header class="page-heading"><div><h1>业务总览</h1><p>历史观测、真实预测运行与压缩处理记录分开展示，不使用随机值填充缺口。</p></div><div class="heading-actions"><div class="segmented segmented--plain" aria-label="业务总览数据来源"><button :class="{ active: mode === 'real' }" @click="mode = 'real'">真实数据</button><button :class="{ active: mode === 'mock' }" @click="mode = 'mock'">UI 演示</button></div><button class="btn" :disabled="loading" @click="load"><AppIcon name="refresh" :size="15"/>{{ loading ? '刷新中…' : '刷新' }}</button><RouterLink class="btn btn-primary" to="/prediction"><AppIcon name="chart" :size="15"/>进入热点预测</RouterLink></div></header>
+
+    <template v-if="mode === 'real'">
+      <section class="card filter-card" aria-label="业务总览筛选"><div class="filter-field"><label for="overview-app">AppID</label><select id="overview-app" v-model="previewAppId"><option v-for="option in appOptions" :key="option.id" :value="option.id">{{ option.label }}</option></select></div><div class="filter-field"><label for="overview-window">历史窗口</label><select id="overview-window" v-model.number="windowDays"><option :value="7">近 7 天</option><option :value="30">近 30 天</option><option :value="90">近 90 天</option></select></div><div class="segmented filter-spacer" aria-label="预测榜单粒度"><button :class="{ active: granularity === 'DAILY' }" @click="granularity = 'DAILY'">日榜</button><button :class="{ active: granularity === 'WEEKLY' }" @click="granularity = 'WEEKLY'">周榜</button></div></section>
+      <div class="context-note"><span>App {{ previewAppId }} · 历史数据集 {{ selectedDataset?.datasetId || '未加载' }}</span><span>REAL 数据 · 缺失保持空值</span></div>
+      <div v-if="error" class="notice notice--amber" role="alert"><AppIcon name="info" :size="16"/>{{ error }}</div>
+      <section class="metric-grid" aria-label="业务总览核心指标">
+        <MetricCard label="已观测文件流量" :value="history ? formatBytes(history.observedTrafficBytes) : '—'" icon="file" :note="history ? `${history.startDate} 至 ${history.endDate} · 仅已观测文件` : '历史查询失败或无数据集'"/>
+        <MetricCard label="历史热点占比" :value="ratioValue" :unit="ratio?.value == null ? '' : '%'" icon="pie" :note="ratio?.value == null ? `原因码：${ratio?.reasonCode || 'NO_HISTORY'}` : `Top${ratio.topK} 已观测文件 ÷ App 每日总流量`"/>
+        <MetricCard label="预测 Top50 实际占比" :value="ratioText(predictedTop50Metric)" icon="pie" :note="metricsError || `${ratioReason(predictedTop50Metric)} · 分母单位 ${metrics?.appTotalUnit || '未确认'}`"/>
+        <MetricCard label="Top50 预测窗口累计" :value="run ? formatBytes(run.top50PredictedBytes) : '—'" icon="trend" :note="run ? `${run.predictionStartDate} 至 ${run.predictionEndDate} · REAL/MODEL` : '暂无真实运行'"/>
+        <MetricCard label="待压缩文件" :value="pendingCount ?? '—'" unit="个" icon="compression" :note="compressionRecords == null ? '压缩登记状态待查询' : `登记 ${compressionRecords} 条 · 观测 ${compressionObservations} 条`"/>
+      </section>
+      <div class="chart-grid">
+        <section class="card"><header class="card-heading"><h2>已观测文件流量趋势</h2><small>{{ history?.startDate || '—' }} — {{ history?.endDate || '—' }}</small></header><LineChart v-if="history" :labels="history.days.map(day => day.date)" :series="chartSeries" :unit="chart.unit" :max-y="chart.maxY" source-label="MySQL 已观测文件" aria-label="真实历史文件流量趋势"/><div v-else class="chart-empty">{{ historyError || '暂无历史观测' }}</div><div class="chart-foot">App 整日缺失：{{ history?.missingDates.length ? history.missingDates.join('、') : '无' }}；未自动补零。</div></section>
+        <section class="card"><header class="card-heading"><h2>Top5 文件流量集中度</h2><small>历史实际</small></header><DonutChart v-if="topShares.length" :items="topShares" :total="topShares.reduce((sum, item) => sum + item.value, 0).toFixed(1)" unit="%" source-label="Top5 已观测流量占比"/><div v-else class="chart-empty">没有可计算的历史文件排行</div><div class="chart-foot">分母为查询窗口内全部已观测文件流量；不是 App 全量流量。</div></section>
       </div>
-    </div>
+      <div class="content-grid overview-bottom">
+        <section class="card table-card"><header class="card-heading"><h2>Top50 预测摘要 <span class="small-title">{{ granularity === 'DAILY' ? '日榜' : '周榜' }}</span></h2><RouterLink class="card-action" to="/prediction">查看全部 <AppIcon name="chevron" :size="13"/></RouterLink></header><div class="table-scroll"><table><thead><tr><th>排名</th><th>FileKey</th><th>预测流量</th><th>模型</th></tr></thead><tbody><tr v-for="item in realRows" :key="item.fileKey"><td><span class="overview-rank" :class="{ 'overview-rank--top': item.rank <= 3 }">{{ item.rank }}</span></td><td><div class="file-key" :title="item.fileKey">{{ item.fileKey }}</div><small class="file-subtitle">{{ fileTypeLabels[item.fileType] || '类型未知' }}</small></td><td class="text-blue">{{ formatBytes(item.predictedBytes) }}</td><td><code>{{ item.modelVersion }}</code></td></tr></tbody></table></div><div v-if="!realRows.length" class="empty-panel"><h3>暂无真实 Top50</h3><p>不会用演示数据替代。</p></div><footer v-if="run" class="table-footer"><span>{{ run.runId }}</span><span>{{ run.datasetSource }} / {{ run.predictionSource }}</span></footer></section>
+        <div class="stack"><section class="card saving-summary"><header class="card-heading"><h2>压缩降本状态</h2><RouterLink class="card-action" to="/compression">查看详情 <AppIcon name="chevron" :size="13"/></RouterLink></header><div class="saving-facts"><div><small>压缩登记</small><strong>{{ compressionRecords ?? '—' }} <em>条</em></strong></div><div><small>效果观测</small><strong>{{ compressionObservations ?? '—' }} <em>条</em></strong></div><div><small>实际账单降本</small><strong class="text-muted">{{ effects?.realizedBillSavingYuan ?? '未验证' }}</strong></div></div><p class="chart-foot">{{ effectsError || effects?.reasonCodes?.join('、') || '等待真实压缩登记与成熟观测。' }}</p></section><section class="card"><header class="card-heading"><h2>数据边界</h2></header><dl class="boundary-list"><dt>预测结果</dt><dd>{{ run?.resultMode || '未加载' }}</dd><dt>预测 Top50 占比</dt><dd>{{ ratioText(predictedTop50Metric) }} · {{ ratioReason(predictedTop50Metric) }}</dd><dt>历史占比</dt><dd>{{ ratio?.value == null ? ratio?.reasonCode || '未验证' : 'REAL 已计算' }}</dd><dt>占比分母</dt><dd>{{ metrics?.appTotalDatasetId || '缺失' }} · {{ metrics?.appTotalUnit || '单位未确认' }}</dd><dt>压缩收益</dt><dd>仅在真实观测与成本证据齐全后计算</dd></dl></section></div>
+      </div>
+      <details class="card history-disclosure"><summary>查看完整历史观测查询与逐日明细</summary><HistoryPanel :dataset="selectedDataset"/></details>
+    </template>
+
+    <template v-else>
+      <div class="notice notice--amber"><AppIcon name="info" :size="16"/>UI MOCK 仅用于版式演示，不参与任何真实统计。</div>
+      <section class="metric-grid"><MetricCard label="总流量" :value="app.totalTraffic" :unit="app.totalUnit" icon="file" note="固定样例"/><MetricCard label="热点流量占比" :value="app.hotspotRatio" unit="%" icon="pie" note="固定样例"/><MetricCard label="待压缩文件数" :value="app.pending" unit="个" icon="compression" note="固定样例"/><MetricCard label="预计节省金额" :value="`¥ ${app.forecastSaving}`" icon="money" tone="green" note="固定样例"/></section>
+      <div class="chart-grid"><section class="card"><header class="card-heading"><h2>总流量与热点流量趋势</h2><small>UI MOCK</small></header><LineChart :labels="chartDates" :series="[{ name: '总流量', color: '#1677ff', values: app.totalSeries, fill: true }, { name: '热点流量', color: '#ff9d45', values: app.hotspotSeries, dashed: true }]" aria-label="UI Mock 趋势"/><div class="chart-foot">静态样例 {{ mockDateRange.start }} — {{ mockDateRange.end }}</div></section><section class="card table-card"><header class="card-heading"><h2>Top50 样例摘要</h2><span class="source-badge">UI MOCK</span></header><div class="table-scroll"><table><tbody><tr v-for="item in mockRows" :key="item.fileKey"><td>{{ item.rank }}</td><td><div class="file-key">{{ item.fileKey }}</div></td><td>{{ formatBytes(item.predictedBytes) }}</td><td>{{ compressionStatusLabels[item.compressionStatus] }}</td></tr></tbody></table></div></section></div>
     </template>
   </div>
 </template>
-<style scoped>.small-title{font-size:10px;color:#8b9eb5;font-weight:400;margin-left:7px}.overview-rank{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:4px;color:#8a9bb1;font-size:10px}.overview-rank--top{background:#edf5ff;color:#1677ff}.overview-bottom table{min-width:600px}.overview-bottom th,.overview-bottom td{padding:12px 14px}.overview-bottom .file-key{max-width:235px;font-size:10px}.saving-highlight{display:flex;align-items:center;gap:13px;padding:0 20px 20px}.saving-icon{display:grid;place-items:center;background:#fff6df;color:#eaa228;width:45px;height:45px;border-radius:50%}.saving-highlight small{font-size:11px;color:#8b9cb1;display:block;margin-bottom:7px}.saving-highlight strong{color:#235896;font-size:25px;font-weight:650;letter-spacing:-.4px}.saving-highlight>.status-pill{margin-left:auto}.saving-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:0 20px 14px}.saving-facts>div{padding:10px 9px;border:1px solid #edf1f7;border-radius:4px}.saving-facts small{color:#8c9cb1;font-size:9px;display:block;margin-bottom:7px}.saving-facts strong{font-size:15px;color:#476282;font-weight:600}.saving-facts em{font-size:10px;font-style:normal;font-weight:400}.overview-bottom>.stack .chart-wrap{max-height:230px}.saving-summary .chart-foot{margin-bottom:0;font-size:9px}@media(min-width:1700px){.overview-bottom th,.overview-bottom td{padding-top:15px;padding-bottom:15px}}</style>
+
+<style scoped>
+.small-title{font-size:10px;color:#8b9eb5;font-weight:400;margin-left:7px}.overview-rank{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:4px;color:#8a9bb1;font-size:10px}.overview-rank--top{background:#edf5ff;color:#1677ff}.overview-bottom table{min-width:620px}.overview-bottom th,.overview-bottom td{padding:12px 14px}.overview-bottom .file-key{max-width:300px;font-size:10px}.saving-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:0 20px 14px}.saving-facts>div{padding:10px 9px;border:1px solid #edf1f7;border-radius:4px}.saving-facts small{color:#8c9cb1;font-size:9px;display:block;margin-bottom:7px}.saving-facts strong{font-size:15px;color:#476282;font-weight:600}.saving-facts em{font-size:10px;font-style:normal;font-weight:400}.saving-summary .chart-foot{margin-bottom:0;font-size:9px;line-height:1.8}.boundary-list{display:grid;grid-template-columns:100px 1fr;gap:12px 8px;padding:0 20px 20px;font-size:10px}.boundary-list dt{color:#94a5b9}.boundary-list dd{margin:0;color:#5d7796;overflow-wrap:anywhere}.history-disclosure{margin-top:18px;padding:16px}.history-disclosure>summary{cursor:pointer;font-size:12px;color:#567394;font-weight:600}.overview-bottom>.stack .chart-wrap{max-height:230px}@media(max-width:1200px){.content-grid{grid-template-columns:1fr}}@media(max-width:760px){.page-heading{flex-wrap:wrap}.saving-facts{grid-template-columns:1fr}}
+</style>

@@ -8,7 +8,9 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Repository
@@ -104,5 +106,23 @@ public class NotificationRepository {
                 SELECT COUNT(*) FROM notification_delivery WHERE app_id=:app
                 AND (:run IS NULL OR run_id=:run) AND (:type IS NULL OR type=:type)
                 """, p, Integer.class);
+    }
+
+    public Map<String, Integer> statusCounts(String appId) {
+        Map<String, Integer> counts = new LinkedHashMap<>();
+        jdbc.query("SELECT status,COUNT(*) AS total FROM notification_delivery WHERE app_id=:app GROUP BY status",
+                Map.of("app", appId), rs -> {
+                    counts.put(rs.getString("status"), rs.getInt("total"));
+                });
+        return counts;
+    }
+
+    public List<ObjectNode> recentProblems(String appId, int limit) {
+        return jdbc.query("""
+                SELECT * FROM notification_delivery WHERE app_id=:app AND status IN ('FAILED','UNKNOWN')
+                ORDER BY updated_at_ms DESC,id DESC LIMIT :limit
+                """, Map.of("app", appId, "limit", limit),
+                (rs, i) -> read(rs.getString("record_json"), rs.getString("status"), rs.getInt("attempt_count"),
+                        rs.getLong("next_attempt_at_ms"), rs.getLong("sent_at_ms"), rs.wasNull()));
     }
 }

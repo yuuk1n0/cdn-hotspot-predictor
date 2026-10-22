@@ -16,7 +16,7 @@ const lookup = createPredictionLookup({ storage })
 const { state } = lookup
 const submission = createPredictionSubmit({ storage })
 const submitState = submission.state
-const form = reactive({ cutoffDate: '', horizonDays: 1, modelVersion: 'contract-demo-v1' })
+const form = reactive({ cutoffDate: '', horizonDays: 1, modelVersion: 'hotspot-simple-v1' })
 const dateRange = computed(() => props.dataset?.appDateRanges?.[props.dataset.appId])
 const kind = ref('task')
 const id = ref('')

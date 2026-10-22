@@ -70,14 +70,14 @@ onBeforeUnmount(query.dispose)
           <MetricCard label="已观测文件流量合计" :value="formatBytes(result.observedTrafficBytes)" icon="file" note="仅查询窗口内已有记录，不是权威App总量"/>
           <MetricCard label="App 整日缺失" :value="String(result.missingDates.length)" unit="天" icon="clock" note="缺失日期保留 null；不会自动补零"/>
           <MetricCard label="窗口排行返回" :value="String(result.items.length)" unit="条" icon="chart" note="按文件窗口累计排序，由后端真实统计"/>
-          <MetricCard label="热点流量占比" value="—" icon="pie" note="未确认 App 全量分母，不可计算"/>
+          <MetricCard label="热点流量占比" :value="result.hotspotTrafficRatio.value ?? '不可计算'" :unit="result.hotspotTrafficRatio.value == null ? '' : '%'" icon="pie" :note="result.hotspotTrafficRatio.value == null ? `原因码：${result.hotspotTrafficRatio.reasonCode}` : `历史实际 · Top${result.hotspotTrafficRatio.topK} ÷ App每日总流量`"/>
         </section>
         <section class="card history-trend"><header class="card-heading"><h2>已观测文件每日流量</h2><small>App {{ result.appId }} · {{ state.request.fileKey ? '指定文件' : '全部已观测文件' }}</small></header><LineChart :labels="result.days.map(day=>day.date)" :series="chartSeries" :unit="chart.unit" :max-y="chart.maxY" source-label="接口观测" aria-label="接口历史观测流量趋势"/><div class="chart-foot">图形按流量大小选择单位并近似显示；精确字节以下表为准。缺日断线，显式 0B 保留观测点。单文件无观测不等于该日 App 整体缺失。</div></section>
         <div class="history-tables">
           <section class="card table-card history-days"><header class="card-heading"><h2>逐日观测与缺口</h2><small>精确字节 B</small></header><div class="table-scroll"><table><thead><tr><th>日期</th><th>已观测流量（B）</th><th>文件数</th><th>观测状态</th></tr></thead><tbody><tr v-for="day in result.days" :key="day.date" :data-date="day.date"><td class="mono">{{ day.date }}</td><td class="mono exact-bytes">{{ day.observedTrafficBytes ?? '无观测（null）' }}</td><td>{{ day.fileCount }}</td><td><span class="status-pill" :class="day.status==='OBSERVED'?'status-pill--success':'status-pill--unknown'">{{ day.status==='OBSERVED'?'已观测':'无观测' }}</span></td></tr></tbody></table></div></section>
           <section class="card table-card history-ranking"><header class="card-heading"><h2>窗口 Top{{ state.request.topK }} 文件</h2><small>精确 FileKey · 累计B</small></header><div class="table-scroll"><table><thead><tr><th>排名</th><th>文件标识</th><th>累计流量（B）</th><th>观测天数</th></tr></thead><tbody><tr v-for="item in result.items" :key="item.fileKey"><td>{{ item.rank }}</td><td class="history-file-key mono">{{ item.fileKey }}</td><td class="mono exact-bytes">{{ item.observedTrafficBytes }}</td><td>{{ item.observedDays }}</td></tr></tbody></table></div><div v-if="!result.items.length" class="empty-panel"><h3>所选窗口没有匹配文件观测</h3><p>合计为 null，不能解释为实际流量为 0B。</p></div></section>
         </div>
-        <div class="notice notice--muted history-footer"><span>App 整日无记录：{{ result.missingDates.length ? result.missingDates.join('、') : '查询窗口内无整日缺失' }}</span><span>FAKE 输入仍标记演示；REAL 声明也不证明数据集覆盖 App 全量。未确认 App 全量分母，热点占比不可计算。</span></div>
+        <div class="notice notice--muted history-footer"><span>App 整日无记录：{{ result.missingDates.length ? result.missingDates.join('、') : '查询窗口内无整日缺失' }}</span><span>FAKE 输入仍标记演示。热点占比仅在已导入 App 每日总流量单位确认为 GB_DECIMAL、窗口无缺日且分母为正时计算；否则保留原因码。</span></div>
       </template>
     </template>
   </section>

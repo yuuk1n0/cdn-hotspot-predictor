@@ -1,0 +1,113 @@
+- generic [ref=f2e3]:
+  - link "跳到主内容" [ref=f2e4] [cursor=pointer]:
+    - /url: "#main-content"
+  - banner [ref=f2e5]:
+    - link "CDN 系统首页" [ref=f2e6] [cursor=pointer]:
+      - /url: /overview
+      - generic [ref=f2e12]: CDN 热点文件动态预测与压缩降本系统
+    - generic [ref=f2e13]:
+      - generic "全局 AppID 切换" [ref=f2e14]:
+        - generic [ref=f2e15]: AppID
+        - combobox "AppID" [ref=f2e16] [cursor=pointer]:
+          - option "10350" [selected]
+          - option "10066"
+      - generic [ref=f2e17]: 加载数据集中
+      - generic [ref=f2e18]: 本地前端预览
+      - button "界面说明" [ref=f2e20] [cursor=pointer]
+      - generic [ref=f2e24]: UI
+      - generic [ref=f2e25]: 预览工作台
+  - complementary [ref=f2e26]:
+    - generic [ref=f2e27]:
+      - text: 运营工作台
+      - generic [ref=f2e28]: WORKSPACE
+    - navigation "主导航" [ref=f2e29]:
+      - link "业务总览" [ref=f2e30] [cursor=pointer]:
+        - /url: /overview
+      - link "热点预测" [ref=f2e34] [cursor=pointer]:
+        - /url: /prediction
+      - link "模型回测" [ref=f2e38] [cursor=pointer]:
+        - /url: /backtest
+      - link "压缩降本" [ref=f2e42] [cursor=pointer]:
+        - /url: /compression
+      - link "通知中心" [ref=f2e46] [cursor=pointer]:
+        - /url: /notifications
+      - link "智能 Agent" [ref=f2e50] [cursor=pointer]:
+        - /url: /agent
+    - generic [ref=f2e55]:
+      - strong [ref=f2e60]: 从热点洞察到降本决策
+      - generic [ref=f2e61]: CDN OPERATIONS CONSOLE
+      - generic [ref=f2e62]: 业务工作台
+  - main [ref=f2e63]:
+    - generic [ref=f2e64]:
+      - generic [ref=f2e65]: 工作台
+      - strong [ref=f2e68]: CDN 智能运营助手
+      - generic [ref=f2e69]: CDN 流量运营
+    - generic [ref=f2e70]:
+      - generic [ref=f2e71]:
+        - generic [ref=f2e72]:
+          - heading "CDN 智能运营助手" [level=1] [ref=f2e73]
+          - paragraph [ref=f2e74]: 使用服务端模型和业务工具查询事实；回答附带服务端证据与不确定项。
+        - generic [ref=f2e75]: 实时接口 · 按上下文隔离
+      - generic [ref=f2e76]:
+        - complementary [ref=f2e77]:
+          - heading "查询上下文" [level=2] [ref=f2e78]
+          - generic [ref=f2e79]:
+            - text: App
+            - combobox "App" [ref=f2e80] [cursor=pointer]:
+              - option "10350 · 内容分发" [selected]
+              - option "10066 · 应用资源"
+          - generic [ref=f2e81]:
+            - text: 业务日（上海）
+            - textbox "业务日（上海）" [ref=f2e82]: 2026-10-22
+          - generic [ref=f2e83]:
+            - text: 跨度
+            - combobox "跨度" [ref=f2e84] [cursor=pointer]:
+              - option "1 天" [selected]
+              - option "7 天"
+          - generic [ref=f2e85]:
+            - text: 历史运行 runId（可选）
+            - textbox "历史运行 runId（可选）" [ref=f2e86]:
+              - /placeholder: 留空按业务日查询
+          - generic [ref=f2e87]:
+            - text: 文件标识（可选）
+            - textbox "文件标识（可选）" [ref=f2e88]:
+              - /placeholder: 精确 fileKey
+          - generic [ref=f2e89]:
+            - text: 回测编号（可选）
+            - textbox "回测编号（可选）" [ref=f2e90]:
+              - /placeholder: backtestId
+          - paragraph [ref=f2e91]: 未指定运行时只查询所选业务日与跨度；历史运行按其原日期显示。切换上下文保留本页原对话，迟到回答不会插入新对话。
+          - heading "示例问题" [level=3] [ref=f2e92]
+          - button "当前 AppID 最新成功预测的 Top5 待压缩文件有哪些？" [ref=f2e93] [cursor=pointer]
+          - button "所选业务日的 Top10 热点是什么？" [ref=f2e94] [cursor=pointer]
+          - button "有哪些文件逾期未处理？" [ref=f2e95] [cursor=pointer]
+          - button "当前模型有哪些可验证的改进建议？" [ref=f2e96] [cursor=pointer]
+        - region "Agent 对话" [ref=f2e97]:
+          - generic [ref=f2e98]:
+            - generic [ref=f2e102]:
+              - heading "运营问答" [level=2] [ref=f2e103]
+              - paragraph [ref=f2e104]: App 10350 · 2026-10-22 · 1 天
+            - generic [ref=f2e105]: 模型 deepseek-flash
+          - log [ref=f2e106]:
+            - paragraph [ref=f2e107]: 选择查询上下文后输入问题。无模型配置或无业务证据时，服务端会返回明确原因。
+          - generic [ref=f2e108]:
+            - text: 输入运营问题
+            - textbox "输入运营问题" [ref=f2e109]:
+              - /placeholder: 输入问题，Enter 发送，Shift + Enter 换行
+            - generic [ref=f2e110]:
+              - generic [ref=f2e111]: 问题与回答仅保留在本页内存
+              - button "发送" [disabled] [ref=f2e112]
+      - region [ref=f2e115]:
+        - generic [ref=f2e116]:
+          - generic [ref=f2e117]:
+            - heading "模型配置与建议" [level=2] [ref=f2e118]
+            - paragraph [ref=f2e119]: 建议来自服务端证据。切换模型需要独立确认与配置版本校验。
+          - button "生成当前跨度建议" [ref=f2e120] [cursor=pointer]
+        - generic [ref=f2e121]:
+          - generic [ref=f2e122]: 日模型：hotspot-simple-v1
+          - generic [ref=f2e123]: 周模型：hotspot-simple-v1
+          - generic [ref=f2e124]: 可用模型：hotspot-simple-v1
+          - generic [ref=f2e125]: 配置版本：0
+    - generic [ref=f2e126]:
+      - text: CDN 热点预测与压缩降本系统
+      - generic [ref=f2e127]: 界面样例与接口数据均标明来源

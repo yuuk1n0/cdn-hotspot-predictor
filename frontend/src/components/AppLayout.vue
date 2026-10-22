@@ -1,8 +1,13 @@
 <script setup>
-import { ref } from 'vue'
+import { inject, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import AppIcon from './AppIcon.vue'
+import { uiContextKey } from '../ui/context.js'
+import { appOptions } from '../ui/mock-data.js'
 const route = useRoute()
+const { previewAppId, datasetBusy, datasetError, refreshDatasets } = inject(uiContextKey, {
+  previewAppId: ref('10350'), datasetBusy: ref(false), datasetError: ref(''), refreshDatasets: () => {}
+})
 const helpOpen = ref(false)
 const links = [
   { path: '/overview', title: '业务总览', icon: 'overview' },
@@ -23,6 +28,9 @@ const links = [
         <span>CDN 热点文件动态预测与压缩降本系统</span>
       </RouterLink>
       <div class="header-tools">
+        <label class="app-switch" title="全局 AppID 切换"><span>AppID</span><select v-model="previewAppId"><option v-for="app in appOptions" :key="app.id" :value="app.id">{{ app.id }}</option></select></label>
+        <button v-if="datasetError" class="header-icon" title="重试加载真实数据集" @click="refreshDatasets">!</button>
+        <span v-if="datasetBusy" class="app-switch-state">加载数据集中</span>
         <span class="environment-badge"><i></i>本地前端预览</span>
         <button class="header-icon" aria-label="界面说明" :aria-expanded="helpOpen" @click="helpOpen = !helpOpen"><AppIcon name="help" /></button>
         <span class="header-divider"></span><span class="avatar">UI</span><span class="header-user">预览工作台</span>
@@ -43,3 +51,7 @@ const links = [
     </main>
   </div>
 </template>
+
+<style scoped>
+.app-switch{display:flex;align-items:center;gap:6px;font-size:10px;color:#7d91aa}.app-switch select{height:28px;border:1px solid #dbe5f1;border-radius:4px;background:#fff;color:#35577f;padding:0 7px;font-size:11px}.app-switch-state{font-size:9px;color:#91a4bb}.header-icon{font-weight:700}
+</style>

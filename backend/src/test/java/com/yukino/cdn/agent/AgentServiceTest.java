@@ -135,6 +135,42 @@ class AgentServiceTest {
         assertFalse(service.status().toString().contains("model.test"));
         assertEquals(4,service.status().path("maxModelRequests").asInt());
     }
+    @Test void coreTop5PendingQuestionUsesDeterministicBusinessFacts() throws Exception {
+        operations.top5 = true;
+        var response = service.chat(request("当前 AppID 最新成功预测的 Top5 待压缩文件有哪些？"));
+
+        assertEquals("DETERMINISTIC_BUSINESS_FACT", response.path("groundingStatus").asText());
+        assertTrue(response.path("answer").asText().contains("easinote/top-1"));
+        assertTrue(response.path("answer").asText().contains("hotspot-simple-v1"));
+        assertEquals("run_real", response.path("context").path("runId").asText());
+        assertEquals("hotspot-simple-v1", response.path("context").path("modelVersion").asText());
+        assertEquals("REAL/MODEL", response.path("evidence").get(0).path("data").path("datasetSource").asText() + "/"
+                + response.path("evidence").get(0).path("data").path("predictionSource").asText());
+        assertEquals(1, operations.calls);
+        server.verify();
+    }
+
+    @Test void top10HotspotQuestionUsesDeterministicBusinessFacts() throws Exception {
+        operations.top5 = true;
+        var response = service.chat(request("所选业务日的 Top10 热点是什么？"));
+
+        assertEquals("DETERMINISTIC_BUSINESS_FACT", response.path("groundingStatus").asText());
+        assertTrue(response.path("answer").asText().contains("easinote/top-1"));
+        assertEquals("run_real", response.path("context").path("runId").asText());
+        assertEquals(1, operations.calls);
+        server.verify();
+    }
+
+    @Test void overdueQuestionUsesDeterministicBusinessFacts() throws Exception {
+        operations.top5 = true;
+        var response = service.chat(request("有哪些文件逾期未处理？"));
+
+        assertEquals("DETERMINISTIC_BUSINESS_FACT", response.path("groundingStatus").asText());
+        assertTrue(response.path("answer").asText().contains("easinote/top-1"));
+        assertEquals("run_real", response.path("context").path("runId").asText());
+        assertEquals(1, operations.calls);
+        server.verify();
+    }
 
     @Test void failuresAreSanitizedAndNeverProduceEvidence() throws Exception {
         server.expect(requestTo("http://model.test/v1/chat/completions"))
@@ -176,7 +212,7 @@ class AgentServiceTest {
     void verifyAndReset() { server.verify(); server.reset(); }
 
     class FakeOperations implements OperationsService {
-        int calls; String resultDate; RuntimeException failure; boolean missing; long delayMillis;
+        int calls; String resultDate; RuntimeException failure; boolean missing; boolean top5; long delayMillis;
         public ObjectNode evidence(String tool,JsonNode context,JsonNode arguments) {
             calls++; if(failure!=null) throw failure;
             try {Thread.sleep(delayMillis);} catch(InterruptedException ignored){Thread.currentThread().interrupt();}
@@ -184,6 +220,20 @@ class AgentServiceTest {
             ObjectNode node=mapper.createObjectNode().put("tool",tool).put("appId",context.path("appId").asText());
             node.set("context",effective); node.put("queriedAt",clock.instant().toString());
             if(missing){node.putNull("data");node.putArray("reasonCodes").add("NO_CURRENT_RUN");}
+            else if(top5) {
+                effective.put("runId", "run_real");
+                node.set("context", effective);
+                var data = node.putObject("data").put("runId", "run_real").put("appId", context.path("appId").asText())
+                        .put("cutoffDate", "2026-10-20").put("predictionStartDate", "2026-10-21")
+                        .put("predictionEndDate", "2026-10-21").put("modelVersion", "hotspot-simple-v1")
+                        .put("datasetSource", "REAL").put("predictionSource", "MODEL")
+                        .put("asOf", clock.instant().toString()).put("handlingHours", 24);
+                var items = data.putArray("items");
+                for (int i = 1; i <= 10; i++) items.addObject().put("rank", i).put("fileKey", "easinote/top-" + i)
+                        .put("predictedBytes", String.valueOf(100 - i)).put("compressionStatus", "PENDING")
+                        .put("dueAt", "2026-10-20T16:00:00Z");
+                node.putArray("reasonCodes");
+            }
             else {node.putObject("data").put("predictedBytes","100").put("predictionSource","MOCK"); node.putArray("reasonCodes");}
             return node;
         }
@@ -191,7 +241,13 @@ class AgentServiceTest {
         public ObjectNode updateConfig(String appId,JsonNode body){throw new UnsupportedOperationException();}
         public List<String> configuredApps(){return List.of();}
         public ObjectNode run(String appId,String runId,LocalDate date,int horizon){throw new UnsupportedOperationException();}
-        public ObjectNode pending(String appId,String runId,String source){throw new UnsupportedOperationException();}
+        public ObjectNode pending(String appId,String runId,String source){
+            var result=mapper.createObjectNode().put("appId",appId).put("runId",runId);
+            var items=result.putArray("items");
+            for(int i=1;i<=5;i++)items.addObject().put("rank",i).put("fileKey","easinote/top-"+i)
+                    .put("predictedBytes",String.valueOf(100-i)).put("compressionStatus","PENDING");
+            return result;
+        }
         public ObjectNode overdue(String appId,String runId,String source){throw new UnsupportedOperationException();}
         public ObjectNode suggestion(String appId,int horizon,String backtestId){throw new UnsupportedOperationException();}
     }

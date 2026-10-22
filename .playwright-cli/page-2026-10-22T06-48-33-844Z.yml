@@ -1,0 +1,687 @@
+- generic [ref=f5e3]:
+  - link "跳到主内容" [ref=f5e4] [cursor=pointer]:
+    - /url: "#main-content"
+  - banner [ref=f5e5]:
+    - link "CDN 系统首页" [ref=f5e6] [cursor=pointer]:
+      - /url: /overview
+      - generic [ref=f5e12]: CDN 热点文件动态预测与压缩降本系统
+    - generic [ref=f5e13]:
+      - generic "全局 AppID 切换" [ref=f5e14]:
+        - generic [ref=f5e15]: AppID
+        - combobox "AppID" [ref=f5e16] [cursor=pointer]:
+          - option "10350" [selected]
+          - option "10066"
+      - generic [ref=f5e17]: 本地前端预览
+      - button "界面说明" [ref=f5e19] [cursor=pointer]
+      - generic [ref=f5e23]: UI
+      - generic [ref=f5e24]: 预览工作台
+  - complementary [ref=f5e25]:
+    - generic [ref=f5e26]:
+      - text: 运营工作台
+      - generic [ref=f5e27]: WORKSPACE
+    - navigation "主导航" [ref=f5e28]:
+      - link "业务总览" [ref=f5e29] [cursor=pointer]:
+        - /url: /overview
+      - link "热点预测" [ref=f5e33] [cursor=pointer]:
+        - /url: /prediction
+      - link "模型回测" [ref=f5e37] [cursor=pointer]:
+        - /url: /backtest
+      - link "压缩降本" [ref=f5e41] [cursor=pointer]:
+        - /url: /compression
+      - link "通知中心" [ref=f5e46] [cursor=pointer]:
+        - /url: /notifications
+      - link "智能 Agent" [ref=f5e50] [cursor=pointer]:
+        - /url: /agent
+    - generic [ref=f5e54]:
+      - strong [ref=f5e59]: 从热点洞察到降本决策
+      - generic [ref=f5e60]: CDN OPERATIONS CONSOLE
+      - generic [ref=f5e61]: 业务工作台
+  - main [ref=f5e62]:
+    - generic [ref=f5e63]:
+      - generic [ref=f5e64]: 工作台
+      - strong [ref=f5e67]: 压缩降本决策
+      - generic [ref=f5e68]: CDN 流量运营
+    - generic [ref=f5e69]:
+      - generic [ref=f5e70]:
+        - generic [ref=f5e71]:
+          - heading "压缩降本决策" [level=1] [ref=f5e72]
+          - paragraph [ref=f5e73]: 从真实 Top50 运行登记处理结果；预测收益、测试证据和实际账单收益分开呈现。
+        - generic "压缩页面数据来源" [ref=f5e74]:
+          - button "真实业务" [ref=f5e75] [cursor=pointer]
+          - button "UI 演示" [ref=f5e76] [cursor=pointer]
+      - generic [ref=f5e77]:
+        - generic [ref=f5e78]:
+          - generic [ref=f5e79]: AppID
+          - combobox "AppID" [ref=f5e80] [cursor=pointer]:
+            - option "10350 · 内容分发" [selected]
+            - option "10066 · 应用资源"
+        - generic [ref=f5e81]:
+          - generic [ref=f5e82]: 处理状态
+          - combobox "处理状态" [ref=f5e83] [cursor=pointer]:
+            - option "全部状态" [selected]
+            - option "待处理"
+            - option "处理中"
+            - option "已压缩"
+        - generic [ref=f5e84]:
+          - button "日榜" [ref=f5e85] [cursor=pointer]
+          - button "周榜" [ref=f5e86] [cursor=pointer]
+        - button "刷新" [ref=f5e87] [cursor=pointer]
+      - generic [ref=f5e90]:
+        - generic [ref=f5e91]: App 10350 · 2026-10-14 — 2026-10-14 · hotspot-simple-v1
+        - generic [ref=f5e92]: run_80be590a82650e0b064a2897815ff621c6589765715baaab240460062164d7c6
+      - generic [ref=f5e93]:
+        - article [ref=f5e94]:
+          - generic [ref=f5e95]: 待压缩文件
+          - generic [ref=f5e100]: 50个
+          - generic [ref=f5e101]: 来自当前真实运行 Top50 与登记状态
+        - article [ref=f5e103]:
+          - generic [ref=f5e104]: 处理中
+          - generic [ref=f5e109]: 0个
+          - generic [ref=f5e110]: 已登记 PROCESSING
+        - article [ref=f5e112]:
+          - generic [ref=f5e113]: 已压缩
+          - generic [ref=f5e118]: 0个
+          - generic [ref=f5e119]: 已登记 COMPRESSED
+        - article [ref=f5e121]:
+          - generic [ref=f5e122]: 预测窗口累计
+          - generic [ref=f5e127]: 192 GB
+          - generic [ref=f5e128]: 仅当前运行 Top50，不等于实际节省
+        - article [ref=f5e130]:
+          - generic [ref=f5e131]: 实际账单降本
+          - generic [ref=f5e136]: 未验证
+          - generic [ref=f5e137]: NO_COMPRESSION_OBSERVATION
+      - generic [ref=f5e139]:
+        - generic [ref=f5e140]:
+          - generic [ref=f5e141]:
+            - heading "真实压缩候选与登记状态" [level=2] [ref=f5e142]
+            - paragraph [ref=f5e143]: 点击“登记/详情”进入文件详情；REAL 原大小需 CStore，无法取得时不得伪造。
+          - generic [ref=f5e144]: 50 条
+        - table [ref=f5e146]:
+          - rowgroup [ref=f5e147]:
+            - row [ref=f5e148]:
+              - columnheader "排名" [ref=f5e149]
+              - columnheader "FileKey" [ref=f5e150]
+              - columnheader "预测流量" [ref=f5e151]
+              - columnheader "处理状态" [ref=f5e152]
+              - columnheader "证据来源" [ref=f5e153]
+              - columnheader "处理人" [ref=f5e154]
+              - columnheader "操作" [ref=f5e155]
+          - rowgroup [ref=f5e156]:
+            - row [ref=f5e157]:
+              - cell "1" [ref=f5e158]
+              - cell "seewo-training/uwiwmulqhjvwnhlxhynixvyyyohhihhh.mp4 App · hotspot-simple-v1" [ref=f5e159]:
+                - generic "seewo-training/uwiwmulqhjvwnhlxhynixvyyyohhihhh.mp4" [ref=f5e160]
+                - generic [ref=f5e161]: App · hotspot-simple-v1
+              - cell "45.3 GB" [ref=f5e162]
+              - cell "待处理" [ref=f5e163]
+              - cell "未登记" [ref=f5e165]
+              - cell "—" [ref=f5e166]
+              - cell [ref=f5e167]:
+                - button "登记处理" [ref=f5e168] [cursor=pointer]
+            - row [ref=f5e169]:
+              - cell "2" [ref=f5e170]
+              - cell "seewo-training/uwiwvyqihjvwnhlxhynixvyminphihhh.mp4 App · hotspot-simple-v1" [ref=f5e171]:
+                - generic "seewo-training/uwiwvyqihjvwnhlxhynixvyminphihhh.mp4" [ref=f5e172]
+                - generic [ref=f5e173]: App · hotspot-simple-v1
+              - cell "18.3 GB" [ref=f5e174]
+              - cell "待处理" [ref=f5e175]
+              - cell "未登记" [ref=f5e177]
+              - cell "—" [ref=f5e178]
+              - cell [ref=f5e179]:
+                - button "登记处理" [ref=f5e180] [cursor=pointer]
+            - row [ref=f5e181]:
+              - cell "3" [ref=f5e182]
+              - cell "seewo-training/uwiwhvxwhjvwnhlxhynixvzoqophihhh.mp4 App · hotspot-simple-v1" [ref=f5e183]:
+                - generic "seewo-training/uwiwhvxwhjvwnhlxhynixvzoqophihhh.mp4" [ref=f5e184]
+                - generic [ref=f5e185]: App · hotspot-simple-v1
+              - cell "17.2 GB" [ref=f5e186]
+              - cell "待处理" [ref=f5e187]
+              - cell "未登记" [ref=f5e189]
+              - cell "—" [ref=f5e190]
+              - cell [ref=f5e191]:
+                - button "登记处理" [ref=f5e192] [cursor=pointer]
+            - row [ref=f5e193]:
+              - cell "4" [ref=f5e194]
+              - cell "seewo-training/uwiwwhqwhjvwnhlxhynloqzupzphihhh.mp4 App · hotspot-simple-v1" [ref=f5e195]:
+                - generic "seewo-training/uwiwwhqwhjvwnhlxhynloqzupzphihhh.mp4" [ref=f5e196]
+                - generic [ref=f5e197]: App · hotspot-simple-v1
+              - cell "11.6 GB" [ref=f5e198]
+              - cell "待处理" [ref=f5e199]
+              - cell "未登记" [ref=f5e201]
+              - cell "—" [ref=f5e202]
+              - cell [ref=f5e203]:
+                - button "登记处理" [ref=f5e204] [cursor=pointer]
+            - row [ref=f5e205]:
+              - cell "5" [ref=f5e206]
+              - cell "seewo-training/uwiwpomlhjvwnhlxhynhhknlwihhihhh.mp4 App · hotspot-simple-v1" [ref=f5e207]:
+                - generic "seewo-training/uwiwpomlhjvwnhlxhynhhknlwihhihhh.mp4" [ref=f5e208]
+                - generic [ref=f5e209]: App · hotspot-simple-v1
+              - cell "10.9 GB" [ref=f5e210]
+              - cell "待处理" [ref=f5e211]
+              - cell "未登记" [ref=f5e213]
+              - cell "—" [ref=f5e214]
+              - cell [ref=f5e215]:
+                - button "登记处理" [ref=f5e216] [cursor=pointer]
+            - row [ref=f5e217]:
+              - cell "6" [ref=f5e218]
+              - cell "seewo-training/uwiwmpkphjvwnhlxhyozykmluvhhihhh.mp4 App · hotspot-simple-v1" [ref=f5e219]:
+                - generic "seewo-training/uwiwmpkphjvwnhlxhyozykmluvhhihhh.mp4" [ref=f5e220]
+                - generic [ref=f5e221]: App · hotspot-simple-v1
+              - cell "9.4 GB" [ref=f5e222]
+              - cell "待处理" [ref=f5e223]
+              - cell "未登记" [ref=f5e225]
+              - cell "—" [ref=f5e226]
+              - cell [ref=f5e227]:
+                - button "登记处理" [ref=f5e228] [cursor=pointer]
+            - row [ref=f5e229]:
+              - cell "7" [ref=f5e230]
+              - cell "seewo-training/uwiwizvihjvwnhlxhymzvmhkvpphihhh.mp4 App · hotspot-simple-v1" [ref=f5e231]:
+                - generic "seewo-training/uwiwizvihjvwnhlxhymzvmhkvpphihhh.mp4" [ref=f5e232]
+                - generic [ref=f5e233]: App · hotspot-simple-v1
+              - cell "7.1 GB" [ref=f5e234]
+              - cell "待处理" [ref=f5e235]
+              - cell "未登记" [ref=f5e237]
+              - cell "—" [ref=f5e238]
+              - cell [ref=f5e239]:
+                - button "登记处理" [ref=f5e240] [cursor=pointer]
+            - row [ref=f5e241]:
+              - cell "8" [ref=f5e242]
+              - cell "seewo-training/uwiwnhqxhjvwnhlxhynlowkjnlhhihhh.mp4 App · hotspot-simple-v1" [ref=f5e243]:
+                - generic "seewo-training/uwiwnhqxhjvwnhlxhynlowkjnlhhihhh.mp4" [ref=f5e244]
+                - generic [ref=f5e245]: App · hotspot-simple-v1
+              - cell "6.7 GB" [ref=f5e246]
+              - cell "待处理" [ref=f5e247]
+              - cell "未登记" [ref=f5e249]
+              - cell "—" [ref=f5e250]
+              - cell [ref=f5e251]:
+                - button "登记处理" [ref=f5e252] [cursor=pointer]
+            - row [ref=f5e253]:
+              - cell "9" [ref=f5e254]
+              - cell "seewo-training/uwixjovhhjvwnhlxhymzuvlnovphihhh.mp4 App · hotspot-simple-v1" [ref=f5e255]:
+                - generic "seewo-training/uwixjovhhjvwnhlxhymzuvlnovphihhh.mp4" [ref=f5e256]
+                - generic [ref=f5e257]: App · hotspot-simple-v1
+              - cell "6.6 GB" [ref=f5e258]
+              - cell "待处理" [ref=f5e259]
+              - cell "未登记" [ref=f5e261]
+              - cell "—" [ref=f5e262]
+              - cell [ref=f5e263]:
+                - button "登记处理" [ref=f5e264] [cursor=pointer]
+            - row [ref=f5e265]:
+              - cell "10" [ref=f5e266]
+              - cell "seewo-training/uwiwizvihjvwnhlxhymzpjkijhphihhh.mp4 App · hotspot-simple-v1" [ref=f5e267]:
+                - generic "seewo-training/uwiwizvihjvwnhlxhymzpjkijhphihhh.mp4" [ref=f5e268]
+                - generic [ref=f5e269]: App · hotspot-simple-v1
+              - cell "6.4 GB" [ref=f5e270]
+              - cell "待处理" [ref=f5e271]
+              - cell "未登记" [ref=f5e273]
+              - cell "—" [ref=f5e274]
+              - cell [ref=f5e275]:
+                - button "登记处理" [ref=f5e276] [cursor=pointer]
+            - row [ref=f5e277]:
+              - cell "11" [ref=f5e278]
+              - cell "seewo-training/uwixizpxhjvwnhlxhymzvkqzppphihhh.mp4 App · hotspot-simple-v1" [ref=f5e279]:
+                - generic "seewo-training/uwixizpxhjvwnhlxhymzvkqzppphihhh.mp4" [ref=f5e280]
+                - generic [ref=f5e281]: App · hotspot-simple-v1
+              - cell "5.4 GB" [ref=f5e282]
+              - cell "待处理" [ref=f5e283]
+              - cell "未登记" [ref=f5e285]
+              - cell "—" [ref=f5e286]
+              - cell [ref=f5e287]:
+                - button "登记处理" [ref=f5e288] [cursor=pointer]
+            - row [ref=f5e289]:
+              - cell "12" [ref=f5e290]
+              - cell "seewo-training/uwiwlnunhjvwnhlxhymzwininqphihhh.mp4 App · hotspot-simple-v1" [ref=f5e291]:
+                - generic "seewo-training/uwiwlnunhjvwnhlxhymzwininqphihhh.mp4" [ref=f5e292]
+                - generic [ref=f5e293]: App · hotspot-simple-v1
+              - cell "5.0 GB" [ref=f5e294]
+              - cell "待处理" [ref=f5e295]
+              - cell "未登记" [ref=f5e297]
+              - cell "—" [ref=f5e298]
+              - cell [ref=f5e299]:
+                - button "登记处理" [ref=f5e300] [cursor=pointer]
+            - row [ref=f5e301]:
+              - cell "13" [ref=f5e302]
+              - cell "seewo-training/uwixjmmuhjvwnhlxhynixwhpxxhhihhh.mp4 App · hotspot-simple-v1" [ref=f5e303]:
+                - generic "seewo-training/uwixjmmuhjvwnhlxhynixwhpxxhhihhh.mp4" [ref=f5e304]
+                - generic [ref=f5e305]: App · hotspot-simple-v1
+              - cell "5.0 GB" [ref=f5e306]
+              - cell "待处理" [ref=f5e307]
+              - cell "未登记" [ref=f5e309]
+              - cell "—" [ref=f5e310]
+              - cell [ref=f5e311]:
+                - button "登记处理" [ref=f5e312] [cursor=pointer]
+            - row [ref=f5e313]:
+              - cell "14" [ref=f5e314]
+              - cell "seewo-training/uwiwkwqqhjvwnhlxhymzvqkhyyhhihhh.mp4 App · hotspot-simple-v1" [ref=f5e315]:
+                - generic "seewo-training/uwiwkwqqhjvwnhlxhymzvqkhyyhhihhh.mp4" [ref=f5e316]
+                - generic [ref=f5e317]: App · hotspot-simple-v1
+              - cell "4.8 GB" [ref=f5e318]
+              - cell "待处理" [ref=f5e319]
+              - cell "未登记" [ref=f5e321]
+              - cell "—" [ref=f5e322]
+              - cell [ref=f5e323]:
+                - button "登记处理" [ref=f5e324] [cursor=pointer]
+            - row [ref=f5e325]:
+              - cell "15" [ref=f5e326]
+              - cell "seewo-training/uwiwiqhphjvwnhlxhynlowkvqphhihhh.mp4 App · hotspot-simple-v1" [ref=f5e327]:
+                - generic "seewo-training/uwiwiqhphjvwnhlxhynlowkvqphhihhh.mp4" [ref=f5e328]
+                - generic [ref=f5e329]: App · hotspot-simple-v1
+              - cell "4.5 GB" [ref=f5e330]
+              - cell "待处理" [ref=f5e331]
+              - cell "未登记" [ref=f5e333]
+              - cell "—" [ref=f5e334]
+              - cell [ref=f5e335]:
+                - button "登记处理" [ref=f5e336] [cursor=pointer]
+            - row [ref=f5e337]:
+              - cell "16" [ref=f5e338]
+              - cell "seewo-training/uwiwlxkyhjvwnhlxhynhhumwljhhihhh.mp4 App · hotspot-simple-v1" [ref=f5e339]:
+                - generic "seewo-training/uwiwlxkyhjvwnhlxhynhhumwljhhihhh.mp4" [ref=f5e340]
+                - generic [ref=f5e341]: App · hotspot-simple-v1
+              - cell "4.3 GB" [ref=f5e342]
+              - cell "待处理" [ref=f5e343]
+              - cell "未登记" [ref=f5e345]
+              - cell "—" [ref=f5e346]
+              - cell [ref=f5e347]:
+                - button "登记处理" [ref=f5e348] [cursor=pointer]
+            - row [ref=f5e349]:
+              - cell "17" [ref=f5e350]
+              - cell "seewo-training/uwiwkznxhjvwnhlxhynixvzzxiphihhh.mp4 App · hotspot-simple-v1" [ref=f5e351]:
+                - generic "seewo-training/uwiwkznxhjvwnhlxhynixvzzxiphihhh.mp4" [ref=f5e352]
+                - generic [ref=f5e353]: App · hotspot-simple-v1
+              - cell "3.8 GB" [ref=f5e354]
+              - cell "待处理" [ref=f5e355]
+              - cell "未登记" [ref=f5e357]
+              - cell "—" [ref=f5e358]
+              - cell [ref=f5e359]:
+                - button "登记处理" [ref=f5e360] [cursor=pointer]
+            - row [ref=f5e361]:
+              - cell "18" [ref=f5e362]
+              - cell "seewo-training/uwiwkhojhjvwnhlxhymzuipomnhhihhh.mp4 App · hotspot-simple-v1" [ref=f5e363]:
+                - generic "seewo-training/uwiwkhojhjvwnhlxhymzuipomnhhihhh.mp4" [ref=f5e364]
+                - generic [ref=f5e365]: App · hotspot-simple-v1
+              - cell "3.3 GB" [ref=f5e366]
+              - cell "待处理" [ref=f5e367]
+              - cell "未登记" [ref=f5e369]
+              - cell "—" [ref=f5e370]
+              - cell [ref=f5e371]:
+                - button "登记处理" [ref=f5e372] [cursor=pointer]
+            - row [ref=f5e373]:
+              - cell "19" [ref=f5e374]
+              - cell "seewo-training/uwixinqihjvwnhlxhymzxxkonjphihhh.mp4 App · hotspot-simple-v1" [ref=f5e375]:
+                - generic "seewo-training/uwixinqihjvwnhlxhymzxxkonjphihhh.mp4" [ref=f5e376]
+                - generic [ref=f5e377]: App · hotspot-simple-v1
+              - cell "3.2 GB" [ref=f5e378]
+              - cell "待处理" [ref=f5e379]
+              - cell "未登记" [ref=f5e381]
+              - cell "—" [ref=f5e382]
+              - cell [ref=f5e383]:
+                - button "登记处理" [ref=f5e384] [cursor=pointer]
+            - row [ref=f5e385]:
+              - cell "20" [ref=f5e386]
+              - cell "seewo-training/uwixinqihjvwnhlxhymzyxzhwxphihhh.mp4 App · hotspot-simple-v1" [ref=f5e387]:
+                - generic "seewo-training/uwixinqihjvwnhlxhymzyxzhwxphihhh.mp4" [ref=f5e388]
+                - generic [ref=f5e389]: App · hotspot-simple-v1
+              - cell "3.0 GB" [ref=f5e390]
+              - cell "待处理" [ref=f5e391]
+              - cell "未登记" [ref=f5e393]
+              - cell "—" [ref=f5e394]
+              - cell [ref=f5e395]:
+                - button "登记处理" [ref=f5e396] [cursor=pointer]
+            - row [ref=f5e397]:
+              - cell "21" [ref=f5e398]
+              - cell "seewo-training/uwiwloowhjvwnhlxhymzxjilvhhhihhh.mp4 App · hotspot-simple-v1" [ref=f5e399]:
+                - generic "seewo-training/uwiwloowhjvwnhlxhymzxjilvhhhihhh.mp4" [ref=f5e400]
+                - generic [ref=f5e401]: App · hotspot-simple-v1
+              - cell "2.3 GB" [ref=f5e402]
+              - cell "待处理" [ref=f5e403]
+              - cell "未登记" [ref=f5e405]
+              - cell "—" [ref=f5e406]
+              - cell [ref=f5e407]:
+                - button "登记处理" [ref=f5e408] [cursor=pointer]
+            - row [ref=f5e409]:
+              - cell "22" [ref=f5e410]
+              - cell "seewo-training/uwiwlzpnhjvwnhlxhynhmullxhphihhh.mp4 App · hotspot-simple-v1" [ref=f5e411]:
+                - generic "seewo-training/uwiwlzpnhjvwnhlxhynhmullxhphihhh.mp4" [ref=f5e412]
+                - generic [ref=f5e413]: App · hotspot-simple-v1
+              - cell "2.0 GB" [ref=f5e414]
+              - cell "待处理" [ref=f5e415]
+              - cell "未登记" [ref=f5e417]
+              - cell "—" [ref=f5e418]
+              - cell [ref=f5e419]:
+                - button "登记处理" [ref=f5e420] [cursor=pointer]
+            - row [ref=f5e421]:
+              - cell "23" [ref=f5e422]
+              - cell "seewo-training/uwiwlqqyhjvwnhlxhynhhlwquzphihhh.mp4 App · hotspot-simple-v1" [ref=f5e423]:
+                - generic "seewo-training/uwiwlqqyhjvwnhlxhynhhlwquzphihhh.mp4" [ref=f5e424]
+                - generic [ref=f5e425]: App · hotspot-simple-v1
+              - cell "1.2 GB" [ref=f5e426]
+              - cell "待处理" [ref=f5e427]
+              - cell "未登记" [ref=f5e429]
+              - cell "—" [ref=f5e430]
+              - cell [ref=f5e431]:
+                - button "登记处理" [ref=f5e432] [cursor=pointer]
+            - row [ref=f5e433]:
+              - cell "24" [ref=f5e434]
+              - cell "seewo-training/uwiwkhojhjvwnhlxhymzwjwmxqphihhh.mp4 App · hotspot-simple-v1" [ref=f5e435]:
+                - generic "seewo-training/uwiwkhojhjvwnhlxhymzwjwmxqphihhh.mp4" [ref=f5e436]
+                - generic [ref=f5e437]: App · hotspot-simple-v1
+              - cell "1.1 GB" [ref=f5e438]
+              - cell "待处理" [ref=f5e439]
+              - cell "未登记" [ref=f5e441]
+              - cell "—" [ref=f5e442]
+              - cell [ref=f5e443]:
+                - button "登记处理" [ref=f5e444] [cursor=pointer]
+            - row [ref=f5e445]:
+              - cell "25" [ref=f5e446]
+              - cell "seewo-training/uwiwplwqhjvwnhlxhynlouojmuhhihhh.mp4 App · hotspot-simple-v1" [ref=f5e447]:
+                - generic "seewo-training/uwiwplwqhjvwnhlxhynlouojmuhhihhh.mp4" [ref=f5e448]
+                - generic [ref=f5e449]: App · hotspot-simple-v1
+              - cell "908 MB" [ref=f5e450]
+              - cell "待处理" [ref=f5e451]
+              - cell "未登记" [ref=f5e453]
+              - cell "—" [ref=f5e454]
+              - cell [ref=f5e455]:
+                - button "登记处理" [ref=f5e456] [cursor=pointer]
+            - row [ref=f5e457]:
+              - cell "26" [ref=f5e458]
+              - cell "seewo-training/uwiwlqqyhjvwnhlxhynhhoqjxwhhihhh.mp4 App · hotspot-simple-v1" [ref=f5e459]:
+                - generic "seewo-training/uwiwlqqyhjvwnhlxhynhhoqjxwhhihhh.mp4" [ref=f5e460]
+                - generic [ref=f5e461]: App · hotspot-simple-v1
+              - cell "768 MB" [ref=f5e462]
+              - cell "待处理" [ref=f5e463]
+              - cell "未登记" [ref=f5e465]
+              - cell "—" [ref=f5e466]
+              - cell [ref=f5e467]:
+                - button "登记处理" [ref=f5e468] [cursor=pointer]
+            - row [ref=f5e469]:
+              - cell "27" [ref=f5e470]
+              - cell "seewo-training/uwiwijxvhjvwnhlxhymzzuovwzphihhh.mp4 App · hotspot-simple-v1" [ref=f5e471]:
+                - generic "seewo-training/uwiwijxvhjvwnhlxhymzzuovwzphihhh.mp4" [ref=f5e472]
+                - generic [ref=f5e473]: App · hotspot-simple-v1
+              - cell "577 MB" [ref=f5e474]
+              - cell "待处理" [ref=f5e475]
+              - cell "未登记" [ref=f5e477]
+              - cell "—" [ref=f5e478]
+              - cell [ref=f5e479]:
+                - button "登记处理" [ref=f5e480] [cursor=pointer]
+            - row [ref=f5e481]:
+              - cell "28" [ref=f5e482]
+              - cell "seewo-training/uwiwxmzhhjvwnhlxhynzqzknynphihhh.mp4 App · hotspot-simple-v1" [ref=f5e483]:
+                - generic "seewo-training/uwiwxmzhhjvwnhlxhynzqzknynphihhh.mp4" [ref=f5e484]
+                - generic [ref=f5e485]: App · hotspot-simple-v1
+              - cell "528 MB" [ref=f5e486]
+              - cell "待处理" [ref=f5e487]
+              - cell "未登记" [ref=f5e489]
+              - cell "—" [ref=f5e490]
+              - cell [ref=f5e491]:
+                - button "登记处理" [ref=f5e492] [cursor=pointer]
+            - row [ref=f5e493]:
+              - cell "29" [ref=f5e494]
+              - cell "seewo-training/uwiwykuohjvwnhlxhymzzlypyqphihhh.mp4 App · hotspot-simple-v1" [ref=f5e495]:
+                - generic "seewo-training/uwiwykuohjvwnhlxhymzzlypyqphihhh.mp4" [ref=f5e496]
+                - generic [ref=f5e497]: App · hotspot-simple-v1
+              - cell "508 MB" [ref=f5e498]
+              - cell "待处理" [ref=f5e499]
+              - cell "未登记" [ref=f5e501]
+              - cell "—" [ref=f5e502]
+              - cell [ref=f5e503]:
+                - button "登记处理" [ref=f5e504] [cursor=pointer]
+            - row [ref=f5e505]:
+              - cell "30" [ref=f5e506]
+              - cell "seewo-training/uwiwmizyhjvwnhlxhynyyxqoxpphihhh.mp4 App · hotspot-simple-v1" [ref=f5e507]:
+                - generic "seewo-training/uwiwmizyhjvwnhlxhynyyxqoxpphihhh.mp4" [ref=f5e508]
+                - generic [ref=f5e509]: App · hotspot-simple-v1
+              - cell "483 MB" [ref=f5e510]
+              - cell "待处理" [ref=f5e511]
+              - cell "未登记" [ref=f5e513]
+              - cell "—" [ref=f5e514]
+              - cell [ref=f5e515]:
+                - button "登记处理" [ref=f5e516] [cursor=pointer]
+            - row [ref=f5e517]:
+              - cell "31" [ref=f5e518]
+              - cell "seewo-training/uwiwkipqhjvwnhlxhymzxunyqyhhihhh.mp4 App · hotspot-simple-v1" [ref=f5e519]:
+                - generic "seewo-training/uwiwkipqhjvwnhlxhymzxunyqyhhihhh.mp4" [ref=f5e520]
+                - generic [ref=f5e521]: App · hotspot-simple-v1
+              - cell "69.7 MB" [ref=f5e522]
+              - cell "待处理" [ref=f5e523]
+              - cell "未登记" [ref=f5e525]
+              - cell "—" [ref=f5e526]
+              - cell [ref=f5e527]:
+                - button "登记处理" [ref=f5e528] [cursor=pointer]
+            - row [ref=f5e529]:
+              - cell "32" [ref=f5e530]
+              - cell "seewo-training/uwiwmwqlhjvwnhlxhymzymqlihphihhh.mp4 App · hotspot-simple-v1" [ref=f5e531]:
+                - generic "seewo-training/uwiwmwqlhjvwnhlxhymzymqlihphihhh.mp4" [ref=f5e532]
+                - generic [ref=f5e533]: App · hotspot-simple-v1
+              - cell "44.5 MB" [ref=f5e534]
+              - cell "待处理" [ref=f5e535]
+              - cell "未登记" [ref=f5e537]
+              - cell "—" [ref=f5e538]
+              - cell [ref=f5e539]:
+                - button "登记处理" [ref=f5e540] [cursor=pointer]
+            - row [ref=f5e541]:
+              - cell "33" [ref=f5e542]
+              - cell "seewo-training/uwiwhzwihjvwnhlxhynhljizkuphihhh.mp4 App · hotspot-simple-v1" [ref=f5e543]:
+                - generic "seewo-training/uwiwhzwihjvwnhlxhynhljizkuphihhh.mp4" [ref=f5e544]
+                - generic [ref=f5e545]: App · hotspot-simple-v1
+              - cell "40.0 MB" [ref=f5e546]
+              - cell "待处理" [ref=f5e547]
+              - cell "未登记" [ref=f5e549]
+              - cell "—" [ref=f5e550]
+              - cell [ref=f5e551]:
+                - button "登记处理" [ref=f5e552] [cursor=pointer]
+            - row [ref=f5e553]:
+              - cell "34" [ref=f5e554]
+              - cell "seewo-training/uwiwhzwihjvwnhlxhymzxyqvvnphihhh.mp4 App · hotspot-simple-v1" [ref=f5e555]:
+                - generic "seewo-training/uwiwhzwihjvwnhlxhymzxyqvvnphihhh.mp4" [ref=f5e556]
+                - generic [ref=f5e557]: App · hotspot-simple-v1
+              - cell "36.5 MB" [ref=f5e558]
+              - cell "待处理" [ref=f5e559]
+              - cell "未登记" [ref=f5e561]
+              - cell "—" [ref=f5e562]
+              - cell [ref=f5e563]:
+                - button "登记处理" [ref=f5e564] [cursor=pointer]
+            - row [ref=f5e565]:
+              - cell "35" [ref=f5e566]
+              - cell "seewo-training/uwixiyonhjvwnhlxhynjioxhwxphihhh.mp4 App · hotspot-simple-v1" [ref=f5e567]:
+                - generic "seewo-training/uwixiyonhjvwnhlxhynjioxhwxphihhh.mp4" [ref=f5e568]
+                - generic [ref=f5e569]: App · hotspot-simple-v1
+              - cell "14.8 MB" [ref=f5e570]
+              - cell "待处理" [ref=f5e571]
+              - cell "未登记" [ref=f5e573]
+              - cell "—" [ref=f5e574]
+              - cell [ref=f5e575]:
+                - button "登记处理" [ref=f5e576] [cursor=pointer]
+            - row [ref=f5e577]:
+              - cell "36" [ref=f5e578]
+              - cell "seewo-training/uwixjovhhjvwnhlxhynhmlvkuphhihhh.mp4 App · hotspot-simple-v1" [ref=f5e579]:
+                - generic "seewo-training/uwixjovhhjvwnhlxhynhmlvkuphhihhh.mp4" [ref=f5e580]
+                - generic [ref=f5e581]: App · hotspot-simple-v1
+              - cell "12.5 MB" [ref=f5e582]
+              - cell "待处理" [ref=f5e583]
+              - cell "未登记" [ref=f5e585]
+              - cell "—" [ref=f5e586]
+              - cell [ref=f5e587]:
+                - button "登记处理" [ref=f5e588] [cursor=pointer]
+            - row [ref=f5e589]:
+              - cell "37" [ref=f5e590]
+              - cell "seewo-training/uwiwqooyhjvwnhlxhynjjhviuwhhihhh.mp4 App · hotspot-simple-v1" [ref=f5e591]:
+                - generic "seewo-training/uwiwqooyhjvwnhlxhynjjhviuwhhihhh.mp4" [ref=f5e592]
+                - generic [ref=f5e593]: App · hotspot-simple-v1
+              - cell "10.1 MB" [ref=f5e594]
+              - cell "待处理" [ref=f5e595]
+              - cell "未登记" [ref=f5e597]
+              - cell "—" [ref=f5e598]
+              - cell [ref=f5e599]:
+                - button "登记处理" [ref=f5e600] [cursor=pointer]
+            - row [ref=f5e601]:
+              - cell "38" [ref=f5e602]
+              - cell "seewo-training/uwiwvwnqhjvwnhlxhynhmpyhophhihhh.mp4 App · hotspot-simple-v1" [ref=f5e603]:
+                - generic "seewo-training/uwiwvwnqhjvwnhlxhynhmpyhophhihhh.mp4" [ref=f5e604]
+                - generic [ref=f5e605]: App · hotspot-simple-v1
+              - cell "9.3 MB" [ref=f5e606]
+              - cell "待处理" [ref=f5e607]
+              - cell "未登记" [ref=f5e609]
+              - cell "—" [ref=f5e610]
+              - cell [ref=f5e611]:
+                - button "登记处理" [ref=f5e612] [cursor=pointer]
+            - row [ref=f5e613]:
+              - cell "39" [ref=f5e614]
+              - cell "seewo-training/uwiwlqqyhjvwnhlxhynhllvjnwhhihhh.mp4 App · hotspot-simple-v1" [ref=f5e615]:
+                - generic "seewo-training/uwiwlqqyhjvwnhlxhynhllvjnwhhihhh.mp4" [ref=f5e616]
+                - generic [ref=f5e617]: App · hotspot-simple-v1
+              - cell "7.7 MB" [ref=f5e618]
+              - cell "待处理" [ref=f5e619]
+              - cell "未登记" [ref=f5e621]
+              - cell "—" [ref=f5e622]
+              - cell [ref=f5e623]:
+                - button "登记处理" [ref=f5e624] [cursor=pointer]
+            - row [ref=f5e625]:
+              - cell "40" [ref=f5e626]
+              - cell "seewo-training/uwiwnhqxhjvwnhlxhynozymnniphihhh.mp4 App · hotspot-simple-v1" [ref=f5e627]:
+                - generic "seewo-training/uwiwnhqxhjvwnhlxhynozymnniphihhh.mp4" [ref=f5e628]
+                - generic [ref=f5e629]: App · hotspot-simple-v1
+              - cell "4.2 MB" [ref=f5e630]
+              - cell "待处理" [ref=f5e631]
+              - cell "未登记" [ref=f5e633]
+              - cell "—" [ref=f5e634]
+              - cell [ref=f5e635]:
+                - button "登记处理" [ref=f5e636] [cursor=pointer]
+            - row [ref=f5e637]:
+              - cell "41" [ref=f5e638]
+              - cell "seewo-training/uwiwplwqhjvwnhlxhynjiowlmjhhihhh.mp4 App · hotspot-simple-v1" [ref=f5e639]:
+                - generic "seewo-training/uwiwplwqhjvwnhlxhynjiowlmjhhihhh.mp4" [ref=f5e640]
+                - generic [ref=f5e641]: App · hotspot-simple-v1
+              - cell "4.0 MB" [ref=f5e642]
+              - cell "待处理" [ref=f5e643]
+              - cell "未登记" [ref=f5e645]
+              - cell "—" [ref=f5e646]
+              - cell [ref=f5e647]:
+                - button "登记处理" [ref=f5e648] [cursor=pointer]
+            - row [ref=f5e649]:
+              - cell "42" [ref=f5e650]
+              - cell "seewo-training/uwiyoylohkkhnhoxhyumiqionphhihhh App · hotspot-simple-v1" [ref=f5e651]:
+                - generic "seewo-training/uwiyoylohkkhnhoxhyumiqionphhihhh" [ref=f5e652]
+                - generic [ref=f5e653]: App · hotspot-simple-v1
+              - cell "3.5 MB" [ref=f5e654]
+              - cell "待处理" [ref=f5e655]
+              - cell "未登记" [ref=f5e657]
+              - cell "—" [ref=f5e658]
+              - cell [ref=f5e659]:
+                - button "登记处理" [ref=f5e660] [cursor=pointer]
+            - row [ref=f5e661]:
+              - cell "43" [ref=f5e662]
+              - cell "seewo-training/uwiwlqqyhjvwnhlxhymzylhjpkhhihhh.mp4 App · hotspot-simple-v1" [ref=f5e663]:
+                - generic "seewo-training/uwiwlqqyhjvwnhlxhymzylhjpkhhihhh.mp4" [ref=f5e664]
+                - generic [ref=f5e665]: App · hotspot-simple-v1
+              - cell "2.9 MB" [ref=f5e666]
+              - cell "待处理" [ref=f5e667]
+              - cell "未登记" [ref=f5e669]
+              - cell "—" [ref=f5e670]
+              - cell [ref=f5e671]:
+                - button "登记处理" [ref=f5e672] [cursor=pointer]
+            - row [ref=f5e673]:
+              - cell "44" [ref=f5e674]
+              - cell "seewo-training/uwiwqonuhjvwnhlxhynhpuzuxjphihhh.mp4 App · hotspot-simple-v1" [ref=f5e675]:
+                - generic "seewo-training/uwiwqonuhjvwnhlxhynhpuzuxjphihhh.mp4" [ref=f5e676]
+                - generic [ref=f5e677]: App · hotspot-simple-v1
+              - cell "2.8 MB" [ref=f5e678]
+              - cell "待处理" [ref=f5e679]
+              - cell "未登记" [ref=f5e681]
+              - cell "—" [ref=f5e682]
+              - cell [ref=f5e683]:
+                - button "登记处理" [ref=f5e684] [cursor=pointer]
+            - row [ref=f5e685]:
+              - cell "45" [ref=f5e686]
+              - cell "seewo-training/uwiwqmoxhjvwnhlxhymzvhxokzhhihhh.mp4 App · hotspot-simple-v1" [ref=f5e687]:
+                - generic "seewo-training/uwiwqmoxhjvwnhlxhymzvhxokzhhihhh.mp4" [ref=f5e688]
+                - generic [ref=f5e689]: App · hotspot-simple-v1
+              - cell "2.5 MB" [ref=f5e690]
+              - cell "待处理" [ref=f5e691]
+              - cell "未登记" [ref=f5e693]
+              - cell "—" [ref=f5e694]
+              - cell [ref=f5e695]:
+                - button "登记处理" [ref=f5e696] [cursor=pointer]
+            - row [ref=f5e697]:
+              - cell "46" [ref=f5e698]
+              - cell "seewo-training/uwiwlnunhjvwnhlxhymzupowkpphihhh.mp4 App · hotspot-simple-v1" [ref=f5e699]:
+                - generic "seewo-training/uwiwlnunhjvwnhlxhymzupowkpphihhh.mp4" [ref=f5e700]
+                - generic [ref=f5e701]: App · hotspot-simple-v1
+              - cell "2.3 MB" [ref=f5e702]
+              - cell "待处理" [ref=f5e703]
+              - cell "未登记" [ref=f5e705]
+              - cell "—" [ref=f5e706]
+              - cell [ref=f5e707]:
+                - button "登记处理" [ref=f5e708] [cursor=pointer]
+            - row [ref=f5e709]:
+              - cell "47" [ref=f5e710]
+              - cell "seewo-training/uwiyoylohkkhnhoxhyumiqmqjxphihhh App · hotspot-simple-v1" [ref=f5e711]:
+                - generic "seewo-training/uwiyoylohkkhnhoxhyumiqmqjxphihhh" [ref=f5e712]
+                - generic [ref=f5e713]: App · hotspot-simple-v1
+              - cell "1.4 MB" [ref=f5e714]
+              - cell "待处理" [ref=f5e715]
+              - cell "未登记" [ref=f5e717]
+              - cell "—" [ref=f5e718]
+              - cell [ref=f5e719]:
+                - button "登记处理" [ref=f5e720] [cursor=pointer]
+            - row [ref=f5e721]:
+              - cell "48" [ref=f5e722]
+              - cell "seewo-training/uwiynwvlhkkhnhoxhmoxwqvwxihhihhh App · hotspot-simple-v1" [ref=f5e723]:
+                - generic "seewo-training/uwiynwvlhkkhnhoxhmoxwqvwxihhihhh" [ref=f5e724]
+                - generic [ref=f5e725]: App · hotspot-simple-v1
+              - cell "712 KB" [ref=f5e726]
+              - cell "待处理" [ref=f5e727]
+              - cell "未登记" [ref=f5e729]
+              - cell "—" [ref=f5e730]
+              - cell [ref=f5e731]:
+                - button "登记处理" [ref=f5e732] [cursor=pointer]
+            - row [ref=f5e733]:
+              - cell "49" [ref=f5e734]
+              - cell "seewo-training/uwiyoylohkkhnhoxhyumimyjzyhhihhh App · hotspot-simple-v1" [ref=f5e735]:
+                - generic "seewo-training/uwiyoylohkkhnhoxhyumimyjzyhhihhh" [ref=f5e736]
+                - generic [ref=f5e737]: App · hotspot-simple-v1
+              - cell "526 KB" [ref=f5e738]
+              - cell "待处理" [ref=f5e739]
+              - cell "未登记" [ref=f5e741]
+              - cell "—" [ref=f5e742]
+              - cell [ref=f5e743]:
+                - button "登记处理" [ref=f5e744] [cursor=pointer]
+            - row [ref=f5e745]:
+              - cell "50" [ref=f5e746]
+              - cell "seewo-training/uwiynilwhkkhnhoxhmoxwqvymzphihhh App · hotspot-simple-v1" [ref=f5e747]:
+                - generic "seewo-training/uwiynilwhkkhnhoxhmoxwqvymzphihhh" [ref=f5e748]
+                - generic [ref=f5e749]: App · hotspot-simple-v1
+              - cell "499 KB" [ref=f5e750]
+              - cell "待处理" [ref=f5e751]
+              - cell "未登记" [ref=f5e753]
+              - cell "—" [ref=f5e754]
+              - cell [ref=f5e755]:
+                - button "登记处理" [ref=f5e756] [cursor=pointer]
+        - generic [ref=f5e757]:
+          - generic [ref=f5e758]: 预测总额与实际节省独立；压缩率与收益未凭空估算。
+          - generic [ref=f5e759]: run_80be590a82650e0b064a2897815ff621c6589765715baaab240460062164d7c6
+      - generic [ref=f5e760]:
+        - generic [ref=f5e761]:
+          - generic [ref=f5e762]:
+            - heading "从推荐到效果追踪" [level=2] [ref=f5e763]
+            - generic [ref=f5e764]: 真实流程
+          - generic [ref=f5e765]:
+            - generic [ref=f5e766]:
+              - generic [ref=f5e767]: "1"
+              - strong [ref=f5e768]: 真实 Top50
+              - generic [ref=f5e769]: runId 对应快照
+            - generic [ref=f5e772]:
+              - generic [ref=f5e773]: "2"
+              - strong [ref=f5e774]: 登记处理证据
+              - generic [ref=f5e775]: REAL 或显式 TEST
+            - generic [ref=f5e778]:
+              - generic [ref=f5e779]: "3"
+              - strong [ref=f5e780]: 成熟观测
+              - generic [ref=f5e781]: 实际效果与账单
+        - generic [ref=f5e785]:
+          - heading "收益证据边界" [level=3] [ref=f5e786]
+          - paragraph [ref=f5e787]: 当前尚未登记效果观测，实际节省金额保持未验证。
+          - generic [ref=f5e788]: 真实账单降本未验证
+    - generic [ref=f5e789]:
+      - text: CDN 热点预测与压缩降本系统
+      - generic [ref=f5e790]: 界面样例与接口数据均标明来源

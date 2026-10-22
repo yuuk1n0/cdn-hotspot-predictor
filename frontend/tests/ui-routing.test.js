@@ -21,7 +21,7 @@ test('root defaults to overview, with notification center and one current naviga
     assert.equal(router.currentRoute.value.name,expected)
     const html=await renderToString(createSSRApp(App).use(router))
     assert.ok(html.includes(`data-page="${expected}"`))
-    const nav=html.match(/<nav aria-label="主导航">([\s\S]*?)<\/nav>/)?.[1]
+    const nav=html.match(/<nav aria-label="主导航"[^>]*>([\s\S]*?)<\/nav>/)?.[1]
     assert.ok(nav)
     assert.equal((nav.match(/href=/g)||[]).length,6)
     assert.equal((nav.match(/aria-current="page"/g)||[]).length,1)
@@ -35,7 +35,7 @@ test('legacy task and run links keep query identifiers and enter the existing AP
     await router.push(path)
     assert.equal(router.currentRoute.value.path,'/prediction')
     const html=await renderToString(createSSRApp(App).use(router))
-    assert.ok(html.includes('已有接口功能'))
+    assert.ok(html.includes('导入数据与发起新的真实预测任务'))
     assert.ok(html.includes('CSV 上传'))
     assert.equal(router.currentRoute.value.fullPath,path.replace(/^\//,'/prediction'))
   }

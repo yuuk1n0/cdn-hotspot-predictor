@@ -1,0 +1,132 @@
+- generic [ref=f5e3]:
+  - link "跳到主内容" [ref=f5e4] [cursor=pointer]:
+    - /url: "#main-content"
+  - banner [ref=f5e5]:
+    - link "CDN 系统首页" [ref=f5e6] [cursor=pointer]:
+      - /url: /overview
+      - generic [ref=f5e12]: CDN 热点文件动态预测与压缩降本系统
+    - generic [ref=f5e13]:
+      - generic "全局 AppID 切换" [ref=f5e14]:
+        - generic [ref=f5e15]: AppID
+        - combobox "AppID" [ref=f5e16] [cursor=pointer]:
+          - option "10350"
+          - option "10066" [selected]
+      - generic [ref=f5e17]: 本地前端预览
+      - button "界面说明" [ref=f5e19] [cursor=pointer]
+      - generic [ref=f5e23]: UI
+      - generic [ref=f5e24]: 预览工作台
+  - complementary [ref=f5e25]:
+    - generic [ref=f5e26]:
+      - text: 运营工作台
+      - generic [ref=f5e27]: WORKSPACE
+    - navigation "主导航" [ref=f5e28]:
+      - link "业务总览" [ref=f5e29] [cursor=pointer]:
+        - /url: /overview
+      - link "热点预测" [ref=f5e33] [cursor=pointer]:
+        - /url: /prediction
+      - link "模型回测" [ref=f5e37] [cursor=pointer]:
+        - /url: /backtest
+      - link "压缩降本" [ref=f5e41] [cursor=pointer]:
+        - /url: /compression
+      - link "通知中心" [ref=f5e46] [cursor=pointer]:
+        - /url: /notifications
+      - link "智能 Agent" [ref=f5e50] [cursor=pointer]:
+        - /url: /agent
+    - generic [ref=f5e54]:
+      - strong [ref=f5e59]: 从热点洞察到降本决策
+      - generic [ref=f5e60]: CDN OPERATIONS CONSOLE
+      - generic [ref=f5e61]: 业务工作台
+  - main [ref=f5e62]:
+    - generic [ref=f5e63]:
+      - generic [ref=f5e64]: 工作台
+      - strong [ref=f5e67]: 压缩降本决策
+      - generic [ref=f5e68]: CDN 流量运营
+    - generic [ref=f5e69]:
+      - generic [ref=f5e70]:
+        - generic [ref=f5e71]:
+          - heading "压缩降本决策" [level=1] [ref=f5e72]
+          - paragraph [ref=f5e73]: 从真实 Top50 运行登记处理结果；预测收益、测试证据和实际账单收益分开呈现。
+        - generic "压缩页面数据来源" [ref=f5e74]:
+          - button "真实业务" [ref=f5e75] [cursor=pointer]
+          - button "UI 演示" [ref=f5e76] [cursor=pointer]
+      - generic [ref=f5e77]:
+        - generic [ref=f5e78]:
+          - generic [ref=f5e79]: AppID
+          - combobox "AppID" [ref=f5e80] [cursor=pointer]:
+            - option "10350 · 内容分发"
+            - option "10066 · 应用资源" [selected]
+        - generic [ref=f5e81]:
+          - generic [ref=f5e82]: 处理状态
+          - combobox "处理状态" [ref=f5e83] [cursor=pointer]:
+            - option "全部状态" [selected]
+            - option "待处理"
+            - option "处理中"
+            - option "已压缩"
+        - generic [ref=f5e84]:
+          - button "日榜" [ref=f5e85] [cursor=pointer]
+          - button "周榜" [ref=f5e86] [cursor=pointer]
+        - button "刷新中…" [disabled] [ref=f5e791]
+      - generic [ref=f5e93]:
+        - article [ref=f5e94]:
+          - generic [ref=f5e95]: 待压缩文件
+          - generic [ref=f5e100]: 0个
+          - generic [ref=f5e101]: 来自当前真实运行 Top50 与登记状态
+        - article [ref=f5e103]:
+          - generic [ref=f5e104]: 处理中
+          - generic [ref=f5e109]: 0个
+          - generic [ref=f5e110]: 已登记 PROCESSING
+        - article [ref=f5e112]:
+          - generic [ref=f5e113]: 已压缩
+          - generic [ref=f5e118]: 0个
+          - generic [ref=f5e119]: 已登记 COMPRESSED
+        - article [ref=f5e121]:
+          - generic [ref=f5e122]: 预测窗口累计
+          - generic [ref=f5e127]: —
+          - generic [ref=f5e128]: 仅当前运行 Top50，不等于实际节省
+        - article [ref=f5e130]:
+          - generic [ref=f5e131]: 实际账单降本
+          - generic [ref=f5e136]: 未验证
+          - generic [ref=f5e137]: 等待真实观测与成本证据
+      - generic [ref=f5e139]:
+        - generic [ref=f5e140]:
+          - generic [ref=f5e141]:
+            - heading "真实压缩候选与登记状态" [level=2] [ref=f5e142]
+            - paragraph [ref=f5e143]: 点击“登记/详情”进入文件详情；REAL 原大小需 CStore，无法取得时不得伪造。
+          - generic [ref=f5e144]: 0 条
+        - table [ref=f5e146]:
+          - rowgroup [ref=f5e147]:
+            - row [ref=f5e148]:
+              - columnheader "排名" [ref=f5e149]
+              - columnheader "FileKey" [ref=f5e150]
+              - columnheader "预测流量" [ref=f5e151]
+              - columnheader "处理状态" [ref=f5e152]
+              - columnheader "证据来源" [ref=f5e153]
+              - columnheader "处理人" [ref=f5e154]
+              - columnheader "操作" [ref=f5e155]
+          - rowgroup
+        - generic [ref=f5e757]: 预测总额与实际节省独立；压缩率与收益未凭空估算。
+      - generic [ref=f5e760]:
+        - generic [ref=f5e761]:
+          - generic [ref=f5e762]:
+            - heading "从推荐到效果追踪" [level=2] [ref=f5e763]
+            - generic [ref=f5e764]: 真实流程
+          - generic [ref=f5e765]:
+            - generic [ref=f5e766]:
+              - generic [ref=f5e767]: "1"
+              - strong [ref=f5e768]: 真实 Top50
+              - generic [ref=f5e769]: runId 对应快照
+            - generic [ref=f5e772]:
+              - generic [ref=f5e773]: "2"
+              - strong [ref=f5e774]: 登记处理证据
+              - generic [ref=f5e775]: REAL 或显式 TEST
+            - generic [ref=f5e778]:
+              - generic [ref=f5e779]: "3"
+              - strong [ref=f5e780]: 成熟观测
+              - generic [ref=f5e781]: 实际效果与账单
+        - generic [ref=f5e785]:
+          - heading "收益证据边界" [level=3] [ref=f5e786]
+          - paragraph [ref=f5e787]: 已读取压缩效果接口；仍需核对观测窗口、承接比例与成本。
+          - generic [ref=f5e788]: 真实账单降本未验证
+    - generic [ref=f5e789]:
+      - text: CDN 热点预测与压缩降本系统
+      - generic [ref=f5e790]: 界面样例与接口数据均标明来源

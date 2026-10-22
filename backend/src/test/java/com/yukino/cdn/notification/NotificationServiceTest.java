@@ -70,6 +70,11 @@ class NotificationServiceTest {
         assertEquals(1, row.path("attemptCount").asInt());
         assertFalse(row.toString().contains("secret-value"));
         assertFalse(row.toString().contains("127.0.0.1"));
+        var monitor = service.monitor("10350");
+        assertEquals(1, monitor.path("total").asInt());
+        assertEquals(1, monitor.path("statusCounts").path("SENT").asInt());
+        assertFalse(monitor.toString().contains("secret-value"));
+        assertFalse(monitor.toString().contains("127.0.0.1"));
         var changed = request().put("type", "OVERDUE");
         assertEquals("IDEMPOTENCY_CONFLICT", assertThrows(PredictionProblem.class, () -> service.submit(changed, "one")).code());
     }

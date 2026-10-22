@@ -10,9 +10,9 @@ const { previewAppId: appId } = inject(uiContextKey, { previewAppId: ref('10350'
 const session = createNotificationSession()
 const type = ref('DAILY'), purpose = ref('DEMO'), evidenceSource = ref('TEST')
 const runId = ref(''), businessDate = ref('')
-const destinations = ref([]), runs = ref([]), config = ref(null), records = ref(null), overdue = ref(null)
+const destinations = ref([]), runs = ref([]), config = ref(null), records = ref(null), overdue = ref(null), monitor = ref(null)
 const destinationId = ref(''), busy = reactive({ setup: false, runs: false, records: false, config: false, overdue: false })
-const error = ref(''), recordsError = ref(''), configError = ref(''), confirmOpen = ref(false), notice = ref('')
+const error = ref(''), recordsError = ref(''), configError = ref(''), monitorError = ref(''), confirmOpen = ref(false), notice = ref('')
 const settings = reactive({ notificationsEnabled: false, destinationId: '', handlingHours: 24, modelReviewEnabled: false })
 let generation = 0, runGeneration = 0, recordGeneration = 0
 const chosenDestination = computed(() => destinations.value.find(item => item.id === destinationId.value))
@@ -22,7 +22,7 @@ const reasonText = computed(() => session.state.preview?.reasonCodes?.join('、'
 
 watch([appId, runId, type, purpose, evidenceSource], () => { session.invalidate(); confirmOpen.value = false; notice.value = ''; overdue.value = null })
 watch(destinationId, value => { session.setDestination(value); confirmOpen.value = false })
-watch(appId, () => { runId.value = ''; runGeneration++; runs.value = []; void loadSetup(); void loadRecords() })
+watch(appId, () => { runId.value = ''; runGeneration++; runs.value = []; void loadSetup(); void loadRecords(); void loadMonitor() })
 watch(type, value => { if (value === 'OVERDUE') evidenceSource.value = 'REAL' })
 watch([runId, type], () => { void loadRecords() })
 watch(businessDate, () => { void loadRuns() })
@@ -67,6 +67,14 @@ async function loadRecords(page = 1) {
   } catch (cause) { if (current === recordGeneration) recordsError.value = cause.message || '通知记录查询失败。' }
   finally { if (current === recordGeneration) busy.records = false }
 }
+async function loadMonitor() {
+  monitorError.value = ''
+  try {
+    const result = await notificationApi.monitor(appId.value)
+    if (result?.appId !== appId.value || !result?.statusCounts) throw new Error('飞书投递监控响应与当前 App 不匹配。')
+    monitor.value = result
+  } catch (cause) { monitorError.value = cause.message || '飞书投递监控查询失败。' }
+}
 async function preview() {
   notice.value = ''
   if (!runId.value.trim()) { error.value = '请选择或输入运行编号。'; return }
@@ -91,6 +99,7 @@ async function sendConfirmed() {
     if (receipt) {
       notice.value = `已收到发送请求（${receipt.notificationId}，${receipt.status}）。请刷新记录查看最终状态。`
       await loadRecords()
+      await loadMonitor()
     }
   } catch { /* The session retains the actionable error and idempotency key. */ }
 }
@@ -105,15 +114,21 @@ async function saveConfig() {
   } catch (cause) { configError.value = cause.message || '配置保存失败。' }
   finally { busy.config = false }
 }
-onMounted(() => { void loadSetup(); void loadRecords() })
+onMounted(() => { void loadSetup(); void loadRecords(); void loadMonitor() })
 onBeforeUnmount(() => { generation++; runGeneration++; recordGeneration++; session.invalidate() })
 </script>
 
 <template>
   <div data-page="notifications">
     <header class="page-heading"><div><h1>通知中心</h1><p>按真实运行预览飞书清单、确认发送目标，并查询投递状态。</p></div><span class="source-badge">业务接口 · 预览不发送</span></header>
-    <div v-if="error || session.state.error || configError || recordsError" class="notice notice--amber" role="alert">{{ error || session.state.error || configError || recordsError }}</div>
+    <div v-if="error || session.state.error || configError || recordsError || monitorError" class="notice notice--amber" role="alert">{{ error || session.state.error || configError || recordsError || monitorError }}</div>
     <div v-if="notice" class="notice" role="status">{{ notice }}</div>
+    <section class="card nt-section" aria-labelledby="nt-monitor-title"><div class="nt-heading"><h2 id="nt-monitor-title">飞书投递监控</h2><span>只读 · {{ monitor?.monitorMode || 'DELIVERY_RECORDS_ONLY' }} · {{ monitor?.generatedAt || '未加载' }}</span></div>
+      <div v-if="monitor" class="nt-monitor-grid"><div><small>记录总数</small><strong>{{ monitor.total }}</strong></div><div><small>SENT</small><strong>{{ monitor.statusCounts.SENT }}</strong></div><div><small>PENDING</small><strong>{{ monitor.statusCounts.PENDING }}</strong></div><div><small>失败 / 未确认</small><strong>{{ monitor.statusCounts.FAILED }} / {{ monitor.statusCounts.UNKNOWN }}</strong></div><div><small>已配置目的地</small><strong>{{ monitor.destinations.length }}</strong></div></div>
+      <p class="nt-hint">目的地：{{ monitor?.destinations?.map(item => `${item.label}(${item.id})`).join('、') || '未配置' }}。告警规则：每日 09:00 清单、每小时逾期检查；投递失败按退避重试，不阻断业务任务。</p>
+      <div v-if="monitor?.recentProblems?.length" class="table-scroll"><table><thead><tr><th>更新时间 / 类型</th><th>状态</th><th>运行 / 目标</th><th>错误</th></tr></thead><tbody><tr v-for="item in monitor.recentProblems" :key="item.notificationId"><td>{{ item.sentAt || item.createdAt || '—' }}<small>{{ item.type }} / {{ item.purpose }}</small></td><td><strong>{{ item.status }}</strong><small>{{ item.attemptCount }} 次尝试</small></td><td>{{ item.runId }}<small>{{ item.destinationId }}</small></td><td>{{ item.lastError || '—' }}</td></tr></tbody></table></div>
+      <p v-else class="nt-hint">暂无 FAILED / UNKNOWN 投递记录。</p>
+    </section>
     <section class="card nt-section" aria-labelledby="nt-preview-title"><div class="nt-heading"><h2 id="nt-preview-title">通知预览</h2><span>DEMO 仅供测试目标；BUSINESS 由服务端校验 REAL / MODEL 与业务日</span></div>
       <div class="nt-fields">
         <label>App<select v-model="appId"><option v-for="app in appOptions" :key="app.id" :value="app.id">{{ app.label }}</option></select></label>
@@ -134,5 +149,5 @@ onBeforeUnmount(() => { generation++; runGeneration++; recordGeneration++; sessi
 </template>
 
 <style scoped>
-.nt-section{padding:20px;margin-bottom:18px}.nt-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:17px}.nt-heading h2{font-size:15px;margin:0;color:#294668}.nt-heading span,.nt-hint{font-size:11px;color:#8293a9;line-height:1.7}.nt-fields{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:end}.nt-fields label,.nt-send label{font-size:11px;color:#627995;display:grid;gap:6px;min-width:130px}.nt-fields input,.nt-fields select,.nt-send select{height:35px;font-size:12px}.nt-run{border-top:1px solid #edf1f7;padding-top:15px}.nt-run label{min-width:220px;flex:1}.nt-preview{border:1px solid #dce9f8;background:#f8fbff;border-radius:6px;margin-top:18px;padding:16px;color:#516983;font-size:12px}.nt-meta{display:flex;flex-wrap:wrap;gap:8px 18px;line-height:1.7}.nt-preview pre,.nt-confirm-text{white-space:pre-wrap;overflow-wrap:anywhere;background:#fff;border:1px solid #e6edf6;padding:14px;border-radius:5px;max-height:330px;overflow:auto;font-family:inherit;font-size:12px;line-height:1.7}.nt-send{display:flex;align-items:end;gap:12px;margin-top:17px;flex-wrap:wrap;font-size:11px;color:#68809d}.nt-send label{min-width:230px}.nt-section table{width:100%;border-collapse:collapse;font-size:11px;color:#536c8c}.nt-section th,.nt-section td{padding:11px;border-bottom:1px solid #edf1f6;text-align:left;vertical-align:top}.nt-section td small{display:block;color:#8b9cb0;margin-top:5px}.nt-pages{display:flex;justify-content:end;align-items:center;gap:10px;margin-top:14px;font-size:11px;color:#7b8ea7}.nt-check{display:flex!important;align-items:center;gap:8px!important}.nt-check input{height:auto}.nt-confirm-text{max-height:45vh}@media(max-width:760px){.nt-heading{align-items:start;flex-direction:column}.nt-fields label,.nt-send label{min-width:100%;width:100%}.nt-section{padding:14px}}
+.nt-section{padding:20px;margin-bottom:18px}.nt-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:17px}.nt-heading h2{font-size:15px;margin:0;color:#294668}.nt-heading span,.nt-hint{font-size:11px;color:#8293a9;line-height:1.7}.nt-fields{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:end}.nt-fields label,.nt-send label{font-size:11px;color:#627995;display:grid;gap:6px;min-width:130px}.nt-fields input,.nt-fields select,.nt-send select{height:35px;font-size:12px}.nt-run{border-top:1px solid #edf1f7;padding-top:15px}.nt-run label{min-width:220px;flex:1}.nt-preview{border:1px solid #dce9f8;background:#f8fbff;border-radius:6px;margin-top:18px;padding:16px;color:#516983;font-size:12px}.nt-meta{display:flex;flex-wrap:wrap;gap:8px 18px;line-height:1.7}.nt-preview pre,.nt-confirm-text{white-space:pre-wrap;overflow-wrap:anywhere;background:#fff;border:1px solid #e6edf6;padding:14px;border-radius:5px;max-height:330px;overflow:auto;font-family:inherit;font-size:12px;line-height:1.7}.nt-send{display:flex;align-items:end;gap:12px;margin-top:17px;flex-wrap:wrap;font-size:11px;color:#68809d}.nt-send label{min-width:230px}.nt-section table{width:100%;border-collapse:collapse;font-size:11px;color:#536c8c}.nt-section th,.nt-section td{padding:11px;border-bottom:1px solid #edf1f6;text-align:left;vertical-align:top}.nt-section td small{display:block;color:#8b9cb0;margin-top:5px}.nt-pages{display:flex;justify-content:end;align-items:center;gap:10px;margin-top:14px;font-size:11px;color:#7b8ea7}.nt-check{display:flex!important;align-items:center;gap:8px!important}.nt-check input{height:auto}.nt-monitor-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:13px}.nt-monitor-grid>div{padding:12px;border:1px solid #e8eef6;border-radius:5px;background:#fafcff}.nt-monitor-grid small{display:block;color:#8b9cb0;margin-bottom:7px}.nt-monitor-grid strong{color:#2c4c73;font-size:18px}.nt-confirm-text{max-height:45vh}@media(max-width:760px){.nt-heading{align-items:start;flex-direction:column}.nt-fields label,.nt-send label{min-width:100%;width:100%}.nt-section{padding:14px}.nt-monitor-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>

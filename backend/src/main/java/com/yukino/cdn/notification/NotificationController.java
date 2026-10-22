@@ -30,6 +30,7 @@ public class NotificationController {
             @RequestParam(defaultValue = "1") int page, @RequestParam(defaultValue = "20") int pageSize) {
         return service.list(appId, runId, type, page, pageSize);
     }
+    @GetMapping("/notifications/monitor") public ObjectNode monitor(@RequestParam String appId) { return service.monitor(appId); }
     @GetMapping("/overdue") public ObjectNode overdue(@RequestParam String appId, @RequestParam String runId,
             @RequestParam(defaultValue = "REAL") String evidenceSource) { return service.overdue(appId, runId, evidenceSource); }
 }

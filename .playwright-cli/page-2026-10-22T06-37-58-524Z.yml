@@ -1,0 +1,148 @@
+- generic [ref=e3]:
+  - link "跳到主内容" [ref=e4] [cursor=pointer]:
+    - /url: "#main-content"
+  - banner [ref=e5]:
+    - link "CDN 系统首页" [ref=e6] [cursor=pointer]:
+      - /url: /overview
+      - generic [ref=e12]: CDN 热点文件动态预测与压缩降本系统
+    - generic [ref=e13]:
+      - generic "全局 AppID 切换" [ref=e14]:
+        - generic [ref=e15]: AppID
+        - combobox "AppID" [ref=e16] [cursor=pointer]:
+          - option "10350"
+          - option "10066" [selected]
+      - generic [ref=e18]: 本地前端预览
+      - button "界面说明" [ref=e20] [cursor=pointer]
+      - generic [ref=e24]: UI
+      - generic [ref=e25]: 预览工作台
+  - complementary [ref=e26]:
+    - generic [ref=e27]:
+      - text: 运营工作台
+      - generic [ref=e28]: WORKSPACE
+    - navigation "主导航" [ref=e29]:
+      - link "业务总览" [ref=e30] [cursor=pointer]:
+        - /url: /overview
+      - link "热点预测" [ref=e35] [cursor=pointer]:
+        - /url: /prediction
+      - link "模型回测" [ref=e39] [cursor=pointer]:
+        - /url: /backtest
+      - link "压缩降本" [ref=e43] [cursor=pointer]:
+        - /url: /compression
+      - link "通知中心" [active] [ref=e47] [cursor=pointer]:
+        - /url: /notifications
+      - link "智能 Agent" [ref=e51] [cursor=pointer]:
+        - /url: /agent
+    - generic [ref=e55]:
+      - strong [ref=e60]: 从热点洞察到降本决策
+      - generic [ref=e61]: CDN OPERATIONS CONSOLE
+      - generic [ref=e62]: 业务工作台
+  - main [ref=e63]:
+    - generic [ref=e64]:
+      - generic [ref=e65]: 工作台
+      - strong [ref=e68]: 通知中心
+      - generic [ref=e69]: CDN 流量运营
+    - generic [ref=e2194]:
+      - generic [ref=e2195]:
+        - generic [ref=e2196]:
+          - heading "通知中心" [level=1] [ref=e2197]
+          - paragraph [ref=e2198]: 按真实运行预览飞书清单、确认发送目标，并查询投递状态。
+        - generic [ref=e2199]: 业务接口 · 预览不发送
+      - region [ref=e2200]:
+        - generic [ref=e2201]:
+          - heading "飞书投递监控" [level=2] [ref=e2202]
+          - generic [ref=e2203]: 只读 · DELIVERY_RECORDS_ONLY · 2026-10-22T06:37:57.408400053Z
+        - generic [ref=e2204]:
+          - generic [ref=e2205]:
+            - generic [ref=e2206]: 记录总数
+            - strong [ref=e2207]: "1"
+          - generic [ref=e2208]:
+            - generic [ref=e2209]: SENT
+            - strong [ref=e2210]: "1"
+          - generic [ref=e2211]:
+            - generic [ref=e2212]: PENDING
+            - strong [ref=e2213]: "0"
+          - generic [ref=e2214]:
+            - generic [ref=e2215]: 失败 / 未确认
+            - strong [ref=e2216]: 0 / 0
+          - generic [ref=e2217]:
+            - generic [ref=e2218]: 已配置目的地
+            - strong [ref=e2219]: "1"
+        - paragraph [ref=e2220]: 目的地：业务测试群(business)。告警规则：每日 09:00 清单、每小时逾期检查；投递失败按退避重试，不阻断业务任务。
+        - paragraph [ref=e2221]: 暂无 FAILED / UNKNOWN 投递记录。
+      - region [ref=e2222]:
+        - generic [ref=e2223]:
+          - heading "通知预览" [level=2] [ref=e2224]
+          - generic [ref=e2225]: DEMO 仅供测试目标；BUSINESS 由服务端校验 REAL / MODEL 与业务日
+        - generic [ref=e2226]:
+          - generic [ref=e2227]:
+            - text: App
+            - combobox "App" [ref=e2228] [cursor=pointer]:
+              - option "10350 · 内容分发"
+              - option "10066 · 应用资源" [selected]
+          - generic [ref=e2229]:
+            - text: 通知类型
+            - combobox "通知类型" [ref=e2230] [cursor=pointer]:
+              - option "每日清单" [selected]
+              - option "逾期提醒"
+          - generic [ref=e2231]:
+            - text: 用途
+            - combobox "用途" [ref=e2232] [cursor=pointer]:
+              - option "DEMO · 测试" [selected]
+              - option "BUSINESS · 正式"
+          - generic [ref=e2233]:
+            - text: 处理证据
+            - combobox "处理证据" [ref=e2234] [cursor=pointer]:
+              - option "TEST · 测试登记" [selected]
+              - option "REAL · 真实登记"
+          - generic [ref=e2235]:
+            - text: 运行日期筛选（可选）
+            - textbox "运行日期筛选（可选）" [ref=e2236]
+        - paragraph [ref=e2237]: 筛选仅用于查找运行；预览正文日期以服务端快照为准。上海今日：2026-10-22
+        - generic [ref=e2238]:
+          - generic [ref=e2239]:
+            - text: 历史运行
+            - combobox "历史运行" [ref=e2240] [cursor=pointer]:
+              - option "选择运行或下方输入" [selected]
+              - option "run_3ed97fd12794dcdb654dcf19a8affcce0521e050cee0f4f24d1facf1328a679d · 2026-04-16 · MODEL"
+              - option "run_cc1c022b662208a381d50fc905d3360b74286798eb416140e9293b3b04b74953 · 2026-01-02 · MODEL"
+          - generic [ref=e2241]:
+            - text: 运行编号
+            - textbox "运行编号" [ref=e2242]:
+              - /placeholder: 输入已成功运行的 runId
+          - button "刷新运行" [ref=e2243] [cursor=pointer]
+          - button "预览内容" [disabled] [ref=e2244]
+        - generic [ref=e2245]:
+          - generic [ref=e2246]:
+            - text: 飞书目标
+            - combobox "飞书目标" [ref=e2247] [cursor=pointer]:
+              - option "选择已配置目的地"
+              - option "业务测试群 · 业务目标 · 已配置" [selected]
+          - button "确认目标与内容后发送" [disabled] [ref=e2248]
+      - region [ref=e2249]:
+        - generic [ref=e2250]:
+          - heading "发送记录" [level=2] [ref=e2251]
+          - button "刷新状态" [ref=e2252] [cursor=pointer]
+        - paragraph [ref=e2253]: 当前筛选条件下暂无发送记录。
+      - region [ref=e2254]:
+        - generic [ref=e2255]:
+          - heading "App 通知配置" [level=2] [ref=e2256]
+          - generic [ref=e2257]: 版本 1 · 默认自动通知关闭
+        - generic [ref=e2258]:
+          - generic [ref=e2259]:
+            - checkbox "启用服务端自动通知" [ref=e2260]
+            - text: 启用服务端自动通知
+          - generic [ref=e2261]:
+            - text: 默认目标
+            - combobox "默认目标" [ref=e2262] [cursor=pointer]:
+              - option "未选择"
+              - option "业务测试群" [selected]
+          - generic [ref=e2263]:
+            - text: 处理时限（小时）
+            - spinbutton "处理时限（小时）" [ref=e2264]: "1"
+          - generic [ref=e2265]:
+            - checkbox "启用周期模型评估建议" [ref=e2266]
+            - text: 启用周期模型评估建议
+          - button "保存配置" [ref=e2267] [cursor=pointer]
+    - generic [ref=e284]:
+      - text: CDN 热点预测与压缩降本系统
+      - generic [ref=e285]: 界面样例与接口数据均标明来源

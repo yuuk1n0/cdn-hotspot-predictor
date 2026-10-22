@@ -62,6 +62,17 @@ class OperationsServiceTest {
         runs.get(0).put("publishedAt", "2026-10-20T00:00:00Z");
         assertEquals(0, service.overdue("10066", "run_old", "REAL").path("items").size());
     }
+    @Test void latestRunDoesNotSilentlySelectMockResults() throws Exception {
+        var mock = (ObjectNode) mapper.readTree("""
+                {"runId":"run_mock","appId":"10066","datasetId":"ds_mock","datasetSource":"REAL","predictionSource":"MOCK",
+                 "modelVersion":"hotspot-simple-v1","horizonDays":1,"predictionStartDate":"2026-10-21","predictionEndDate":"2026-10-21",
+                 "items":[]}
+                """);
+        runs.add(0, mock);
+
+        assertEquals("run_old", service.latestRun("10066", null, 1).path("runId").asText());
+        assertEquals(1, service.runList("10066", null, 1).path("items").size());
+    }
     @Test void configIsPersistedWithOptimisticVersionAndNoModelWriteShortcut() {
         assertFalse(service.config("10066").path("notificationsEnabled").asBoolean());
         var body = mapper.createObjectNode().put("expectedVersion", 0).put("notificationsEnabled", false).put("handlingHours", 48);

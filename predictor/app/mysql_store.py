@@ -229,6 +229,128 @@ class MySqlDataStore:
             "createdAt": _iso_time(row[6]), "updatedAt": _iso_time(row[7]),
         }
 
+    def get_dataset(self, dataset_id: str):
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT metadata_json FROM imported_dataset "
+                "WHERE dataset_id=%s AND status='READY'",
+                (dataset_id,),
+            )
+            row = cursor.fetchone()
+        if row is None:
+            raise ImportProblem("DATASET_NOT_FOUND", "READY 数据集不存在。", 404)
+        try:
+            metadata = json.loads(row[0])
+        except (TypeError, ValueError):
+            raise ImportProblem("DATASET_METADATA_INVALID", "数据集元数据损坏，不能作为可用数据集读取。") from None
+        if not isinstance(metadata, dict) or metadata.get("datasetId") != dataset_id:
+            raise ImportProblem("DATASET_METADATA_INVALID", "数据集元数据与 datasetId 不匹配。")
+        metadata["status"] = "READY"
+        return metadata
+
+    def get_quality(self, dataset_id: str):
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT quality_report_json FROM imported_dataset "
+                "WHERE dataset_id=%s AND status='READY'",
+                (dataset_id,),
+            )
+            row = cursor.fetchone()
+        if row is None or not row[0]:
+            raise ImportProblem("DATASET_NOT_FOUND", "READY 数据集或质量报告不存在。", 404)
+        try:
+            quality = json.loads(row[0])
+        except (TypeError, ValueError):
+            raise ImportProblem("DATASET_QUALITY_INVALID", "数据集质量报告损坏。") from None
+        if not isinstance(quality, dict):
+            raise ImportProblem("DATASET_QUALITY_INVALID", "数据集质量报告格式无效。")
+        return quality
+
+    def list_datasets(self, page: int, page_size: int):
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute("SELECT COUNT(*) FROM imported_dataset WHERE status='READY'")
+            total = int(cursor.fetchone()[0])
+        offset = (page - 1) * page_size
+        items = []
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT dataset_id,metadata_json FROM imported_dataset "
+                "WHERE status='READY' ORDER BY created_at_ms DESC,dataset_id DESC "
+                "LIMIT %s OFFSET %s",
+                (page_size, offset),
+            )
+            for dataset_id, raw in cursor:
+                try:
+                    metadata = json.loads(raw)
+                except (TypeError, ValueError):
+                    raise ImportProblem("DATASET_METADATA_INVALID", "数据集列表中存在损坏的元数据。") from None
+                if not isinstance(metadata, dict) or metadata.get("datasetId") != dataset_id:
+                    raise ImportProblem("DATASET_METADATA_INVALID", "数据集列表元数据与 datasetId 不匹配。")
+                metadata["status"] = "READY"
+                items.append(metadata)
+        return {"page": page, "pageSize": page_size, "total": total, "items": items}
+
+    def latest_dataset(self, app_id: str, dataset_type: str):
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT metadata_json FROM imported_dataset "
+                "WHERE app_id=%s AND dataset_type=%s AND dataset_source='REAL' AND status='READY' "
+                "ORDER BY created_at_ms DESC,dataset_id DESC LIMIT 1",
+                (app_id, dataset_type),
+            )
+            row = cursor.fetchone()
+        if row is None:
+            return None
+        try:
+            metadata = json.loads(row[0])
+        except (TypeError, ValueError):
+            raise ImportProblem("DATASET_METADATA_INVALID", "数据集元数据损坏。") from None
+        if not isinstance(metadata, dict):
+            raise ImportProblem("DATASET_METADATA_INVALID", "数据集元数据格式无效。")
+        metadata["status"] = "READY"
+        return metadata
+
+    def observations_window(self, dataset_id: str, app_id: str, start_date: str, end_date: str,
+                            file_key: str | None = None):
+        where = [
+            "d.dataset_id=%s", "d.app_id=%s", "d.dataset_type='FILE_DAILY'",
+            "d.status='READY'", "o.observed_date>=%s", "o.observed_date<=%s",
+        ]
+        params = [dataset_id, app_id, start_date, end_date]
+        if file_key is not None:
+            where.append("o.file_key=%s")
+            params.append(file_key)
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT o.file_key,o.observed_date,o.traffic_bytes "
+                "FROM file_daily_observation o JOIN imported_dataset d ON d.dataset_id=o.dataset_id "
+                f"WHERE {' AND '.join(where)} ORDER BY o.observed_date,o.file_key",
+                tuple(params),
+            )
+            for row in cursor:
+                yield {
+                    "fileKey": row[0],
+                    "date": row[1].isoformat() if hasattr(row[1], "isoformat") else str(row[1]),
+                    "trafficBytes": str(row[2]),
+                }
+
+    def app_daily_totals(self, dataset_id: str, app_id: str, start_date: str, end_date: str):
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT t.observed_date,t.total_traffic_bytes,t.source_unit "
+                "FROM app_daily_total t JOIN imported_dataset d ON d.dataset_id=t.dataset_id "
+                "WHERE t.dataset_id=%s AND t.app_id=%s AND d.dataset_type='APP_DAILY_TOTAL' "
+                "AND d.status='READY' AND t.observed_date>=%s AND t.observed_date<=%s "
+                "ORDER BY t.observed_date",
+                (dataset_id, app_id, start_date, end_date),
+            )
+            for row in cursor:
+                yield {
+                    "date": row[0].isoformat() if hasattr(row[0], "isoformat") else str(row[0]),
+                    "totalTrafficBytes": str(row[1]),
+                    "unit": row[2],
+                }
+
     def import_dataset(self, metadata: dict, normalized_path: Path):
         self.check_schema()
         quality = json.loads((Path(normalized_path).parent / "quality.json").read_text(encoding="utf-8"))

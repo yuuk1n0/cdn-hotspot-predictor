@@ -1,0 +1,1513 @@
+- generic [ref=e3]:
+  - link "跳到主内容" [ref=e4] [cursor=pointer]:
+    - /url: "#main-content"
+  - banner [ref=e5]:
+    - link "CDN 系统首页" [ref=e6] [cursor=pointer]:
+      - /url: /overview
+      - generic [ref=e12]: CDN 热点文件动态预测与压缩降本系统
+    - generic [ref=e13]:
+      - generic "全局 AppID 切换" [ref=e14]:
+        - generic [ref=e15]: AppID
+        - combobox "AppID" [ref=e16] [cursor=pointer]:
+          - option "10350"
+          - option "10066" [selected]
+      - generic [ref=e18]: 本地前端预览
+      - button "界面说明" [ref=e20] [cursor=pointer]
+      - generic [ref=e24]: UI
+      - generic [ref=e25]: 预览工作台
+  - complementary [ref=e26]:
+    - generic [ref=e27]:
+      - text: 运营工作台
+      - generic [ref=e28]: WORKSPACE
+    - navigation "主导航" [ref=e29]:
+      - link "业务总览" [ref=e30] [cursor=pointer]:
+        - /url: /overview
+      - link "热点预测" [active] [ref=e35] [cursor=pointer]:
+        - /url: /prediction
+      - link "模型回测" [ref=e39] [cursor=pointer]:
+        - /url: /backtest
+      - link "压缩降本" [ref=e43] [cursor=pointer]:
+        - /url: /compression
+      - link "通知中心" [ref=e47] [cursor=pointer]:
+        - /url: /notifications
+      - link "智能 Agent" [ref=e51] [cursor=pointer]:
+        - /url: /agent
+    - generic [ref=e55]:
+      - strong [ref=e60]: 从热点洞察到降本决策
+      - generic [ref=e61]: CDN OPERATIONS CONSOLE
+      - generic [ref=e62]: 业务工作台
+  - main [ref=e63]:
+    - generic [ref=e64]:
+      - generic [ref=e65]: 工作台
+      - strong [ref=e68]: 热点预测
+      - generic [ref=e69]: CDN 流量运营
+    - generic [ref=e579]:
+      - generic [ref=e580]:
+        - generic [ref=e581]:
+          - heading "热点预测 Top50" [level=1] [ref=e582]
+          - paragraph [ref=e583]: 默认读取 Java 已持久化的真实预测快照；结果、排序、模型版本与 Python 运行保持一致。
+        - generic "预测页面数据来源" [ref=e584]:
+          - button "真实运行" [pressed] [ref=e585] [cursor=pointer]
+          - button "UI 演示" [ref=e586] [cursor=pointer]
+      - generic [ref=e587]:
+        - generic "预测粒度" [ref=e588]:
+          - button "日榜预测" [ref=e589] [cursor=pointer]
+          - button "周榜预测" [ref=e590] [cursor=pointer]
+        - generic [ref=e591]: REAL / MODEL
+      - generic [ref=e592]:
+        - generic [ref=e593]:
+          - generic [ref=e594]: AppID
+          - combobox "AppID" [ref=e595] [cursor=pointer]:
+            - option "10350 · 内容分发"
+            - option "10066 · 应用资源" [selected]
+        - generic [ref=e596]:
+          - generic [ref=e597]: 预测粒度
+          - textbox [ref=e598]: 下一自然日
+        - generic [ref=e599]:
+          - generic [ref=e600]: 模型版本
+          - textbox [ref=e601]: hotspot-simple-v1
+        - button "刷新最新运行" [ref=e602] [cursor=pointer]
+      - generic [ref=e605]:
+        - article [ref=e606]:
+          - generic [ref=e607]: 候选文件总数
+          - strong [ref=e608]:
+            - text: "6750"
+            - emphasis [ref=e609]: 个
+          - generic [ref=e610]: Python 真实候选集
+        - article [ref=e611]:
+          - generic [ref=e612]: 返回 Top50 数量
+          - strong [ref=e613]:
+            - text: "50"
+            - emphasis [ref=e614]: 条
+          - generic [ref=e615]: 最多 50 条，未补足
+        - article [ref=e616]:
+          - generic [ref=e617]: 预测目标窗口 · 日榜
+          - strong [ref=e618]:
+            - text: 2026-04-16
+            - emphasis [ref=e619]: —
+            - text: 2026-04-16
+          - generic [ref=e620]: 截止日 2026-04-15
+        - article [ref=e621]:
+          - generic [ref=e622]: 数据 / 预测来源
+          - strong [ref=e623]: REAL / MODEL
+          - generic [ref=e624]: REAL · hotspot-simple-v1
+        - article [ref=e625]:
+          - generic [ref=e626]: 运行编号
+          - generic [ref=e627]: SUCCEEDED
+          - generic "run_3ed97fd12794dcdb654dcf19a8affcce0521e050cee0f4f24d1facf1328a679d" [ref=e629]
+      - generic [ref=e630]:
+        - generic [ref=e631]:
+          - generic [ref=e632]:
+            - heading "真实 Top50 预测结果" [level=2] [ref=e633]
+            - generic [ref=e634]: App 10066 · hotspot-simple-v1 · runId run_3ed97fd12794dcdb654dcf19a8affcce0521e050cee0f4f24d1facf1328a679d
+          - generic [ref=e635]: NO_MATCHING_TOTAL
+        - generic "Top50 榜单，可横向滚动" [ref=e636]:
+          - table [ref=e637]:
+            - rowgroup [ref=e638]:
+              - row [ref=e639]:
+                - columnheader "排名" [ref=e640]
+                - columnheader "文件标识" [ref=e641]
+                - columnheader "类型" [ref=e642]
+                - columnheader "文件大小" [ref=e643]
+                - columnheader "预测流量" [ref=e644]
+                - columnheader "预测分数" [ref=e645]
+                - columnheader "推荐理由" [ref=e646]
+                - columnheader "最近实际流量" [ref=e647]
+                - columnheader "压缩状态" [ref=e648]
+                - columnheader "模型版本" [ref=e649]
+                - columnheader "预测窗口" [ref=e650]
+                - columnheader "操作" [ref=e651]
+            - rowgroup [ref=e652]:
+              - row [ref=e653]:
+                - cell [ref=e654]:
+                  - strong [ref=e656]: "#01"
+                - cell "easinote/uwixmovwhhpljhhvhmlwxjwkmphhihhi APP 10066" [ref=e657]:
+                  - generic "easinote/uwixmovwhhpljhhvhmlwxjwkmphhihhi" [ref=e658]
+                  - generic [ref=e659]: APP 10066
+                - cell "未知" [ref=e660]
+                - cell "—" [ref=e661]
+                - cell "848 GB 910778697366 B" [ref=e662]:
+                  - text: 848 GB
+                  - generic [ref=e663]: 910778697366 B
+                - cell "—" [ref=e664]
+                - cell [ref=e665]:
+                  - paragraph [ref=e666]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e667]
+                - cell "未知" [ref=e668]
+                - cell [ref=e670]:
+                  - code [ref=e671]: hotspot-simple-v1
+                - cell [ref=e672]:
+                  - strong [ref=e673]: 2026-04-16
+                  - generic [ref=e674]: 至 2026-04-16下一自然日
+                - cell [ref=e675]:
+                  - generic [ref=e676]:
+                    - button "预览" [ref=e677] [cursor=pointer]
+                    - button "下载" [ref=e678] [cursor=pointer]
+                    - button "查看详情" [ref=e679] [cursor=pointer]
+                    - button "标记压缩" [ref=e680] [cursor=pointer]
+              - row [ref=e681]:
+                - cell [ref=e682]:
+                  - strong [ref=e684]: "#02"
+                - cell "easinote/encloud-1649238127781baa22af0 APP 10066" [ref=e685]:
+                  - generic "easinote/encloud-1649238127781baa22af0" [ref=e686]
+                  - generic [ref=e687]: APP 10066
+                - cell "未知" [ref=e688]
+                - cell "—" [ref=e689]
+                - cell "804 GB 862981813767 B" [ref=e690]:
+                  - text: 804 GB
+                  - generic [ref=e691]: 862981813767 B
+                - cell "—" [ref=e692]
+                - cell [ref=e693]:
+                  - paragraph [ref=e694]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e695]
+                - cell "未知" [ref=e696]
+                - cell [ref=e698]:
+                  - code [ref=e699]: hotspot-simple-v1
+                - cell [ref=e700]:
+                  - strong [ref=e701]: 2026-04-16
+                  - generic [ref=e702]: 至 2026-04-16下一自然日
+                - cell [ref=e703]:
+                  - generic [ref=e704]:
+                    - button "预览" [ref=e705] [cursor=pointer]
+                    - button "下载" [ref=e706] [cursor=pointer]
+                    - button "查看详情" [ref=e707] [cursor=pointer]
+                    - button "标记压缩" [ref=e708] [cursor=pointer]
+              - row [ref=e709]:
+                - cell [ref=e710]:
+                  - strong [ref=e712]: "#03"
+                - cell "easinote/uwixjqpnhhpljhhvhwuxmwwlxohhihjk APP 10066" [ref=e713]:
+                  - generic "easinote/uwixjqpnhhpljhhvhwuxmwwlxohhihjk" [ref=e714]
+                  - generic [ref=e715]: APP 10066
+                - cell "未知" [ref=e716]
+                - cell "—" [ref=e717]
+                - cell "744 GB 798960341931 B" [ref=e718]:
+                  - text: 744 GB
+                  - generic [ref=e719]: 798960341931 B
+                - cell "—" [ref=e720]
+                - cell [ref=e721]:
+                  - paragraph [ref=e722]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e723]
+                - cell "未知" [ref=e724]
+                - cell [ref=e726]:
+                  - code [ref=e727]: hotspot-simple-v1
+                - cell [ref=e728]:
+                  - strong [ref=e729]: 2026-04-16
+                  - generic [ref=e730]: 至 2026-04-16下一自然日
+                - cell [ref=e731]:
+                  - generic [ref=e732]:
+                    - button "预览" [ref=e733] [cursor=pointer]
+                    - button "下载" [ref=e734] [cursor=pointer]
+                    - button "查看详情" [ref=e735] [cursor=pointer]
+                    - button "标记压缩" [ref=e736] [cursor=pointer]
+              - row [ref=e737]:
+                - cell [ref=e738]:
+                  - strong [ref=e740]: "#04"
+                - cell "easinote/uwizuhohhhpljhhvhwilpijlvqphihjh APP 10066" [ref=e741]:
+                  - generic "easinote/uwizuhohhhpljhhvhwilpijlvqphihjh" [ref=e742]
+                  - generic [ref=e743]: APP 10066
+                - cell "未知" [ref=e744]
+                - cell "—" [ref=e745]
+                - cell "619 GB 664701763384 B" [ref=e746]:
+                  - text: 619 GB
+                  - generic [ref=e747]: 664701763384 B
+                - cell "—" [ref=e748]
+                - cell [ref=e749]:
+                  - paragraph [ref=e750]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e751]
+                - cell "未知" [ref=e752]
+                - cell [ref=e754]:
+                  - code [ref=e755]: hotspot-simple-v1
+                - cell [ref=e756]:
+                  - strong [ref=e757]: 2026-04-16
+                  - generic [ref=e758]: 至 2026-04-16下一自然日
+                - cell [ref=e759]:
+                  - generic [ref=e760]:
+                    - button "预览" [ref=e761] [cursor=pointer]
+                    - button "下载" [ref=e762] [cursor=pointer]
+                    - button "查看详情" [ref=e763] [cursor=pointer]
+                    - button "标记压缩" [ref=e764] [cursor=pointer]
+              - row [ref=e765]:
+                - cell [ref=e766]:
+                  - strong [ref=e768]: "#05"
+                - cell "easinote/uwixkjoyhhpljhhvhwuyxkmjzihhihhj APP 10066" [ref=e769]:
+                  - generic "easinote/uwixkjoyhhpljhhvhwuyxkmjzihhihhj" [ref=e770]
+                  - generic [ref=e771]: APP 10066
+                - cell "未知" [ref=e772]
+                - cell "—" [ref=e773]
+                - cell "616 GB 661239803692 B" [ref=e774]:
+                  - text: 616 GB
+                  - generic [ref=e775]: 661239803692 B
+                - cell "—" [ref=e776]
+                - cell [ref=e777]:
+                  - paragraph [ref=e778]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e779]
+                - cell "未知" [ref=e780]
+                - cell [ref=e782]:
+                  - code [ref=e783]: hotspot-simple-v1
+                - cell [ref=e784]:
+                  - strong [ref=e785]: 2026-04-16
+                  - generic [ref=e786]: 至 2026-04-16下一自然日
+                - cell [ref=e787]:
+                  - generic [ref=e788]:
+                    - button "预览" [ref=e789] [cursor=pointer]
+                    - button "下载" [ref=e790] [cursor=pointer]
+                    - button "查看详情" [ref=e791] [cursor=pointer]
+                    - button "标记压缩" [ref=e792] [cursor=pointer]
+              - row [ref=e793]:
+                - cell [ref=e794]:
+                  - strong [ref=e796]: "#06"
+                - cell "easinote/uwixhwyphhpljhhvhmlznwnjpqphihhm APP 10066" [ref=e797]:
+                  - generic "easinote/uwixhwyphhpljhhvhmlznwnjpqphihhm" [ref=e798]
+                  - generic [ref=e799]: APP 10066
+                - cell "未知" [ref=e800]
+                - cell "—" [ref=e801]
+                - cell "479 GB 514349052849 B" [ref=e802]:
+                  - text: 479 GB
+                  - generic [ref=e803]: 514349052849 B
+                - cell "—" [ref=e804]
+                - cell [ref=e805]:
+                  - paragraph [ref=e806]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e807]
+                - cell "未知" [ref=e808]
+                - cell [ref=e810]:
+                  - code [ref=e811]: hotspot-simple-v1
+                - cell [ref=e812]:
+                  - strong [ref=e813]: 2026-04-16
+                  - generic [ref=e814]: 至 2026-04-16下一自然日
+                - cell [ref=e815]:
+                  - generic [ref=e816]:
+                    - button "预览" [ref=e817] [cursor=pointer]
+                    - button "下载" [ref=e818] [cursor=pointer]
+                    - button "查看详情" [ref=e819] [cursor=pointer]
+                    - button "标记压缩" [ref=e820] [cursor=pointer]
+              - row [ref=e821]:
+                - cell [ref=e822]:
+                  - strong [ref=e824]: "#07"
+                - cell "easinote/uwixhiuqhhpljhhvhmkkkihqiuphihhq APP 10066" [ref=e825]:
+                  - generic "easinote/uwixhiuqhhpljhhvhmkkkihqiuphihhq" [ref=e826]
+                  - generic [ref=e827]: APP 10066
+                - cell "未知" [ref=e828]
+                - cell "—" [ref=e829]
+                - cell "434 GB 466454490279 B" [ref=e830]:
+                  - text: 434 GB
+                  - generic [ref=e831]: 466454490279 B
+                - cell "—" [ref=e832]
+                - cell [ref=e833]:
+                  - paragraph [ref=e834]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e835]
+                - cell "未知" [ref=e836]
+                - cell [ref=e838]:
+                  - code [ref=e839]: hotspot-simple-v1
+                - cell [ref=e840]:
+                  - strong [ref=e841]: 2026-04-16
+                  - generic [ref=e842]: 至 2026-04-16下一自然日
+                - cell [ref=e843]:
+                  - generic [ref=e844]:
+                    - button "预览" [ref=e845] [cursor=pointer]
+                    - button "下载" [ref=e846] [cursor=pointer]
+                    - button "查看详情" [ref=e847] [cursor=pointer]
+                    - button "标记压缩" [ref=e848] [cursor=pointer]
+              - row [ref=e849]:
+                - cell [ref=e850]:
+                  - strong [ref=e852]: "#08"
+                - cell "easinote/uwizpmkhhhpljhhvhwmmquxuxuhhihjq APP 10066" [ref=e853]:
+                  - generic "easinote/uwizpmkhhhpljhhvhwmmquxuxuhhihjq" [ref=e854]
+                  - generic [ref=e855]: APP 10066
+                - cell "未知" [ref=e856]
+                - cell "—" [ref=e857]
+                - cell "408 GB 437607636570 B" [ref=e858]:
+                  - text: 408 GB
+                  - generic [ref=e859]: 437607636570 B
+                - cell "—" [ref=e860]
+                - cell [ref=e861]:
+                  - paragraph [ref=e862]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e863]
+                - cell "未知" [ref=e864]
+                - cell [ref=e866]:
+                  - code [ref=e867]: hotspot-simple-v1
+                - cell [ref=e868]:
+                  - strong [ref=e869]: 2026-04-16
+                  - generic [ref=e870]: 至 2026-04-16下一自然日
+                - cell [ref=e871]:
+                  - generic [ref=e872]:
+                    - button "预览" [ref=e873] [cursor=pointer]
+                    - button "下载" [ref=e874] [cursor=pointer]
+                    - button "查看详情" [ref=e875] [cursor=pointer]
+                    - button "标记压缩" [ref=e876] [cursor=pointer]
+              - row [ref=e877]:
+                - cell [ref=e878]:
+                  - strong [ref=e880]: "#09"
+                - cell "easinote/uwizqxzqhhpljhhvhvynjnuhwohhihhw APP 10066" [ref=e881]:
+                  - generic "easinote/uwizqxzqhhpljhhvhvynjnuhwohhihhw" [ref=e882]
+                  - generic [ref=e883]: APP 10066
+                - cell "未知" [ref=e884]
+                - cell "—" [ref=e885]
+                - cell "384 GB 412436331537 B" [ref=e886]:
+                  - text: 384 GB
+                  - generic [ref=e887]: 412436331537 B
+                - cell "—" [ref=e888]
+                - cell [ref=e889]:
+                  - paragraph [ref=e890]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e891]
+                - cell "未知" [ref=e892]
+                - cell [ref=e894]:
+                  - code [ref=e895]: hotspot-simple-v1
+                - cell [ref=e896]:
+                  - strong [ref=e897]: 2026-04-16
+                  - generic [ref=e898]: 至 2026-04-16下一自然日
+                - cell [ref=e899]:
+                  - generic [ref=e900]:
+                    - button "预览" [ref=e901] [cursor=pointer]
+                    - button "下载" [ref=e902] [cursor=pointer]
+                    - button "查看详情" [ref=e903] [cursor=pointer]
+                    - button "标记压缩" [ref=e904] [cursor=pointer]
+              - row [ref=e905]:
+                - cell [ref=e906]:
+                  - strong [ref=e908]: "#10"
+                - cell "easinote/encloud-164595152457812d245b4 APP 10066" [ref=e909]:
+                  - generic "easinote/encloud-164595152457812d245b4" [ref=e910]
+                  - generic [ref=e911]: APP 10066
+                - cell "未知" [ref=e912]
+                - cell "—" [ref=e913]
+                - cell "363 GB 390252090290 B" [ref=e914]:
+                  - text: 363 GB
+                  - generic [ref=e915]: 390252090290 B
+                - cell "—" [ref=e916]
+                - cell [ref=e917]:
+                  - paragraph [ref=e918]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e919]
+                - cell "未知" [ref=e920]
+                - cell [ref=e922]:
+                  - code [ref=e923]: hotspot-simple-v1
+                - cell [ref=e924]:
+                  - strong [ref=e925]: 2026-04-16
+                  - generic [ref=e926]: 至 2026-04-16下一自然日
+                - cell [ref=e927]:
+                  - generic [ref=e928]:
+                    - button "预览" [ref=e929] [cursor=pointer]
+                    - button "下载" [ref=e930] [cursor=pointer]
+                    - button "查看详情" [ref=e931] [cursor=pointer]
+                    - button "标记压缩" [ref=e932] [cursor=pointer]
+              - row [ref=e933]:
+                - cell [ref=e934]:
+                  - strong [ref=e936]: "#11"
+                - cell "easinote/uwiwhokxhhpljhhvhpvuxwihmkhhihhm APP 10066" [ref=e937]:
+                  - generic "easinote/uwiwhokxhhpljhhvhpvuxwihmkhhihhm" [ref=e938]
+                  - generic [ref=e939]: APP 10066
+                - cell "未知" [ref=e940]
+                - cell "—" [ref=e941]
+                - cell "363 GB 389981176142 B" [ref=e942]:
+                  - text: 363 GB
+                  - generic [ref=e943]: 389981176142 B
+                - cell "—" [ref=e944]
+                - cell [ref=e945]:
+                  - paragraph [ref=e946]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e947]
+                - cell "未知" [ref=e948]
+                - cell [ref=e950]:
+                  - code [ref=e951]: hotspot-simple-v1
+                - cell [ref=e952]:
+                  - strong [ref=e953]: 2026-04-16
+                  - generic [ref=e954]: 至 2026-04-16下一自然日
+                - cell [ref=e955]:
+                  - generic [ref=e956]:
+                    - button "预览" [ref=e957] [cursor=pointer]
+                    - button "下载" [ref=e958] [cursor=pointer]
+                    - button "查看详情" [ref=e959] [cursor=pointer]
+                    - button "标记压缩" [ref=e960] [cursor=pointer]
+              - row [ref=e961]:
+                - cell [ref=e962]:
+                  - strong [ref=e964]: "#12"
+                - cell "easinote/uwizukyvhhpljhhvhvypuqwyxzhhihhk APP 10066" [ref=e965]:
+                  - generic "easinote/uwizukyvhhpljhhvhvypuqwyxzhhihhk" [ref=e966]
+                  - generic [ref=e967]: APP 10066
+                - cell "未知" [ref=e968]
+                - cell "—" [ref=e969]
+                - cell "349 GB 375142652697 B" [ref=e970]:
+                  - text: 349 GB
+                  - generic [ref=e971]: 375142652697 B
+                - cell "—" [ref=e972]
+                - cell [ref=e973]:
+                  - paragraph [ref=e974]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e975]
+                - cell "未知" [ref=e976]
+                - cell [ref=e978]:
+                  - code [ref=e979]: hotspot-simple-v1
+                - cell [ref=e980]:
+                  - strong [ref=e981]: 2026-04-16
+                  - generic [ref=e982]: 至 2026-04-16下一自然日
+                - cell [ref=e983]:
+                  - generic [ref=e984]:
+                    - button "预览" [ref=e985] [cursor=pointer]
+                    - button "下载" [ref=e986] [cursor=pointer]
+                    - button "查看详情" [ref=e987] [cursor=pointer]
+                    - button "标记压缩" [ref=e988] [cursor=pointer]
+              - row [ref=e989]:
+                - cell [ref=e990]:
+                  - strong [ref=e992]: "#13"
+                - cell "easinote/uwizuhohhhpljhhvhwilpijlvqphihhy APP 10066" [ref=e993]:
+                  - generic "easinote/uwizuhohhhpljhhvhwilpijlvqphihhy" [ref=e994]
+                  - generic [ref=e995]: APP 10066
+                - cell "未知" [ref=e996]
+                - cell "—" [ref=e997]
+                - cell "336 GB 360282724348 B" [ref=e998]:
+                  - text: 336 GB
+                  - generic [ref=e999]: 360282724348 B
+                - cell "—" [ref=e1000]
+                - cell [ref=e1001]:
+                  - paragraph [ref=e1002]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e1003]
+                - cell "未知" [ref=e1004]
+                - cell [ref=e1006]:
+                  - code [ref=e1007]: hotspot-simple-v1
+                - cell [ref=e1008]:
+                  - strong [ref=e1009]: 2026-04-16
+                  - generic [ref=e1010]: 至 2026-04-16下一自然日
+                - cell [ref=e1011]:
+                  - generic [ref=e1012]:
+                    - button "预览" [ref=e1013] [cursor=pointer]
+                    - button "下载" [ref=e1014] [cursor=pointer]
+                    - button "查看详情" [ref=e1015] [cursor=pointer]
+                    - button "标记压缩" [ref=e1016] [cursor=pointer]
+              - row [ref=e1017]:
+                - cell [ref=e1018]:
+                  - strong [ref=e1020]: "#14"
+                - cell "easinote/uwixlzuzhhpljhhvhwwkqxoyviphihhl APP 10066" [ref=e1021]:
+                  - generic "easinote/uwixlzuzhhpljhhvhwwkqxoyviphihhl" [ref=e1022]
+                  - generic [ref=e1023]: APP 10066
+                - cell "未知" [ref=e1024]
+                - cell "—" [ref=e1025]
+                - cell "326 GB 349692252649 B" [ref=e1026]:
+                  - text: 326 GB
+                  - generic [ref=e1027]: 349692252649 B
+                - cell "—" [ref=e1028]
+                - cell [ref=e1029]:
+                  - paragraph [ref=e1030]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量；近30天仅观测1天，文件冷启动，预测不确定
+                - cell "—" [ref=e1031]
+                - cell "未知" [ref=e1032]
+                - cell [ref=e1034]:
+                  - code [ref=e1035]: hotspot-simple-v1
+                - cell [ref=e1036]:
+                  - strong [ref=e1037]: 2026-04-16
+                  - generic [ref=e1038]: 至 2026-04-16下一自然日
+                - cell [ref=e1039]:
+                  - generic [ref=e1040]:
+                    - button "预览" [ref=e1041] [cursor=pointer]
+                    - button "下载" [ref=e1042] [cursor=pointer]
+                    - button "查看详情" [ref=e1043] [cursor=pointer]
+                    - button "标记压缩" [ref=e1044] [cursor=pointer]
+              - row [ref=e1045]:
+                - cell [ref=e1046]:
+                  - strong [ref=e1048]: "#15"
+                - cell "easinote/uwixonokhhpljhhvhwpymunnxphhihjk APP 10066" [ref=e1049]:
+                  - generic "easinote/uwixonokhhpljhhvhwpymunnxphhihjk" [ref=e1050]
+                  - generic [ref=e1051]: APP 10066
+                - cell "未知" [ref=e1052]
+                - cell "—" [ref=e1053]
+                - cell "324 GB 347509397105 B" [ref=e1054]:
+                  - text: 324 GB
+                  - generic [ref=e1055]: 347509397105 B
+                - cell "—" [ref=e1056]
+                - cell [ref=e1057]:
+                  - paragraph [ref=e1058]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e1059]
+                - cell "未知" [ref=e1060]
+                - cell [ref=e1062]:
+                  - code [ref=e1063]: hotspot-simple-v1
+                - cell [ref=e1064]:
+                  - strong [ref=e1065]: 2026-04-16
+                  - generic [ref=e1066]: 至 2026-04-16下一自然日
+                - cell [ref=e1067]:
+                  - generic [ref=e1068]:
+                    - button "预览" [ref=e1069] [cursor=pointer]
+                    - button "下载" [ref=e1070] [cursor=pointer]
+                    - button "查看详情" [ref=e1071] [cursor=pointer]
+                    - button "标记压缩" [ref=e1072] [cursor=pointer]
+              - row [ref=e1073]:
+                - cell [ref=e1074]:
+                  - strong [ref=e1076]: "#16"
+                - cell "easinote/uwixlplwhhpljhhvhwnjjuwyuwphihim APP 10066" [ref=e1077]:
+                  - generic "easinote/uwixlplwhhpljhhvhwnjjuwyuwphihim" [ref=e1078]
+                  - generic [ref=e1079]: APP 10066
+                - cell "未知" [ref=e1080]
+                - cell "—" [ref=e1081]
+                - cell "307 GB 329704448538 B" [ref=e1082]:
+                  - text: 307 GB
+                  - generic [ref=e1083]: 329704448538 B
+                - cell "—" [ref=e1084]
+                - cell [ref=e1085]:
+                  - paragraph [ref=e1086]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e1087]
+                - cell "未知" [ref=e1088]
+                - cell [ref=e1090]:
+                  - code [ref=e1091]: hotspot-simple-v1
+                - cell [ref=e1092]:
+                  - strong [ref=e1093]: 2026-04-16
+                  - generic [ref=e1094]: 至 2026-04-16下一自然日
+                - cell [ref=e1095]:
+                  - generic [ref=e1096]:
+                    - button "预览" [ref=e1097] [cursor=pointer]
+                    - button "下载" [ref=e1098] [cursor=pointer]
+                    - button "查看详情" [ref=e1099] [cursor=pointer]
+                    - button "标记压缩" [ref=e1100] [cursor=pointer]
+              - row [ref=e1101]:
+                - cell [ref=e1102]:
+                  - strong [ref=e1104]: "#17"
+                - cell "easinote/uwizuonjhhpljhhvhwlxlmlpkwphihhh.mp4 APP 10066" [ref=e1105]:
+                  - generic "easinote/uwizuonjhhpljhhvhwlxlmlpkwphihhh.mp4" [ref=e1106]
+                  - generic [ref=e1107]: APP 10066
+                - cell "未知" [ref=e1108]
+                - cell "—" [ref=e1109]
+                - cell "303 GB 324916277951 B" [ref=e1110]:
+                  - text: 303 GB
+                  - generic [ref=e1111]: 324916277951 B
+                - cell "—" [ref=e1112]
+                - cell [ref=e1113]:
+                  - paragraph [ref=e1114]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e1115]
+                - cell "未知" [ref=e1116]
+                - cell [ref=e1118]:
+                  - code [ref=e1119]: hotspot-simple-v1
+                - cell [ref=e1120]:
+                  - strong [ref=e1121]: 2026-04-16
+                  - generic [ref=e1122]: 至 2026-04-16下一自然日
+                - cell [ref=e1123]:
+                  - generic [ref=e1124]:
+                    - button "预览" [ref=e1125] [cursor=pointer]
+                    - button "下载" [ref=e1126] [cursor=pointer]
+                    - button "查看详情" [ref=e1127] [cursor=pointer]
+                    - button "标记压缩" [ref=e1128] [cursor=pointer]
+              - row [ref=e1129]:
+                - cell [ref=e1130]:
+                  - strong [ref=e1132]: "#18"
+                - cell "easinote/encloud-171539712684232d2c63e APP 10066" [ref=e1133]:
+                  - generic "easinote/encloud-171539712684232d2c63e" [ref=e1134]
+                  - generic [ref=e1135]: APP 10066
+                - cell "未知" [ref=e1136]
+                - cell "—" [ref=e1137]
+                - cell "285 GB 306131366971 B" [ref=e1138]:
+                  - text: 285 GB
+                  - generic [ref=e1139]: 306131366971 B
+                - cell "—" [ref=e1140]
+                - cell [ref=e1141]:
+                  - paragraph [ref=e1142]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e1143]
+                - cell "未知" [ref=e1144]
+                - cell [ref=e1146]:
+                  - code [ref=e1147]: hotspot-simple-v1
+                - cell [ref=e1148]:
+                  - strong [ref=e1149]: 2026-04-16
+                  - generic [ref=e1150]: 至 2026-04-16下一自然日
+                - cell [ref=e1151]:
+                  - generic [ref=e1152]:
+                    - button "预览" [ref=e1153] [cursor=pointer]
+                    - button "下载" [ref=e1154] [cursor=pointer]
+                    - button "查看详情" [ref=e1155] [cursor=pointer]
+                    - button "标记压缩" [ref=e1156] [cursor=pointer]
+              - row [ref=e1157]:
+                - cell [ref=e1158]:
+                  - strong [ref=e1160]: "#19"
+                - cell "easinote/uwixmlulhhpljhhvhwoioziyxxhhihjv APP 10066" [ref=e1161]:
+                  - generic "easinote/uwixmlulhhpljhhvhwoioziyxxhhihjv" [ref=e1162]
+                  - generic [ref=e1163]: APP 10066
+                - cell "未知" [ref=e1164]
+                - cell "—" [ref=e1165]
+                - cell "284 GB 305059727530 B" [ref=e1166]:
+                  - text: 284 GB
+                  - generic [ref=e1167]: 305059727530 B
+                - cell "—" [ref=e1168]
+                - cell [ref=e1169]:
+                  - paragraph [ref=e1170]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e1171]
+                - cell "未知" [ref=e1172]
+                - cell [ref=e1174]:
+                  - code [ref=e1175]: hotspot-simple-v1
+                - cell [ref=e1176]:
+                  - strong [ref=e1177]: 2026-04-16
+                  - generic [ref=e1178]: 至 2026-04-16下一自然日
+                - cell [ref=e1179]:
+                  - generic [ref=e1180]:
+                    - button "预览" [ref=e1181] [cursor=pointer]
+                    - button "下载" [ref=e1182] [cursor=pointer]
+                    - button "查看详情" [ref=e1183] [cursor=pointer]
+                    - button "标记压缩" [ref=e1184] [cursor=pointer]
+              - row [ref=e1185]:
+                - cell [ref=e1186]:
+                  - strong [ref=e1188]: "#20"
+                - cell "easinote/uwixiynqhhpljhhvhwqoyolnyzphihho APP 10066" [ref=e1189]:
+                  - generic "easinote/uwixiynqhhpljhhvhwqoyolnyzphihho" [ref=e1190]
+                  - generic [ref=e1191]: APP 10066
+                - cell "未知" [ref=e1192]
+                - cell "—" [ref=e1193]
+                - cell "284 GB 304957928471 B" [ref=e1194]:
+                  - text: 284 GB
+                  - generic [ref=e1195]: 304957928471 B
+                - cell "—" [ref=e1196]
+                - cell [ref=e1197]:
+                  - paragraph [ref=e1198]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e1199]
+                - cell "未知" [ref=e1200]
+                - cell [ref=e1202]:
+                  - code [ref=e1203]: hotspot-simple-v1
+                - cell [ref=e1204]:
+                  - strong [ref=e1205]: 2026-04-16
+                  - generic [ref=e1206]: 至 2026-04-16下一自然日
+                - cell [ref=e1207]:
+                  - generic [ref=e1208]:
+                    - button "预览" [ref=e1209] [cursor=pointer]
+                    - button "下载" [ref=e1210] [cursor=pointer]
+                    - button "查看详情" [ref=e1211] [cursor=pointer]
+                    - button "标记压缩" [ref=e1212] [cursor=pointer]
+              - row [ref=e1213]:
+                - cell [ref=e1214]:
+                  - strong [ref=e1216]: "#21"
+                - cell "easinote/uwixlnophhpljhhvhmjwomhlzqhhihhi APP 10066" [ref=e1217]:
+                  - generic "easinote/uwixlnophhpljhhvhmjwomhlzqhhihhi" [ref=e1218]
+                  - generic [ref=e1219]: APP 10066
+                - cell "未知" [ref=e1220]
+                - cell "—" [ref=e1221]
+                - cell "270 GB 290334989582 B" [ref=e1222]:
+                  - text: 270 GB
+                  - generic [ref=e1223]: 290334989582 B
+                - cell "—" [ref=e1224]
+                - cell [ref=e1225]:
+                  - paragraph [ref=e1226]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e1227]
+                - cell "未知" [ref=e1228]
+                - cell [ref=e1230]:
+                  - code [ref=e1231]: hotspot-simple-v1
+                - cell [ref=e1232]:
+                  - strong [ref=e1233]: 2026-04-16
+                  - generic [ref=e1234]: 至 2026-04-16下一自然日
+                - cell [ref=e1235]:
+                  - generic [ref=e1236]:
+                    - button "预览" [ref=e1237] [cursor=pointer]
+                    - button "下载" [ref=e1238] [cursor=pointer]
+                    - button "查看详情" [ref=e1239] [cursor=pointer]
+                    - button "标记压缩" [ref=e1240] [cursor=pointer]
+              - row [ref=e1241]:
+                - cell [ref=e1242]:
+                  - strong [ref=e1244]: "#22"
+                - cell "easinote/encloud-16476989711087866bdd1 APP 10066" [ref=e1245]:
+                  - generic "easinote/encloud-16476989711087866bdd1" [ref=e1246]
+                  - generic [ref=e1247]: APP 10066
+                - cell "未知" [ref=e1248]
+                - cell "—" [ref=e1249]
+                - cell "267 GB 286413621717 B" [ref=e1250]:
+                  - text: 267 GB
+                  - generic [ref=e1251]: 286413621717 B
+                - cell "—" [ref=e1252]
+                - cell [ref=e1253]:
+                  - paragraph [ref=e1254]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e1255]
+                - cell "未知" [ref=e1256]
+                - cell [ref=e1258]:
+                  - code [ref=e1259]: hotspot-simple-v1
+                - cell [ref=e1260]:
+                  - strong [ref=e1261]: 2026-04-16
+                  - generic [ref=e1262]: 至 2026-04-16下一自然日
+                - cell [ref=e1263]:
+                  - generic [ref=e1264]:
+                    - button "预览" [ref=e1265] [cursor=pointer]
+                    - button "下载" [ref=e1266] [cursor=pointer]
+                    - button "查看详情" [ref=e1267] [cursor=pointer]
+                    - button "标记压缩" [ref=e1268] [cursor=pointer]
+              - row [ref=e1269]:
+                - cell [ref=e1270]:
+                  - strong [ref=e1272]: "#23"
+                - cell "easinote/encloud-17715931137282fdc1210 APP 10066" [ref=e1273]:
+                  - generic "easinote/encloud-17715931137282fdc1210" [ref=e1274]
+                  - generic [ref=e1275]: APP 10066
+                - cell "未知" [ref=e1276]
+                - cell "—" [ref=e1277]
+                - cell "255 GB 273934993864 B" [ref=e1278]:
+                  - text: 255 GB
+                  - generic [ref=e1279]: 273934993864 B
+                - cell "—" [ref=e1280]
+                - cell [ref=e1281]:
+                  - paragraph [ref=e1282]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e1283]
+                - cell "未知" [ref=e1284]
+                - cell [ref=e1286]:
+                  - code [ref=e1287]: hotspot-simple-v1
+                - cell [ref=e1288]:
+                  - strong [ref=e1289]: 2026-04-16
+                  - generic [ref=e1290]: 至 2026-04-16下一自然日
+                - cell [ref=e1291]:
+                  - generic [ref=e1292]:
+                    - button "预览" [ref=e1293] [cursor=pointer]
+                    - button "下载" [ref=e1294] [cursor=pointer]
+                    - button "查看详情" [ref=e1295] [cursor=pointer]
+                    - button "标记压缩" [ref=e1296] [cursor=pointer]
+              - row [ref=e1297]:
+                - cell [ref=e1298]:
+                  - strong [ref=e1300]: "#24"
+                - cell "easinote/uwixhlhnhhpljhhvhmhvnlqqpophihil APP 10066" [ref=e1301]:
+                  - generic "easinote/uwixhlhnhhpljhhvhmhvnlqqpophihil" [ref=e1302]
+                  - generic [ref=e1303]: APP 10066
+                - cell "未知" [ref=e1304]
+                - cell "—" [ref=e1305]
+                - cell "238 GB 255764919425 B" [ref=e1306]:
+                  - text: 238 GB
+                  - generic [ref=e1307]: 255764919425 B
+                - cell "—" [ref=e1308]
+                - cell [ref=e1309]:
+                  - paragraph [ref=e1310]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e1311]
+                - cell "未知" [ref=e1312]
+                - cell [ref=e1314]:
+                  - code [ref=e1315]: hotspot-simple-v1
+                - cell [ref=e1316]:
+                  - strong [ref=e1317]: 2026-04-16
+                  - generic [ref=e1318]: 至 2026-04-16下一自然日
+                - cell [ref=e1319]:
+                  - generic [ref=e1320]:
+                    - button "预览" [ref=e1321] [cursor=pointer]
+                    - button "下载" [ref=e1322] [cursor=pointer]
+                    - button "查看详情" [ref=e1323] [cursor=pointer]
+                    - button "标记压缩" [ref=e1324] [cursor=pointer]
+              - row [ref=e1325]:
+                - cell [ref=e1326]:
+                  - strong [ref=e1328]: "#25"
+                - cell "easinote/encloud-16774092240326959e2de APP 10066" [ref=e1329]:
+                  - generic "easinote/encloud-16774092240326959e2de" [ref=e1330]
+                  - generic [ref=e1331]: APP 10066
+                - cell "未知" [ref=e1332]
+                - cell "—" [ref=e1333]
+                - cell "236 GB 253444007355 B" [ref=e1334]:
+                  - text: 236 GB
+                  - generic [ref=e1335]: 253444007355 B
+                - cell "—" [ref=e1336]
+                - cell [ref=e1337]:
+                  - paragraph [ref=e1338]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e1339]
+                - cell "未知" [ref=e1340]
+                - cell [ref=e1342]:
+                  - code [ref=e1343]: hotspot-simple-v1
+                - cell [ref=e1344]:
+                  - strong [ref=e1345]: 2026-04-16
+                  - generic [ref=e1346]: 至 2026-04-16下一自然日
+                - cell [ref=e1347]:
+                  - generic [ref=e1348]:
+                    - button "预览" [ref=e1349] [cursor=pointer]
+                    - button "下载" [ref=e1350] [cursor=pointer]
+                    - button "查看详情" [ref=e1351] [cursor=pointer]
+                    - button "标记压缩" [ref=e1352] [cursor=pointer]
+              - row [ref=e1353]:
+                - cell [ref=e1354]:
+                  - strong [ref=e1356]: "#26"
+                - cell "easinote/uwixljzjhhpljhhvhwoyhpnxovphihkn APP 10066" [ref=e1357]:
+                  - generic "easinote/uwixljzjhhpljhhvhwoyhpnxovphihkn" [ref=e1358]
+                  - generic [ref=e1359]: APP 10066
+                - cell "未知" [ref=e1360]
+                - cell "—" [ref=e1361]
+                - cell "231 GB 248056789846 B" [ref=e1362]:
+                  - text: 231 GB
+                  - generic [ref=e1363]: 248056789846 B
+                - cell "—" [ref=e1364]
+                - cell [ref=e1365]:
+                  - paragraph [ref=e1366]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e1367]
+                - cell "未知" [ref=e1368]
+                - cell [ref=e1370]:
+                  - code [ref=e1371]: hotspot-simple-v1
+                - cell [ref=e1372]:
+                  - strong [ref=e1373]: 2026-04-16
+                  - generic [ref=e1374]: 至 2026-04-16下一自然日
+                - cell [ref=e1375]:
+                  - generic [ref=e1376]:
+                    - button "预览" [ref=e1377] [cursor=pointer]
+                    - button "下载" [ref=e1378] [cursor=pointer]
+                    - button "查看详情" [ref=e1379] [cursor=pointer]
+                    - button "标记压缩" [ref=e1380] [cursor=pointer]
+              - row [ref=e1381]:
+                - cell [ref=e1382]:
+                  - strong [ref=e1384]: "#27"
+                - cell "pro-ali-pri/easinote/encloud-158659909720531150d1a APP 10066" [ref=e1385]:
+                  - generic "pro-ali-pri/easinote/encloud-158659909720531150d1a" [ref=e1386]
+                  - generic [ref=e1387]: APP 10066
+                - cell "未知" [ref=e1388]
+                - cell "—" [ref=e1389]
+                - cell "226 GB 242180910508 B" [ref=e1390]:
+                  - text: 226 GB
+                  - generic [ref=e1391]: 242180910508 B
+                - cell "—" [ref=e1392]
+                - cell [ref=e1393]:
+                  - paragraph [ref=e1394]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e1395]
+                - cell "未知" [ref=e1396]
+                - cell [ref=e1398]:
+                  - code [ref=e1399]: hotspot-simple-v1
+                - cell [ref=e1400]:
+                  - strong [ref=e1401]: 2026-04-16
+                  - generic [ref=e1402]: 至 2026-04-16下一自然日
+                - cell [ref=e1403]:
+                  - generic [ref=e1404]:
+                    - button "预览" [ref=e1405] [cursor=pointer]
+                    - button "下载" [ref=e1406] [cursor=pointer]
+                    - button "查看详情" [ref=e1407] [cursor=pointer]
+                    - button "标记压缩" [ref=e1408] [cursor=pointer]
+              - row [ref=e1409]:
+                - cell [ref=e1410]:
+                  - strong [ref=e1412]: "#28"
+                - cell "easinote/uwixomlqhhpljhhvhwpqwoqnpwhhihhm APP 10066" [ref=e1413]:
+                  - generic "easinote/uwixomlqhhpljhhvhwpqwoqnpwhhihhm" [ref=e1414]
+                  - generic [ref=e1415]: APP 10066
+                - cell "未知" [ref=e1416]
+                - cell "—" [ref=e1417]
+                - cell "224 GB 240608267197 B" [ref=e1418]:
+                  - text: 224 GB
+                  - generic [ref=e1419]: 240608267197 B
+                - cell "—" [ref=e1420]
+                - cell [ref=e1421]:
+                  - paragraph [ref=e1422]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e1423]
+                - cell "未知" [ref=e1424]
+                - cell [ref=e1426]:
+                  - code [ref=e1427]: hotspot-simple-v1
+                - cell [ref=e1428]:
+                  - strong [ref=e1429]: 2026-04-16
+                  - generic [ref=e1430]: 至 2026-04-16下一自然日
+                - cell [ref=e1431]:
+                  - generic [ref=e1432]:
+                    - button "预览" [ref=e1433] [cursor=pointer]
+                    - button "下载" [ref=e1434] [cursor=pointer]
+                    - button "查看详情" [ref=e1435] [cursor=pointer]
+                    - button "标记压缩" [ref=e1436] [cursor=pointer]
+              - row [ref=e1437]:
+                - cell [ref=e1438]:
+                  - strong [ref=e1440]: "#29"
+                - cell "pro-ali-pri/easinote/encloud-1586183647994f7f53b10 APP 10066" [ref=e1441]:
+                  - generic "pro-ali-pri/easinote/encloud-1586183647994f7f53b10" [ref=e1442]
+                  - generic [ref=e1443]: APP 10066
+                - cell "未知" [ref=e1444]
+                - cell "—" [ref=e1445]
+                - cell "220 GB 236309948063 B" [ref=e1446]:
+                  - text: 220 GB
+                  - generic [ref=e1447]: 236309948063 B
+                - cell "—" [ref=e1448]
+                - cell [ref=e1449]:
+                  - paragraph [ref=e1450]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e1451]
+                - cell "未知" [ref=e1452]
+                - cell [ref=e1454]:
+                  - code [ref=e1455]: hotspot-simple-v1
+                - cell [ref=e1456]:
+                  - strong [ref=e1457]: 2026-04-16
+                  - generic [ref=e1458]: 至 2026-04-16下一自然日
+                - cell [ref=e1459]:
+                  - generic [ref=e1460]:
+                    - button "预览" [ref=e1461] [cursor=pointer]
+                    - button "下载" [ref=e1462] [cursor=pointer]
+                    - button "查看详情" [ref=e1463] [cursor=pointer]
+                    - button "标记压缩" [ref=e1464] [cursor=pointer]
+              - row [ref=e1465]:
+                - cell [ref=e1466]:
+                  - strong [ref=e1468]: "#30"
+                - cell "easinote/uwizujinhhpljhhvhwviqvpjihphihhk APP 10066" [ref=e1469]:
+                  - generic "easinote/uwizujinhhpljhhvhwviqvpjihphihhk" [ref=e1470]
+                  - generic [ref=e1471]: APP 10066
+                - cell "未知" [ref=e1472]
+                - cell "—" [ref=e1473]
+                - cell "210 GB 225917047117 B" [ref=e1474]:
+                  - text: 210 GB
+                  - generic [ref=e1475]: 225917047117 B
+                - cell "—" [ref=e1476]
+                - cell [ref=e1477]:
+                  - paragraph [ref=e1478]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e1479]
+                - cell "未知" [ref=e1480]
+                - cell [ref=e1482]:
+                  - code [ref=e1483]: hotspot-simple-v1
+                - cell [ref=e1484]:
+                  - strong [ref=e1485]: 2026-04-16
+                  - generic [ref=e1486]: 至 2026-04-16下一自然日
+                - cell [ref=e1487]:
+                  - generic [ref=e1488]:
+                    - button "预览" [ref=e1489] [cursor=pointer]
+                    - button "下载" [ref=e1490] [cursor=pointer]
+                    - button "查看详情" [ref=e1491] [cursor=pointer]
+                    - button "标记压缩" [ref=e1492] [cursor=pointer]
+              - row [ref=e1493]:
+                - cell [ref=e1494]:
+                  - strong [ref=e1496]: "#31"
+                - cell "pro-ali-pri/easinote/encloud-158246146378291a06133 APP 10066" [ref=e1497]:
+                  - generic "pro-ali-pri/easinote/encloud-158246146378291a06133" [ref=e1498]
+                  - generic [ref=e1499]: APP 10066
+                - cell "未知" [ref=e1500]
+                - cell "—" [ref=e1501]
+                - cell "209 GB 224003595345 B" [ref=e1502]:
+                  - text: 209 GB
+                  - generic [ref=e1503]: 224003595345 B
+                - cell "—" [ref=e1504]
+                - cell [ref=e1505]:
+                  - paragraph [ref=e1506]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e1507]
+                - cell "未知" [ref=e1508]
+                - cell [ref=e1510]:
+                  - code [ref=e1511]: hotspot-simple-v1
+                - cell [ref=e1512]:
+                  - strong [ref=e1513]: 2026-04-16
+                  - generic [ref=e1514]: 至 2026-04-16下一自然日
+                - cell [ref=e1515]:
+                  - generic [ref=e1516]:
+                    - button "预览" [ref=e1517] [cursor=pointer]
+                    - button "下载" [ref=e1518] [cursor=pointer]
+                    - button "查看详情" [ref=e1519] [cursor=pointer]
+                    - button "标记压缩" [ref=e1520] [cursor=pointer]
+              - row [ref=e1521]:
+                - cell [ref=e1522]:
+                  - strong [ref=e1524]: "#32"
+                - cell "easinote/uwixpupphhpljhhvhpqlxunvjxhhihhh.mp4 APP 10066" [ref=e1525]:
+                  - generic "easinote/uwixpupphhpljhhvhpqlxunvjxhhihhh.mp4" [ref=e1526]
+                  - generic [ref=e1527]: APP 10066
+                - cell "未知" [ref=e1528]
+                - cell "—" [ref=e1529]
+                - cell "203 GB 218036684449 B" [ref=e1530]:
+                  - text: 203 GB
+                  - generic [ref=e1531]: 218036684449 B
+                - cell "—" [ref=e1532]
+                - cell [ref=e1533]:
+                  - paragraph [ref=e1534]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e1535]
+                - cell "未知" [ref=e1536]
+                - cell [ref=e1538]:
+                  - code [ref=e1539]: hotspot-simple-v1
+                - cell [ref=e1540]:
+                  - strong [ref=e1541]: 2026-04-16
+                  - generic [ref=e1542]: 至 2026-04-16下一自然日
+                - cell [ref=e1543]:
+                  - generic [ref=e1544]:
+                    - button "预览" [ref=e1545] [cursor=pointer]
+                    - button "下载" [ref=e1546] [cursor=pointer]
+                    - button "查看详情" [ref=e1547] [cursor=pointer]
+                    - button "标记压缩" [ref=e1548] [cursor=pointer]
+              - row [ref=e1549]:
+                - cell [ref=e1550]:
+                  - strong [ref=e1552]: "#33"
+                - cell "easinote/encloud-1676273197265684d823b APP 10066" [ref=e1553]:
+                  - generic "easinote/encloud-1676273197265684d823b" [ref=e1554]
+                  - generic [ref=e1555]: APP 10066
+                - cell "未知" [ref=e1556]
+                - cell "—" [ref=e1557]
+                - cell "201 GB 216161152387 B" [ref=e1558]:
+                  - text: 201 GB
+                  - generic [ref=e1559]: 216161152387 B
+                - cell "—" [ref=e1560]
+                - cell [ref=e1561]:
+                  - paragraph [ref=e1562]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e1563]
+                - cell "未知" [ref=e1564]
+                - cell [ref=e1566]:
+                  - code [ref=e1567]: hotspot-simple-v1
+                - cell [ref=e1568]:
+                  - strong [ref=e1569]: 2026-04-16
+                  - generic [ref=e1570]: 至 2026-04-16下一自然日
+                - cell [ref=e1571]:
+                  - generic [ref=e1572]:
+                    - button "预览" [ref=e1573] [cursor=pointer]
+                    - button "下载" [ref=e1574] [cursor=pointer]
+                    - button "查看详情" [ref=e1575] [cursor=pointer]
+                    - button "标记压缩" [ref=e1576] [cursor=pointer]
+              - row [ref=e1577]:
+                - cell [ref=e1578]:
+                  - strong [ref=e1580]: "#34"
+                - cell "easinote/uwixijyjhhpljhhvhmlxowxipjhhihhq APP 10066" [ref=e1581]:
+                  - generic "easinote/uwixijyjhhpljhhvhmlxowxipjhhihhq" [ref=e1582]
+                  - generic [ref=e1583]: APP 10066
+                - cell "未知" [ref=e1584]
+                - cell "—" [ref=e1585]
+                - cell "198 GB 212670711925 B" [ref=e1586]:
+                  - text: 198 GB
+                  - generic [ref=e1587]: 212670711925 B
+                - cell "—" [ref=e1588]
+                - cell [ref=e1589]:
+                  - paragraph [ref=e1590]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e1591]
+                - cell "未知" [ref=e1592]
+                - cell [ref=e1594]:
+                  - code [ref=e1595]: hotspot-simple-v1
+                - cell [ref=e1596]:
+                  - strong [ref=e1597]: 2026-04-16
+                  - generic [ref=e1598]: 至 2026-04-16下一自然日
+                - cell [ref=e1599]:
+                  - generic [ref=e1600]:
+                    - button "预览" [ref=e1601] [cursor=pointer]
+                    - button "下载" [ref=e1602] [cursor=pointer]
+                    - button "查看详情" [ref=e1603] [cursor=pointer]
+                    - button "标记压缩" [ref=e1604] [cursor=pointer]
+              - row [ref=e1605]:
+                - cell [ref=e1606]:
+                  - strong [ref=e1608]: "#35"
+                - cell "easinote/uwixplpkhhpljhhvhpwvwpvklzphihjv APP 10066" [ref=e1609]:
+                  - generic "easinote/uwixplpkhhpljhhvhpwvwpvklzphihjv" [ref=e1610]
+                  - generic [ref=e1611]: APP 10066
+                - cell "未知" [ref=e1612]
+                - cell "—" [ref=e1613]
+                - cell "197 GB 210996005733 B" [ref=e1614]:
+                  - text: 197 GB
+                  - generic [ref=e1615]: 210996005733 B
+                - cell "—" [ref=e1616]
+                - cell [ref=e1617]:
+                  - paragraph [ref=e1618]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e1619]
+                - cell "未知" [ref=e1620]
+                - cell [ref=e1622]:
+                  - code [ref=e1623]: hotspot-simple-v1
+                - cell [ref=e1624]:
+                  - strong [ref=e1625]: 2026-04-16
+                  - generic [ref=e1626]: 至 2026-04-16下一自然日
+                - cell [ref=e1627]:
+                  - generic [ref=e1628]:
+                    - button "预览" [ref=e1629] [cursor=pointer]
+                    - button "下载" [ref=e1630] [cursor=pointer]
+                    - button "查看详情" [ref=e1631] [cursor=pointer]
+                    - button "标记压缩" [ref=e1632] [cursor=pointer]
+              - row [ref=e1633]:
+                - cell [ref=e1634]:
+                  - strong [ref=e1636]: "#36"
+                - cell "easinote/encloud-1700119556670894d7fe9 APP 10066" [ref=e1637]:
+                  - generic "easinote/encloud-1700119556670894d7fe9" [ref=e1638]
+                  - generic [ref=e1639]: APP 10066
+                - cell "未知" [ref=e1640]
+                - cell "—" [ref=e1641]
+                - cell "196 GB 210710783876 B" [ref=e1642]:
+                  - text: 196 GB
+                  - generic [ref=e1643]: 210710783876 B
+                - cell "—" [ref=e1644]
+                - cell [ref=e1645]:
+                  - paragraph [ref=e1646]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e1647]
+                - cell "未知" [ref=e1648]
+                - cell [ref=e1650]:
+                  - code [ref=e1651]: hotspot-simple-v1
+                - cell [ref=e1652]:
+                  - strong [ref=e1653]: 2026-04-16
+                  - generic [ref=e1654]: 至 2026-04-16下一自然日
+                - cell [ref=e1655]:
+                  - generic [ref=e1656]:
+                    - button "预览" [ref=e1657] [cursor=pointer]
+                    - button "下载" [ref=e1658] [cursor=pointer]
+                    - button "查看详情" [ref=e1659] [cursor=pointer]
+                    - button "标记压缩" [ref=e1660] [cursor=pointer]
+              - row [ref=e1661]:
+                - cell [ref=e1662]:
+                  - strong [ref=e1664]: "#37"
+                - cell "easinote/uwizqhxvhhpljhhvhwjwlolwluhhihhj APP 10066" [ref=e1665]:
+                  - generic "easinote/uwizqhxvhhpljhhvhwjwlolwluhhihhj" [ref=e1666]
+                  - generic [ref=e1667]: APP 10066
+                - cell "未知" [ref=e1668]
+                - cell "—" [ref=e1669]
+                - cell "196 GB 210354612601 B" [ref=e1670]:
+                  - text: 196 GB
+                  - generic [ref=e1671]: 210354612601 B
+                - cell "—" [ref=e1672]
+                - cell [ref=e1673]:
+                  - paragraph [ref=e1674]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e1675]
+                - cell "未知" [ref=e1676]
+                - cell [ref=e1678]:
+                  - code [ref=e1679]: hotspot-simple-v1
+                - cell [ref=e1680]:
+                  - strong [ref=e1681]: 2026-04-16
+                  - generic [ref=e1682]: 至 2026-04-16下一自然日
+                - cell [ref=e1683]:
+                  - generic [ref=e1684]:
+                    - button "预览" [ref=e1685] [cursor=pointer]
+                    - button "下载" [ref=e1686] [cursor=pointer]
+                    - button "查看详情" [ref=e1687] [cursor=pointer]
+                    - button "标记压缩" [ref=e1688] [cursor=pointer]
+              - row [ref=e1689]:
+                - cell [ref=e1690]:
+                  - strong [ref=e1692]: "#38"
+                - cell "easinote/uwixvzuvhhpljhhvhpqyoolxxmhhihhi APP 10066" [ref=e1693]:
+                  - generic "easinote/uwixvzuvhhpljhhvhpqyoolxxmhhihhi" [ref=e1694]
+                  - generic [ref=e1695]: APP 10066
+                - cell "未知" [ref=e1696]
+                - cell "—" [ref=e1697]
+                - cell "192 GB 206674945459 B" [ref=e1698]:
+                  - text: 192 GB
+                  - generic [ref=e1699]: 206674945459 B
+                - cell "—" [ref=e1700]
+                - cell [ref=e1701]:
+                  - paragraph [ref=e1702]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e1703]
+                - cell "未知" [ref=e1704]
+                - cell [ref=e1706]:
+                  - code [ref=e1707]: hotspot-simple-v1
+                - cell [ref=e1708]:
+                  - strong [ref=e1709]: 2026-04-16
+                  - generic [ref=e1710]: 至 2026-04-16下一自然日
+                - cell [ref=e1711]:
+                  - generic [ref=e1712]:
+                    - button "预览" [ref=e1713] [cursor=pointer]
+                    - button "下载" [ref=e1714] [cursor=pointer]
+                    - button "查看详情" [ref=e1715] [cursor=pointer]
+                    - button "标记压缩" [ref=e1716] [cursor=pointer]
+              - row [ref=e1717]:
+                - cell [ref=e1718]:
+                  - strong [ref=e1720]: "#39"
+                - cell "easinote/uwixmvolhhpljhhvhmkivhupqxphihhi APP 10066" [ref=e1721]:
+                  - generic "easinote/uwixmvolhhpljhhvhmkivhupqxphihhi" [ref=e1722]
+                  - generic [ref=e1723]: APP 10066
+                - cell "未知" [ref=e1724]
+                - cell "—" [ref=e1725]
+                - cell "192 GB 206242874030 B" [ref=e1726]:
+                  - text: 192 GB
+                  - generic [ref=e1727]: 206242874030 B
+                - cell "—" [ref=e1728]
+                - cell [ref=e1729]:
+                  - paragraph [ref=e1730]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e1731]
+                - cell "未知" [ref=e1732]
+                - cell [ref=e1734]:
+                  - code [ref=e1735]: hotspot-simple-v1
+                - cell [ref=e1736]:
+                  - strong [ref=e1737]: 2026-04-16
+                  - generic [ref=e1738]: 至 2026-04-16下一自然日
+                - cell [ref=e1739]:
+                  - generic [ref=e1740]:
+                    - button "预览" [ref=e1741] [cursor=pointer]
+                    - button "下载" [ref=e1742] [cursor=pointer]
+                    - button "查看详情" [ref=e1743] [cursor=pointer]
+                    - button "标记压缩" [ref=e1744] [cursor=pointer]
+              - row [ref=e1745]:
+                - cell [ref=e1746]:
+                  - strong [ref=e1748]: "#40"
+                - cell "easinote/uwixjqmjhhpljhhvhpuvnxqvkqphihhh APP 10066" [ref=e1749]:
+                  - generic "easinote/uwixjqmjhhpljhhvhpuvnxqvkqphihhh" [ref=e1750]
+                  - generic [ref=e1751]: APP 10066
+                - cell "未知" [ref=e1752]
+                - cell "—" [ref=e1753]
+                - cell "192 GB 205827151141 B" [ref=e1754]:
+                  - text: 192 GB
+                  - generic [ref=e1755]: 205827151141 B
+                - cell "—" [ref=e1756]
+                - cell [ref=e1757]:
+                  - paragraph [ref=e1758]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e1759]
+                - cell "未知" [ref=e1760]
+                - cell [ref=e1762]:
+                  - code [ref=e1763]: hotspot-simple-v1
+                - cell [ref=e1764]:
+                  - strong [ref=e1765]: 2026-04-16
+                  - generic [ref=e1766]: 至 2026-04-16下一自然日
+                - cell [ref=e1767]:
+                  - generic [ref=e1768]:
+                    - button "预览" [ref=e1769] [cursor=pointer]
+                    - button "下载" [ref=e1770] [cursor=pointer]
+                    - button "查看详情" [ref=e1771] [cursor=pointer]
+                    - button "标记压缩" [ref=e1772] [cursor=pointer]
+              - row [ref=e1773]:
+                - cell [ref=e1774]:
+                  - strong [ref=e1776]: "#41"
+                - cell "pro-ali-pri/easinote/encloud-16164909780379a5a67d2 APP 10066" [ref=e1777]:
+                  - generic "pro-ali-pri/easinote/encloud-16164909780379a5a67d2" [ref=e1778]
+                  - generic [ref=e1779]: APP 10066
+                - cell "未知" [ref=e1780]
+                - cell "—" [ref=e1781]
+                - cell "192 GB 205724843511 B" [ref=e1782]:
+                  - text: 192 GB
+                  - generic [ref=e1783]: 205724843511 B
+                - cell "—" [ref=e1784]
+                - cell [ref=e1785]:
+                  - paragraph [ref=e1786]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e1787]
+                - cell "未知" [ref=e1788]
+                - cell [ref=e1790]:
+                  - code [ref=e1791]: hotspot-simple-v1
+                - cell [ref=e1792]:
+                  - strong [ref=e1793]: 2026-04-16
+                  - generic [ref=e1794]: 至 2026-04-16下一自然日
+                - cell [ref=e1795]:
+                  - generic [ref=e1796]:
+                    - button "预览" [ref=e1797] [cursor=pointer]
+                    - button "下载" [ref=e1798] [cursor=pointer]
+                    - button "查看详情" [ref=e1799] [cursor=pointer]
+                    - button "标记压缩" [ref=e1800] [cursor=pointer]
+              - row [ref=e1801]:
+                - cell [ref=e1802]:
+                  - strong [ref=e1804]: "#42"
+                - cell "easinote/uwizpmkhhhpljhhvhwkpoyjqquhhihki APP 10066" [ref=e1805]:
+                  - generic "easinote/uwizpmkhhhpljhhvhwkpoyjqquhhihki" [ref=e1806]
+                  - generic [ref=e1807]: APP 10066
+                - cell "未知" [ref=e1808]
+                - cell "—" [ref=e1809]
+                - cell "187 GB 200513285138 B" [ref=e1810]:
+                  - text: 187 GB
+                  - generic [ref=e1811]: 200513285138 B
+                - cell "—" [ref=e1812]
+                - cell [ref=e1813]:
+                  - paragraph [ref=e1814]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e1815]
+                - cell "未知" [ref=e1816]
+                - cell [ref=e1818]:
+                  - code [ref=e1819]: hotspot-simple-v1
+                - cell [ref=e1820]:
+                  - strong [ref=e1821]: 2026-04-16
+                  - generic [ref=e1822]: 至 2026-04-16下一自然日
+                - cell [ref=e1823]:
+                  - generic [ref=e1824]:
+                    - button "预览" [ref=e1825] [cursor=pointer]
+                    - button "下载" [ref=e1826] [cursor=pointer]
+                    - button "查看详情" [ref=e1827] [cursor=pointer]
+                    - button "标记压缩" [ref=e1828] [cursor=pointer]
+              - row [ref=e1829]:
+                - cell [ref=e1830]:
+                  - strong [ref=e1832]: "#43"
+                - cell "easinote/uwixlmjkhhpljhhvhwvqqhhomyphihhm APP 10066" [ref=e1833]:
+                  - generic "easinote/uwixlmjkhhpljhhvhwvqqhhomyphihhm" [ref=e1834]
+                  - generic [ref=e1835]: APP 10066
+                - cell "未知" [ref=e1836]
+                - cell "—" [ref=e1837]
+                - cell "187 GB 200348038715 B" [ref=e1838]:
+                  - text: 187 GB
+                  - generic [ref=e1839]: 200348038715 B
+                - cell "—" [ref=e1840]
+                - cell [ref=e1841]:
+                  - paragraph [ref=e1842]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e1843]
+                - cell "未知" [ref=e1844]
+                - cell [ref=e1846]:
+                  - code [ref=e1847]: hotspot-simple-v1
+                - cell [ref=e1848]:
+                  - strong [ref=e1849]: 2026-04-16
+                  - generic [ref=e1850]: 至 2026-04-16下一自然日
+                - cell [ref=e1851]:
+                  - generic [ref=e1852]:
+                    - button "预览" [ref=e1853] [cursor=pointer]
+                    - button "下载" [ref=e1854] [cursor=pointer]
+                    - button "查看详情" [ref=e1855] [cursor=pointer]
+                    - button "标记压缩" [ref=e1856] [cursor=pointer]
+              - row [ref=e1857]:
+                - cell [ref=e1858]:
+                  - strong [ref=e1860]: "#44"
+                - cell "easinote/uwixwlzvhhpljhhvhqjnioiwjpphihhl APP 10066" [ref=e1861]:
+                  - generic "easinote/uwixwlzvhhpljhhvhqjnioiwjpphihhl" [ref=e1862]
+                  - generic [ref=e1863]: APP 10066
+                - cell "未知" [ref=e1864]
+                - cell "—" [ref=e1865]
+                - cell "183 GB 196951698902 B" [ref=e1866]:
+                  - text: 183 GB
+                  - generic [ref=e1867]: 196951698902 B
+                - cell "—" [ref=e1868]
+                - cell [ref=e1869]:
+                  - paragraph [ref=e1870]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e1871]
+                - cell "未知" [ref=e1872]
+                - cell [ref=e1874]:
+                  - code [ref=e1875]: hotspot-simple-v1
+                - cell [ref=e1876]:
+                  - strong [ref=e1877]: 2026-04-16
+                  - generic [ref=e1878]: 至 2026-04-16下一自然日
+                - cell [ref=e1879]:
+                  - generic [ref=e1880]:
+                    - button "预览" [ref=e1881] [cursor=pointer]
+                    - button "下载" [ref=e1882] [cursor=pointer]
+                    - button "查看详情" [ref=e1883] [cursor=pointer]
+                    - button "标记压缩" [ref=e1884] [cursor=pointer]
+              - row [ref=e1885]:
+                - cell [ref=e1886]:
+                  - strong [ref=e1888]: "#45"
+                - cell "easinote/uwixnplhhhpljhhvhwpqiqzpqyhhihhm APP 10066" [ref=e1889]:
+                  - generic "easinote/uwixnplhhhpljhhvhwpqiqzpqyhhihhm" [ref=e1890]
+                  - generic [ref=e1891]: APP 10066
+                - cell "未知" [ref=e1892]
+                - cell "—" [ref=e1893]
+                - cell "180 GB 193490526597 B" [ref=e1894]:
+                  - text: 180 GB
+                  - generic [ref=e1895]: 193490526597 B
+                - cell "—" [ref=e1896]
+                - cell [ref=e1897]:
+                  - paragraph [ref=e1898]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e1899]
+                - cell "未知" [ref=e1900]
+                - cell [ref=e1902]:
+                  - code [ref=e1903]: hotspot-simple-v1
+                - cell [ref=e1904]:
+                  - strong [ref=e1905]: 2026-04-16
+                  - generic [ref=e1906]: 至 2026-04-16下一自然日
+                - cell [ref=e1907]:
+                  - generic [ref=e1908]:
+                    - button "预览" [ref=e1909] [cursor=pointer]
+                    - button "下载" [ref=e1910] [cursor=pointer]
+                    - button "查看详情" [ref=e1911] [cursor=pointer]
+                    - button "标记压缩" [ref=e1912] [cursor=pointer]
+              - row [ref=e1913]:
+                - cell [ref=e1914]:
+                  - strong [ref=e1916]: "#46"
+                - cell "pro-ali-pri/easinote/encloud-1582806795529d43f0558 APP 10066" [ref=e1917]:
+                  - generic "pro-ali-pri/easinote/encloud-1582806795529d43f0558" [ref=e1918]
+                  - generic [ref=e1919]: APP 10066
+                - cell "未知" [ref=e1920]
+                - cell "—" [ref=e1921]
+                - cell "179 GB 192365411005 B" [ref=e1922]:
+                  - text: 179 GB
+                  - generic [ref=e1923]: 192365411005 B
+                - cell "—" [ref=e1924]
+                - cell [ref=e1925]:
+                  - paragraph [ref=e1926]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e1927]
+                - cell "未知" [ref=e1928]
+                - cell [ref=e1930]:
+                  - code [ref=e1931]: hotspot-simple-v1
+                - cell [ref=e1932]:
+                  - strong [ref=e1933]: 2026-04-16
+                  - generic [ref=e1934]: 至 2026-04-16下一自然日
+                - cell [ref=e1935]:
+                  - generic [ref=e1936]:
+                    - button "预览" [ref=e1937] [cursor=pointer]
+                    - button "下载" [ref=e1938] [cursor=pointer]
+                    - button "查看详情" [ref=e1939] [cursor=pointer]
+                    - button "标记压缩" [ref=e1940] [cursor=pointer]
+              - row [ref=e1941]:
+                - cell [ref=e1942]:
+                  - strong [ref=e1944]: "#47"
+                - cell "easinote/encloud-16455847802499df0e00b APP 10066" [ref=e1945]:
+                  - generic "easinote/encloud-16455847802499df0e00b" [ref=e1946]
+                  - generic [ref=e1947]: APP 10066
+                - cell "未知" [ref=e1948]
+                - cell "—" [ref=e1949]
+                - cell "179 GB 192064234625 B" [ref=e1950]:
+                  - text: 179 GB
+                  - generic [ref=e1951]: 192064234625 B
+                - cell "—" [ref=e1952]
+                - cell [ref=e1953]:
+                  - paragraph [ref=e1954]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e1955]
+                - cell "未知" [ref=e1956]
+                - cell [ref=e1958]:
+                  - code [ref=e1959]: hotspot-simple-v1
+                - cell [ref=e1960]:
+                  - strong [ref=e1961]: 2026-04-16
+                  - generic [ref=e1962]: 至 2026-04-16下一自然日
+                - cell [ref=e1963]:
+                  - generic [ref=e1964]:
+                    - button "预览" [ref=e1965] [cursor=pointer]
+                    - button "下载" [ref=e1966] [cursor=pointer]
+                    - button "查看详情" [ref=e1967] [cursor=pointer]
+                    - button "标记压缩" [ref=e1968] [cursor=pointer]
+              - row [ref=e1969]:
+                - cell [ref=e1970]:
+                  - strong [ref=e1972]: "#48"
+                - cell "easinote/encloud-1649746106129f3112461 APP 10066" [ref=e1973]:
+                  - generic "easinote/encloud-1649746106129f3112461" [ref=e1974]
+                  - generic [ref=e1975]: APP 10066
+                - cell "未知" [ref=e1976]
+                - cell "—" [ref=e1977]
+                - cell "176 GB 188904165195 B" [ref=e1978]:
+                  - text: 176 GB
+                  - generic [ref=e1979]: 188904165195 B
+                - cell "—" [ref=e1980]
+                - cell [ref=e1981]:
+                  - paragraph [ref=e1982]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e1983]
+                - cell "未知" [ref=e1984]
+                - cell [ref=e1986]:
+                  - code [ref=e1987]: hotspot-simple-v1
+                - cell [ref=e1988]:
+                  - strong [ref=e1989]: 2026-04-16
+                  - generic [ref=e1990]: 至 2026-04-16下一自然日
+                - cell [ref=e1991]:
+                  - generic [ref=e1992]:
+                    - button "预览" [ref=e1993] [cursor=pointer]
+                    - button "下载" [ref=e1994] [cursor=pointer]
+                    - button "查看详情" [ref=e1995] [cursor=pointer]
+                    - button "标记压缩" [ref=e1996] [cursor=pointer]
+              - row [ref=e1997]:
+                - cell [ref=e1998]:
+                  - strong [ref=e2000]: "#49"
+                - cell "pro-ali-pri/easinote/encloud-1584430285393bc69e431 APP 10066" [ref=e2001]:
+                  - generic "pro-ali-pri/easinote/encloud-1584430285393bc69e431" [ref=e2002]
+                  - generic [ref=e2003]: APP 10066
+                - cell "未知" [ref=e2004]
+                - cell "—" [ref=e2005]
+                - cell "175 GB 187372065652 B" [ref=e2006]:
+                  - text: 175 GB
+                  - generic [ref=e2007]: 187372065652 B
+                - cell "—" [ref=e2008]
+                - cell [ref=e2009]:
+                  - paragraph [ref=e2010]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e2011]
+                - cell "未知" [ref=e2012]
+                - cell [ref=e2014]:
+                  - code [ref=e2015]: hotspot-simple-v1
+                - cell [ref=e2016]:
+                  - strong [ref=e2017]: 2026-04-16
+                  - generic [ref=e2018]: 至 2026-04-16下一自然日
+                - cell [ref=e2019]:
+                  - generic [ref=e2020]:
+                    - button "预览" [ref=e2021] [cursor=pointer]
+                    - button "下载" [ref=e2022] [cursor=pointer]
+                    - button "查看详情" [ref=e2023] [cursor=pointer]
+                    - button "标记压缩" [ref=e2024] [cursor=pointer]
+              - row [ref=e2025]:
+                - cell [ref=e2026]:
+                  - strong [ref=e2028]: "#50"
+                - cell "easinote/uwixhyhnhhpljhhvhmhzqmilppphihjy APP 10066" [ref=e2029]:
+                  - generic "easinote/uwixhyhnhhpljhhvhmhzqmilppphihjy" [ref=e2030]
+                  - generic [ref=e2031]: APP 10066
+                - cell "未知" [ref=e2032]
+                - cell "—" [ref=e2033]
+                - cell "173 GB 185488922687 B" [ref=e2034]:
+                  - text: 173 GB
+                  - generic [ref=e2035]: 185488922687 B
+                - cell "—" [ref=e2036]
+                - cell [ref=e2037]:
+                  - paragraph [ref=e2038]: 1天last_day观测强度外推；观测1天；最近观测2026-04-15；未校准完整流量
+                - cell "—" [ref=e2039]
+                - cell "未知" [ref=e2040]
+                - cell [ref=e2042]:
+                  - code [ref=e2043]: hotspot-simple-v1
+                - cell [ref=e2044]:
+                  - strong [ref=e2045]: 2026-04-16
+                  - generic [ref=e2046]: 至 2026-04-16下一自然日
+                - cell [ref=e2047]:
+                  - generic [ref=e2048]:
+                    - button "预览" [ref=e2049] [cursor=pointer]
+                    - button "下载" [ref=e2050] [cursor=pointer]
+                    - button "查看详情" [ref=e2051] [cursor=pointer]
+                    - button "标记压缩" [ref=e2052] [cursor=pointer]
+        - generic [ref=e2053]:
+          - generic [ref=e2054]: 排序与 predictedBytes 直接来自持久化 Python 结果。
+          - generic [ref=e2055]: run_3ed97fd12794dcdb654dcf19a8affcce0521e050cee0f4f24d1facf1328a679d
+      - group [ref=e2056]:
+        - generic "导入数据与发起新的真实预测任务" [ref=e2057] [cursor=pointer]
+        - option "文件日流量 · FILE_DAILY" [selected]
+        - option "App 每日总流量 · APP_DAILY_TOTAL"
+        - option "真实业务数据 · REAL" [selected]
+        - option "演示数据 · FAKE"
+        - option "请选择已确认的单位" [selected]
+        - option "B · 已确认是字节"
+        - option "选择 READY 数据集" [selected]
+        - option "总流量 · REAL · ds_b528782e153f93f44fd8181e15af52546218901845f8296941a780c2f529db1c · 257行"
+        - option "总流量 · REAL · ds_97ed094ddd1ec468588b891547b7bf7ab3475752610767d4f3a99c183acf4a73 · 292行"
+        - option "文件日流量 · REAL · ds_e5330aa1f297b4508e887b99f5acd102236a9782346b0387bd9cc9c241435d0d · 4453行"
+        - option "文件日流量 · REAL · ds_478e2f741e9053b254c87e96386b206dee76859f6c85d27a7b6bb0f817f6e3fd · 1019647行"
+        - option "选择 App" [selected]
+        - option "日预测 · 下一自然日" [selected]
+        - option "周预测 · 后续连续七天"
+        - option "taskId · 跟踪任务" [selected]
+        - option "runId · 读取榜单"
+      - group [ref=e2058]:
+        - generic "旧 FAKE Top50 接口演示（不参与真实统计）" [ref=e2059] [cursor=pointer]
+        - option "全部 App" [selected]
+        - option "10066"
+        - option "10350"
+        - option "日 / 周" [selected]
+        - option "日预测"
+        - option "周预测"
+        - option "全部模型" [selected]
+        - option "ewma_v1"
+        - option "last_day_v1"
+        - option "rolling_7d_v1"
+        - option "全部状态" [selected]
+        - option "已压缩"
+        - option "待处理"
+        - option "处理中"
+        - option "10" [selected]
+        - option "20"
+        - option "50"
+    - generic [ref=e284]:
+      - text: CDN 热点预测与压缩降本系统
+      - generic [ref=e285]: 界面样例与接口数据均标明来源

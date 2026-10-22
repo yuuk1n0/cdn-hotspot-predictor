@@ -67,7 +67,14 @@ function validateResult(result, p) {
     requireValue(!p.fileKey || item.fileKey === p.fileKey, '返回文件不是请求的精确标识。')
     files.add(item.fileKey)
   })
-  requireValue(result.hotspotTrafficRatio?.value === null, '未确认 App 全量分母，不应返回热点占比。')
+  const ratio = result.hotspotTrafficRatio
+  requireValue(ratio && ratio.basis === 'HISTORICAL_ACTUAL' && ratio.unit === 'PERCENT', '缺少历史热点占比口径。')
+  if (ratio.value === null) {
+    requireValue(typeof ratio.reasonCode === 'string' && ratio.reasonCode.length > 0, '占比不可计算时必须提供原因码。')
+  } else {
+    requireValue(byteString(ratio.value) && Number(ratio.value) >= 0 && Number(ratio.value) <= 100, '热点占比必须为0至100的精确十进制字符串。')
+    requireValue(byteString(ratio.numeratorBytes) && byteString(ratio.denominatorBytes), '热点占比缺少精确分子或分母。')
+  }
   return result
 }
 

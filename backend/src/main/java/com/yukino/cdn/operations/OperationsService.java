@@ -17,4 +17,8 @@ public interface OperationsService {
     ObjectNode evidence(String tool, JsonNode context, JsonNode arguments);
     ObjectNode suggestion(String appId, int horizonDays, String backtestId);
     default ObjectNode switchModel(String appId, JsonNode body) { throw new UnsupportedOperationException("模型切换服务未实现。"); }
+    default ObjectNode runList(String appId, LocalDate businessDate, int horizonDays) { throw new UnsupportedOperationException("运行列表服务未实现。"); }
+    default ObjectNode latestRun(String appId, LocalDate businessDate, int horizonDays) { throw new UnsupportedOperationException("最新运行服务未实现。"); }
+    default ObjectNode effects(String appId, String evidenceSource) { throw new UnsupportedOperationException("压缩效果服务未实现。"); }
+    default ObjectNode modelMetrics(String appId, int horizonDays) { throw new UnsupportedOperationException("模型证据服务未实现。"); }
 }

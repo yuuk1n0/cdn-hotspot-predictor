@@ -1,0 +1,166 @@
+- generic [ref=e3]:
+  - link "跳到主内容" [ref=e4] [cursor=pointer]:
+    - /url: "#main-content"
+  - banner [ref=e5]:
+    - link "CDN 系统首页" [ref=e6] [cursor=pointer]:
+      - /url: /overview
+      - generic [ref=e12]: CDN 热点文件动态预测与压缩降本系统
+    - generic [ref=e13]:
+      - generic "全局 AppID 切换" [ref=e14]:
+        - generic [ref=e15]: AppID
+        - combobox "AppID" [ref=e16] [cursor=pointer]:
+          - option "10350"
+          - option "10066" [selected]
+      - generic [ref=e18]: 本地前端预览
+      - button "界面说明" [ref=e20] [cursor=pointer]
+      - generic [ref=e24]: UI
+      - generic [ref=e25]: 预览工作台
+  - complementary [ref=e26]:
+    - generic [ref=e27]:
+      - text: 运营工作台
+      - generic [ref=e28]: WORKSPACE
+    - navigation "主导航" [ref=e29]:
+      - link "业务总览" [ref=e30] [cursor=pointer]:
+        - /url: /overview
+      - link "热点预测" [ref=e35] [cursor=pointer]:
+        - /url: /prediction
+      - link "模型回测" [ref=e39] [cursor=pointer]:
+        - /url: /backtest
+      - link "压缩降本" [ref=e43] [cursor=pointer]:
+        - /url: /compression
+      - link "通知中心" [ref=e47] [cursor=pointer]:
+        - /url: /notifications
+      - link "智能 Agent" [ref=e51] [cursor=pointer]:
+        - /url: /agent
+    - generic [ref=e55]:
+      - strong [ref=e60]: 从热点洞察到降本决策
+      - generic [ref=e61]: CDN OPERATIONS CONSOLE
+      - generic [ref=e62]: 业务工作台
+  - main [ref=e63]:
+    - generic [ref=e64]:
+      - generic [ref=e65]: 工作台
+      - strong [ref=e68]: 业务总览
+      - generic [ref=e69]: CDN 流量运营
+    - generic [ref=e70]:
+      - generic [ref=e71]:
+        - generic [ref=e72]:
+          - heading "业务总览" [level=1] [ref=e73]
+          - paragraph [ref=e74]: 历史观测、真实预测运行与压缩处理记录分开展示，不使用随机值填充缺口。
+        - generic [ref=e75]:
+          - generic "业务总览数据来源" [ref=e76]:
+            - button "真实数据" [ref=e77] [cursor=pointer]
+            - button "UI 演示" [ref=e78] [cursor=pointer]
+          - button "刷新中…" [disabled] [ref=e429]
+          - link "进入热点预测" [ref=e82] [cursor=pointer]:
+            - /url: /prediction
+      - region "业务总览筛选" [ref=e85]:
+        - generic [ref=e86]:
+          - generic [ref=e87]: AppID
+          - combobox "AppID" [ref=e88] [cursor=pointer]:
+            - option "10350 · 内容分发"
+            - option "10066 · 应用资源" [selected]
+        - generic [ref=e89]:
+          - generic [ref=e90]: 历史窗口
+          - combobox "历史窗口" [ref=e91] [cursor=pointer]:
+            - option "近 7 天" [selected]
+            - option "近 30 天"
+            - option "近 90 天"
+        - generic "预测榜单粒度" [ref=e92]:
+          - button "日榜" [ref=e93] [cursor=pointer]
+          - button "周榜" [ref=e94] [cursor=pointer]
+      - generic [ref=e95]:
+        - generic [ref=e96]: App 10066 · 历史数据集 ds_478e2f741e9053b254c87e96386b206dee76859f6c85d27a7b6bb0f817f6e3fd
+        - generic [ref=e97]: REAL 数据 · 缺失保持空值
+      - region "业务总览核心指标" [ref=e98]:
+        - article [ref=e99]:
+          - generic [ref=e100]: 已观测文件流量
+          - generic [ref=e105]: —
+          - generic [ref=e106]: 历史查询失败或无数据集
+        - article [ref=e108]:
+          - generic [ref=e109]: 历史热点占比
+          - generic [ref=e114]: 不可计算
+          - generic [ref=e115]: 原因码：NO_HISTORY
+        - article [ref=e117]:
+          - generic [ref=e118]: 预测 Top50 实际占比
+          - generic [ref=e123]: 不可计算
+          - generic [ref=e124]: NO_METRIC · 分母单位 未确认
+        - article [ref=e126]:
+          - generic [ref=e127]: Top50 预测窗口累计
+          - generic [ref=e132]: —
+          - generic [ref=e133]: 暂无真实运行
+        - article [ref=e135]:
+          - generic [ref=e136]: 待压缩文件
+          - generic [ref=e141]: —个
+          - generic [ref=e142]: 压缩登记状态待查询
+      - generic [ref=e144]:
+        - generic [ref=e145]:
+          - generic [ref=e146]:
+            - heading "已观测文件流量趋势" [level=2] [ref=e147]
+            - generic [ref=e148]: — — —
+          - generic [ref=e430]: 暂无历史观测
+          - generic [ref=e150]: App 整日缺失：无；未自动补零。
+        - generic [ref=e151]:
+          - generic [ref=e152]:
+            - heading "Top5 文件流量集中度" [level=2] [ref=e153]
+            - generic [ref=e154]: 历史实际
+          - generic [ref=e431]: 没有可计算的历史文件排行
+          - generic [ref=e156]: 分母为查询窗口内全部已观测文件流量；不是 App 全量流量。
+      - generic [ref=e157]:
+        - generic [ref=e158]:
+          - generic [ref=e159]:
+            - heading "Top50 预测摘要 日榜" [level=2] [ref=e160]
+            - link "查看全部" [ref=e161] [cursor=pointer]:
+              - /url: /prediction
+          - table [ref=e165]:
+            - rowgroup [ref=e166]:
+              - row [ref=e167]:
+                - columnheader "排名" [ref=e168]
+                - columnheader "FileKey" [ref=e169]
+                - columnheader "预测流量" [ref=e170]
+                - columnheader "模型" [ref=e171]
+            - rowgroup
+          - generic [ref=e432]:
+            - heading "暂无真实 Top50" [level=3] [ref=e433]
+            - paragraph [ref=e434]: 不会用演示数据替代。
+        - generic [ref=e248]:
+          - generic [ref=e249]:
+            - generic [ref=e250]:
+              - heading "压缩降本状态" [level=2] [ref=e251]
+              - link "查看详情" [ref=e252] [cursor=pointer]:
+                - /url: /compression
+            - generic [ref=e255]:
+              - generic [ref=e256]:
+                - generic [ref=e257]: 压缩登记
+                - strong [ref=e258]:
+                  - text: —
+                  - emphasis [ref=e259]: 条
+              - generic [ref=e260]:
+                - generic [ref=e261]: 效果观测
+                - strong [ref=e262]:
+                  - text: —
+                  - emphasis [ref=e263]: 条
+              - generic [ref=e264]:
+                - generic [ref=e265]: 实际账单降本
+                - strong [ref=e266]: 未验证
+            - paragraph [ref=e267]: 等待真实压缩登记与成熟观测。
+          - generic [ref=e268]:
+            - heading "数据边界" [level=2] [ref=e270]
+            - generic [ref=e271]:
+              - term [ref=e272]: 预测结果
+              - definition [ref=e273]: 未加载
+              - term [ref=e274]: 预测 Top50 占比
+              - definition [ref=e275]: 不可计算 · NO_METRIC
+              - term [ref=e276]: 历史占比
+              - definition [ref=e277]: 未验证
+              - term [ref=e278]: 占比分母
+              - definition [ref=e279]: 缺失 · 单位未确认
+              - term [ref=e280]: 压缩收益
+              - definition [ref=e281]: 仅在真实观测与成本证据齐全后计算
+      - group [ref=e282]:
+        - generic "查看完整历史观测查询与逐日明细" [ref=e283] [cursor=pointer]
+        - option "10066" [selected]
+        - option "日视图 · 自选日期" [selected]
+        - option "周视图 · 连续七天"
+    - generic [ref=e284]:
+      - text: CDN 热点预测与压缩降本系统
+      - generic [ref=e285]: 界面样例与接口数据均标明来源

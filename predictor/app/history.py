@@ -1,6 +1,5 @@
-"""Read-only aggregates over one immutable normalized dataset, never zero-fill gaps."""
+"""Read-only aggregates over one immutable dataset, never zero-fill gaps."""
 
-import csv
 from collections import defaultdict
 from datetime import date, timedelta
 from decimal import Decimal, localcontext
@@ -33,19 +32,16 @@ def observations(store, dataset_id, app_id, start_date, end_date, granularity='D
     with localcontext() as context:
         # Import caps each integer at 128 digits; another 10 digits covers row summation.
         context.prec = 512
-        with (store.datasets / dataset_id / 'normalized.csv').open(encoding='utf-8', newline='') as stream:
-            for row in csv.DictReader(stream):
-                if row['appId'] != app_id or not start_date <= row['date'] <= end_date:
-                    continue
-                day, key = row['date'], row['fileKey']
-                app_days.add(day)
-                if file_key is not None and key != file_key:
-                    continue
-                value = Decimal(row['trafficBytes'])
-                daily_bytes[day] += value
-                daily_files[day].add(key)
-                file_bytes[key] += value
-                file_days[key].add(day)
+        for row in store.observations_window(dataset_id, app_id, start_date, end_date):
+            day, key = row['date'], row['fileKey']
+            app_days.add(day)
+            if file_key is not None and key != file_key:
+                continue
+            value = Decimal(row['trafficBytes'])
+            daily_bytes[day] += value
+            daily_files[day].add(key)
+            file_bytes[key] += value
+            file_days[key].add(day)
         days, missing = [], []
         for offset in range((end-start).days+1):
             day = (start+timedelta(days=offset)).isoformat()
@@ -55,6 +51,7 @@ def observations(store, dataset_id, app_id, start_date, end_date, granularity='D
             if day not in app_days:
                 missing.append(day)
         ordered = sorted(file_bytes, key=lambda key: (-file_bytes[key], key))[:top_k]
+        ratio = _hotspot_ratio(store, app_id, start_date, end_date, file_key, ordered, file_bytes, app_days)
         return {
             'datasetId': dataset_id, 'appId': app_id, 'datasetSource': metadata['datasetSource'],
             'startDate': start_date, 'endDate': end_date, 'granularity': granularity, 'scope': 'OBSERVED_FILES',
@@ -63,5 +60,57 @@ def observations(store, dataset_id, app_id, start_date, end_date, granularity='D
             'days': days, 'missingDates': missing,
             'items': [{'rank': rank, 'fileKey': key, 'observedTrafficBytes': format(file_bytes[key], 'f'), 'observedDays': len(file_days[key])}
                       for rank, key in enumerate(ordered, 1)],
-            'hotspotTrafficRatio': {'value': None, 'reasonCode': 'NO_CONFIRMED_APP_TOTAL'},
+            'hotspotTrafficRatio': ratio,
         }
+
+
+def _hotspot_ratio(store, app_id, start_date, end_date, file_key, ordered, file_bytes, app_days):
+    if file_key is not None:
+        return {'value': None, 'reasonCode': 'FILE_FILTER_NOT_TOP_K', 'basis': 'HISTORICAL_ACTUAL'}
+    if not app_days:
+        return {'value': None, 'reasonCode': 'NO_OBSERVATIONS', 'basis': 'HISTORICAL_ACTUAL'}
+    total_metadata = store.latest_dataset(app_id, 'APP_DAILY_TOTAL')
+    if total_metadata is None:
+        return {'value': None, 'reasonCode': 'NO_CONFIRMED_APP_TOTAL', 'basis': 'HISTORICAL_ACTUAL'}
+    if total_metadata.get('sourceUnit') != 'GB_DECIMAL':
+        return {
+            'value': None, 'reasonCode': 'APP_TOTAL_UNIT_UNCONFIRMED', 'basis': 'HISTORICAL_ACTUAL',
+            'totalDatasetId': total_metadata['datasetId'], 'appTotalUnit': total_metadata.get('sourceUnit'),
+        }
+    totals = {}
+    units = set()
+    with localcontext() as context:
+        context.prec = 512
+        for row in store.app_daily_totals(total_metadata['datasetId'], app_id, start_date, end_date):
+            totals[row['date']] = Decimal(row['totalTrafficBytes'])
+            units.add(row['unit'])
+    base = {
+        'basis': 'HISTORICAL_ACTUAL', 'unit': 'PERCENT',
+        'totalDatasetId': total_metadata['datasetId'], 'appTotalUnit': total_metadata.get('sourceUnit'),
+        'topK': len(ordered), 'observedFileDays': len(app_days), 'appTotalDays': len(totals),
+    }
+    if not totals:
+        return {'value': None, 'reasonCode': 'NO_APP_TOTAL_IN_WINDOW', **base}
+    if units != {'GB_DECIMAL'}:
+        return {'value': None, 'reasonCode': 'APP_TOTAL_UNIT_UNCONFIRMED', **base}
+    missing_totals = sorted(app_days - totals.keys())
+    if missing_totals:
+        return {'value': None, 'reasonCode': 'APP_TOTAL_MISSING_FOR_OBSERVED_DAYS',
+                'missingTotalDates': missing_totals[:100], **base}
+    if missing_file_days := sorted(totals.keys() - app_days):
+        return {'value': None, 'reasonCode': 'FILE_OBSERVATION_MISSING_IN_WINDOW',
+                'missingFileDates': missing_file_days[:100], **base}
+    with localcontext() as context:
+        context.prec = 512
+        numerator = sum((file_bytes[key] for key in ordered), Decimal(0))
+        denominator = sum(totals.values(), Decimal(0))
+        base.update({
+            'numeratorBytes': format(numerator, 'f'),
+            'denominatorBytes': format(denominator, 'f'),
+        })
+        if denominator <= 0:
+            return {'value': None, 'reasonCode': 'NON_POSITIVE_APP_TOTAL', **base}
+        if numerator > denominator:
+            return {'value': None, 'reasonCode': 'FILE_TOTAL_EXCEEDS_APP_TOTAL', **base}
+        value = (numerator * 100 / denominator).quantize(Decimal('0.000001'))
+    return {'value': format(value, 'f'), 'reasonCode': None, **base}

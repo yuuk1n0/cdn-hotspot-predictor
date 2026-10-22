@@ -1,0 +1,149 @@
+- generic [ref=e3]:
+  - link "跳到主内容" [ref=e4] [cursor=pointer]:
+    - /url: "#main-content"
+  - banner [ref=e5]:
+    - link "CDN 系统首页" [ref=e6] [cursor=pointer]:
+      - /url: /overview
+      - generic [ref=e12]: CDN 热点文件动态预测与压缩降本系统
+    - generic [ref=e13]:
+      - generic "全局 AppID 切换" [ref=e14]:
+        - generic [ref=e15]: AppID
+        - combobox "AppID" [ref=e16] [cursor=pointer]:
+          - option "10350"
+          - option "10066" [selected]
+      - generic [ref=e18]: 本地前端预览
+      - button "界面说明" [ref=e20] [cursor=pointer]
+      - generic [ref=e24]: UI
+      - generic [ref=e25]: 预览工作台
+  - complementary [ref=e26]:
+    - generic [ref=e27]:
+      - text: 运营工作台
+      - generic [ref=e28]: WORKSPACE
+    - navigation "主导航" [ref=e29]:
+      - link "业务总览" [ref=e30] [cursor=pointer]:
+        - /url: /overview
+      - link "热点预测" [ref=e35] [cursor=pointer]:
+        - /url: /prediction
+      - link "模型回测" [active] [ref=e39] [cursor=pointer]:
+        - /url: /backtest
+      - link "压缩降本" [ref=e43] [cursor=pointer]:
+        - /url: /compression
+      - link "通知中心" [ref=e47] [cursor=pointer]:
+        - /url: /notifications
+      - link "智能 Agent" [ref=e51] [cursor=pointer]:
+        - /url: /agent
+    - generic [ref=e55]:
+      - strong [ref=e60]: 从热点洞察到降本决策
+      - generic [ref=e61]: CDN OPERATIONS CONSOLE
+      - generic [ref=e62]: 业务工作台
+  - main [ref=e63]:
+    - generic [ref=e64]:
+      - generic [ref=e65]: 工作台
+      - strong [ref=e68]: 模型回测与比较
+      - generic [ref=e69]: CDN 流量运营
+    - generic [ref=e2061]:
+      - generic [ref=e2062]:
+        - generic [ref=e2063]:
+          - heading "模型回测与比较" [level=1] [ref=e2064]
+          - paragraph [ref=e2065]: 读取已部署配置中的历史离线评估报告；不在线重跑回测，也不把代理指标当作正式选模结论。
+        - generic [ref=e2066]: REAL REPORT · 只读
+      - generic [ref=e2067]:
+        - generic [ref=e2068]:
+          - generic [ref=e2069]: AppID
+          - combobox "AppID" [ref=e2070] [cursor=pointer]:
+            - option "10350 · 内容分发"
+            - option "10066 · 应用资源" [selected]
+        - generic "回测粒度" [ref=e2071]:
+          - button "日粒度" [ref=e2072] [cursor=pointer]
+          - button "周粒度" [ref=e2073] [cursor=pointer]
+        - button "刷新部署报告" [ref=e2074] [cursor=pointer]
+      - status [ref=e2077]:
+        - generic [ref=e2080]: 以下为部署配置内保存的历史离线代理指标，不是本次请求重新计算的结果。
+      - generic [ref=e2081]:
+        - article [ref=e2082]:
+          - generic [ref=e2083]: Recall@50
+          - generic [ref=e2088]: 69.31%
+          - generic [ref=e2089]: 历史离线代理指标
+        - article [ref=e2091]:
+          - generic [ref=e2092]: NDCG@50
+          - generic [ref=e2097]: "0.9519"
+          - generic [ref=e2098]: log1p 观测流量增益
+        - article [ref=e2100]:
+          - generic [ref=e2101]: Top50 流量覆盖率
+          - generic [ref=e2106]: 22.93%
+          - generic [ref=e2107]: 观测未来流量口径
+        - article [ref=e2109]:
+          - generic [ref=e2110]: MAPE
+          - generic [ref=e2115]: —
+          - generic [ref=e2116]: 部署报告未提供，未以其他指标替代
+      - generic [ref=e2118]:
+        - generic [ref=e2119]:
+          - generic [ref=e2120]:
+            - generic [ref=e2121]:
+              - heading "证据窗口与来源" [level=2] [ref=e2122]
+              - text: 2026-03-14 — 2026-04-14；实际观测 2026-03-15 — 2026-04-15
+            - generic [ref=e2123]: DEPLOYED_CONFIG_TEST_REPORT
+          - generic [ref=e2124]:
+            - term [ref=e2125]: App / 粒度
+            - definition [ref=e2126]: 10066 · DAY
+            - term [ref=e2127]: 部署模型
+            - definition [ref=e2128]: hotspot-simple-v1 · MODEL
+            - term [ref=e2129]: 选型方法
+            - definition [ref=e2130]: last_day
+            - term [ref=e2131]: 指标来源
+            - definition [ref=e2132]: DEPLOYED_CONFIG_TEST_REPORT
+            - term [ref=e2133]: 标签口径
+            - definition [ref=e2134]: UNCONFIRMED
+            - term [ref=e2135]: 报告新鲜度
+            - definition [ref=e2136]: HISTORICAL_REPORT · age 190 天
+            - term [ref=e2137]: 本次重算
+            - definition [ref=e2138]: 否
+            - term [ref=e2139]: 正式选模资格
+            - definition [ref=e2140]: 否
+          - generic [ref=e2141]:
+            - generic [ref=e2142]: UNCONFIRMED_LABELS
+            - generic [ref=e2143]: NO_DAILY_BACKTEST
+            - generic [ref=e2144]: SINGLE_DEPLOYED_MODEL
+            - generic [ref=e2145]: HISTORICAL_PROXY_REPORT_ONLY
+        - generic [ref=e2146]:
+          - generic [ref=e2147]:
+            - heading "指标口径与验证状态" [level=2] [ref=e2148]
+            - generic [ref=e2149]: 未确认标签不计为正式成绩
+          - table [ref=e2151]:
+            - rowgroup [ref=e2152]:
+              - row [ref=e2153]:
+                - columnheader "指标" [ref=e2154]
+                - columnheader "值" [ref=e2155]
+                - columnheader "状态" [ref=e2156]
+                - columnheader "口径" [ref=e2157]
+            - rowgroup [ref=e2158]:
+              - row [ref=e2159]:
+                - cell [ref=e2160]:
+                  - strong [ref=e2161]: Recall@50
+                - cell "69.31%" [ref=e2162]
+                - cell "历史代理报告" [ref=e2163]
+                - cell "Overlap with the top 50 observed future files, divided by their count (up to 50)." [ref=e2165]
+              - row [ref=e2166]:
+                - cell [ref=e2167]:
+                  - strong [ref=e2168]: NDCG@50
+                - cell "0.9519" [ref=e2169]
+                - cell "历史代理报告" [ref=e2170]
+                - cell "NDCG with log1p(observed future bytes) gain; not linear-gain formal NDCG." [ref=e2172]
+              - row [ref=e2173]:
+                - cell [ref=e2174]:
+                  - strong [ref=e2175]: Top50 观测流量覆盖率
+                - cell "22.93%" [ref=e2176]
+                - cell "历史代理报告" [ref=e2177]
+                - cell "Observed future bytes of predicted top 50 / all observed future bytes; completeness unconfirmed." [ref=e2179]
+              - row [ref=e2180]:
+                - cell [ref=e2181]:
+                  - strong [ref=e2182]: Top50 候选覆盖率
+                - cell "96.31%" [ref=e2183]
+                - cell "历史代理报告" [ref=e2184]
+                - cell "Observed future top-50 files appearing anywhere in the candidate set / observed top-50 count." [ref=e2186]
+      - generic [ref=e2190]:
+        - strong [ref=e2191]: 当前证据不能用于正式选模
+        - paragraph [ref=e2192]: 正式结论需要同一 App、同一跨度、成熟观测窗口及完整标签；本页只展示已部署报告，不自动切换模型。
+    - generic [ref=e284]:
+      - text: CDN 热点预测与压缩降本系统
+      - generic [ref=e285]: 界面样例与接口数据均标明来源

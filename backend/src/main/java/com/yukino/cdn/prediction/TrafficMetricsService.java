@@ -34,6 +34,7 @@ public class TrafficMetricsService {
 
     public ObjectNode forRun(String runId) {
         JsonNode snapshot = predictions.result(runId);
+        String datasetId = snapshot.path("datasetId").asText();
         String appId = snapshot.path("appId").asText();
         String datasetSource = snapshot.path("datasetSource").asText();
         String predictionSource = snapshot.path("predictionSource").asText();
@@ -49,17 +50,22 @@ public class TrafficMetricsService {
                 .put("datasetSource", datasetSource).put("predictionSource", predictionSource)
                 .put("generatedAt", clock.instant().toString());
 
-        var latest = repository.latestObservedDate(appId, datasetSource);
-        var total = repository.total(appId, start, end, datasetSource);
-        result.set("actualPredictedTop50", predictedTop50(snapshot, appId, datasetSource, predictionSource,
+        var latest = repository.latestObservedDate(datasetId, appId);
+        var total = repository.total(appId, start, end);
+        result.put("datasetId", datasetId);
+        if (total.datasetId() == null) result.putNull("appTotalDatasetId");
+        else result.put("appTotalDatasetId", total.datasetId());
+        if (total.sourceUnit() == null) result.putNull("appTotalUnit");
+        else result.put("appTotalUnit", total.sourceUnit());
+        result.set("actualPredictedTop50", predictedTop50(snapshot, datasetId, appId, datasetSource, predictionSource,
                 start, end, horizonDays, latest.orElse(null), total));
-        result.set("actualTop50", actualTop50(appId, datasetSource, start, end, horizonDays,
+        result.set("actualTop50", actualTop50(datasetId, appId, datasetSource, start, end, horizonDays,
                 latest.orElse(null), total));
         result.put("metricContract", "ACTUAL_BYTES_ONLY_WHEN_WINDOW_MATURED");
         return result;
     }
 
-    private ObjectNode predictedTop50(JsonNode snapshot, String appId, String datasetSource,
+    private ObjectNode predictedTop50(JsonNode snapshot, String datasetId, String appId, String datasetSource,
                                       String predictionSource, LocalDate start, LocalDate end, int horizonDays,
                                       LocalDate latestObserved, TrafficMetricsRepository.TotalWindow total) {
         var metric = metric("ACTUAL_PREDICTED_TOP50");
@@ -70,20 +76,20 @@ public class TrafficMetricsService {
 
         Set<String> hashes = new LinkedHashSet<>();
         for (JsonNode item : snapshot.path("items")) hashes.add(hash(item.path("fileKey").asText()));
-        var actual = repository.actualByHashes(appId, start, end, datasetSource, hashes);
+        var actual = repository.actualByHashes(datasetId, appId, start, end, hashes);
         if (actual.size() != hashes.size()) return unavailable(metric, "TOP50_ACTUAL_MISSING");
         BigDecimal numerator = actual.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
         return complete(metric, numerator, total.totalBytes(), "MYSQL_FILE_DAILY_OBSERVATION", "MYSQL_APP_DAILY_TOTAL");
     }
 
-    private ObjectNode actualTop50(String appId, String datasetSource, LocalDate start, LocalDate end,
+    private ObjectNode actualTop50(String datasetId, String appId, String datasetSource, LocalDate start, LocalDate end,
                                    int horizonDays, LocalDate latestObserved,
                                    TrafficMetricsRepository.TotalWindow total) {
         var metric = metric("ACTUAL_TOP50_CONCENTRATION");
         if (!"REAL".equals(datasetSource)) return unavailable(metric, "DATA_SOURCE_NOT_REAL");
         String maturity = maturity(start, end, horizonDays, latestObserved, total);
         if (maturity != null) return unavailable(metric, maturity);
-        BigDecimal numerator = repository.topActual(appId, start, end, datasetSource, 50).stream()
+        BigDecimal numerator = repository.topActual(datasetId, appId, start, end, 50).stream()
                 .map(TrafficMetricsRepository.ActualFile::actualBytes)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         return complete(metric, numerator, total.totalBytes(), "MYSQL_FILE_DAILY_OBSERVATION", "MYSQL_APP_DAILY_TOTAL");
@@ -92,7 +98,9 @@ public class TrafficMetricsService {
     private String maturity(LocalDate start, LocalDate end, int horizonDays, LocalDate latestObserved,
                             TrafficMetricsRepository.TotalWindow total) {
         if (latestObserved == null || latestObserved.isBefore(end)) return "TOP50_ACTUAL_NOT_MATURED";
+        if (total.datasetId() == null) return "NO_CONFIRMED_APP_TOTAL";
         if (total.observedDays() < horizonDays) return "TOTAL_TRAFFIC_MISSING";
+        if (!"GB_DECIMAL".equals(total.sourceUnit())) return "APP_TOTAL_UNIT_UNCONFIRMED";
         if (total.totalBytes() == null || total.totalBytes().signum() <= 0) return "DENOMINATOR_INCONSISTENT";
         return null;
     }

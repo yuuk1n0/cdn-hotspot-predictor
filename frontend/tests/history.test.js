@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { createHistoryQuery } from '../src/history.js'
 
 const params = { datasetId:'ds_one',appId:'A',startDate:'2026-01-01',endDate:'2026-01-07',granularity:'WEEKLY',fileKey:'a&b?#c',topK:50 }
-const body = p => ({...p,scope:'OBSERVED_FILES',datasetSource:'FAKE',completeness:'UNKNOWN',observedTrafficBytes:'10000000000000001',days:Array.from({length:7},(_,i)=>({date:`2026-01-0${i+1}`,observedTrafficBytes:i===0?null:i===1?'10000000000000001':'0',fileCount:i===0?0:1,status:i===0?'NO_OBSERVATION':'OBSERVED'})),items:[],missingDates:[p.startDate],hotspotTrafficRatio:{value:null,reasonCode:'NO_CONFIRMED_APP_TOTAL'}})
+const body = p => ({...p,scope:'OBSERVED_FILES',datasetSource:'FAKE',completeness:'UNKNOWN',observedTrafficBytes:'10000000000000001',days:Array.from({length:7},(_,i)=>({date:`2026-01-0${i+1}`,observedTrafficBytes:i===0?null:i===1?'10000000000000001':'0',fileCount:i===0?0:1,status:i===0?'NO_OBSERVATION':'OBSERVED'})),items:[],missingDates:[p.startDate],hotspotTrafficRatio:{value:null,reasonCode:'NO_CONFIRMED_APP_TOTAL',basis:'HISTORICAL_ACTUAL',unit:'PERCENT'}})
 const response = value => ({ok:true,status:200,json:async()=>value})
 
 test('history filters reach Java with exact file identity and retain nulls and large byte strings',async()=>{

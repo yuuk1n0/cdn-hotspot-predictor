@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.yukino.cdn.operations.OperationsService;
+import com.yukino.cdn.prediction.PredictionProblem;
 
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -56,11 +57,17 @@ public final class AgentService {
     }
 
     public ObjectNode chat(JsonNode request) {
-        if (!settings.configured()) throw new AgentProblem(503, "AGENT_NOT_CONFIGURED", "Agent 模型服务未配置。");
         ObjectNode context = context(request);
         String question = request.path("message").asText("").trim();
         if (question.isEmpty() || question.length() > 4000)
             throw new AgentProblem(422, "AGENT_INVALID_REQUEST", "message 必须是非空且不超过4000字的文本。");
+        boolean top5Pending = top5PendingQuestion(question);
+        if (top5Pending) return top5PendingTemplate(context);
+        if (top10HotspotQuestion(question)) return top10HotspotTemplate(context);
+        if (overdueQuestion(question)) return overdueTemplate(context);
+        if (!settings.configured()) {
+            throw new AgentProblem(503, "AGENT_NOT_CONFIGURED", "Agent 模型服务未配置。");
+        }
         long deadline = System.nanoTime() + limit.toNanos();
         ArrayNode messages = mapper.createArrayNode();
         messages.add(mapper.createObjectNode().put("role", "system").put("content",
@@ -70,6 +77,7 @@ public final class AgentService {
         ArrayNode evidence = mapper.createArrayNode();
         ArrayNode uncertainties = mapper.createArrayNode();
         int noToolAnswers = 0;
+        try {
         for (int round = 0; round < 4; round++) {
             ObjectNode body = mapper.createObjectNode().put("model", settings.model()).put("tool_choice", "auto");
             body.set("messages", messages.deepCopy());
@@ -139,6 +147,161 @@ public final class AgentService {
         }
         uncertainties.add("模型达到4轮请求上限，未得到可发布回答。");
         return response("无法确认业务事实。", context, evidence, uncertainties, "INSUFFICIENT_EVIDENCE");
+        } catch (AgentProblem problem) {
+            if (top5Pending && Set.of("AGENT_MODEL_UNAVAILABLE", "AGENT_TIMEOUT", "AGENT_NOT_CONFIGURED").contains(problem.code()))
+                return top5PendingTemplate(context);
+            throw problem;
+        }
+    }
+
+    private boolean top5PendingQuestion(String question) {
+        String text = question.toLowerCase().replace(" ", "");
+        boolean top = text.contains("top5") || text.contains("前5") || text.contains("前五");
+        boolean compression = text.contains("压缩") || text.contains("待处理");
+        return top && compression;
+    }
+
+    private boolean top10HotspotQuestion(String question) {
+        String text = question.toLowerCase().replace(" ", "");
+        boolean top = text.contains("top10") || text.contains("前10") || text.contains("前十");
+        return top && (text.contains("热点") || text.contains("文件"));
+    }
+
+    private boolean overdueQuestion(String question) {
+        String text = question.toLowerCase().replace(" ", "");
+        return text.contains("逾期") || text.contains("超时");
+    }
+
+    /** Deterministic read-only answer for the core question; it never estimates benefit or invents compression state. */
+    private ObjectNode top5PendingTemplate(ObjectNode context) {
+        ArrayNode evidence = mapper.createArrayNode();
+        ArrayNode uncertainties = mapper.createArrayNode().add("核心问题使用只读业务事实模板；未推测压缩收益或质量。");
+        try {
+            ObjectNode hotspots = operations.evidence("getTopHotspots", context.deepCopy(), mapper.createObjectNode());
+            evidence.add(hotspots.deepCopy());
+            String appId = context.path("appId").asText();
+            String runId = hotspots.path("context").path("runId").asText();
+            if (runId.isBlank()) throw new AgentProblem(404, "NO_CURRENT_RUN", "没有可用的最新成功预测运行。");
+            ObjectNode pending = operations.pending(appId, runId, "REAL");
+            ObjectNode pendingEvidence = mapper.createObjectNode().put("tool", "getPendingFiles").put("appId", appId);
+            pendingEvidence.set("context", hotspots.path("context").deepCopy());
+            pendingEvidence.set("data", pending);
+            evidence.add(pendingEvidence);
+            String start = hotspots.path("data").path("predictionStartDate").asText();
+            String end = hotspots.path("data").path("predictionEndDate").asText();
+            String model = hotspots.path("data").path("modelVersion").asText();
+            String source = hotspots.path("data").path("datasetSource").asText() + "/" + hotspots.path("data").path("predictionSource").asText();
+            ObjectNode responseContext = runContext(context, hotspots.path("data"), runId);
+            StringBuilder answer = new StringBuilder("当前 App ").append(appId)
+                    .append(" 最新成功预测 runId=").append(runId)
+                    .append("，数据截止 ").append(hotspots.path("data").path("cutoffDate").asText())
+                    .append("，窗口 ").append(start).append(" 至 ").append(end)
+                    .append("，模型 ").append(model).append("，来源 ").append(source).append("。");
+            JsonNode items = pending.path("items");
+            int count = Math.min(5, items.size());
+            if (count == 0) {
+                answer.append("当前运行时点没有登记为待压缩的文件。");
+            } else {
+                answer.append("待压缩 Top").append(count).append("：");
+                for (int index = 0; index < count; index++) {
+                    JsonNode item = items.get(index);
+                    if (index > 0) answer.append("；");
+                    answer.append(index + 1).append(". ").append(item.path("fileKey").asText())
+                            .append("，预测窗口累计 ").append(item.path("predictedBytes").asText()).append(" B")
+                            .append("，状态 ").append(item.path("compressionStatus").asText("PENDING"));
+                }
+                answer.append("。");
+            }
+            return response(answer.toString(), responseContext, evidence, uncertainties, "DETERMINISTIC_BUSINESS_FACT");
+        } catch (PredictionProblem problem) {
+            throw new AgentProblem(problem.httpStatus(), problem.code(), problem.getMessage());
+        }
+    }
+
+    private ObjectNode top10HotspotTemplate(ObjectNode context) {
+        ArrayNode evidence = mapper.createArrayNode();
+        ArrayNode uncertainties = mapper.createArrayNode().add("Top10 为预测窗口累计流量，不是已发生流量；未校准完整流量。");
+        try {
+            ObjectNode hotspots = operations.evidence("getTopHotspots", context.deepCopy(), mapper.createObjectNode());
+            evidence.add(hotspots.deepCopy());
+            JsonNode data = hotspots.path("data");
+            String runId = hotspots.path("context").path("runId").asText();
+            if (runId.isBlank()) throw new AgentProblem(404, "NO_CURRENT_RUN", "没有可用的最新成功预测运行。");
+            String appId = context.path("appId").asText();
+            String start = data.path("predictionStartDate").asText();
+            String end = data.path("predictionEndDate").asText();
+            ObjectNode responseContext = runContext(context, data, runId);
+            StringBuilder answer = new StringBuilder("当前 App ").append(appId)
+                    .append(" 最新成功预测 runId=").append(runId)
+                    .append("，数据截止 ").append(data.path("cutoffDate").asText())
+                    .append("，窗口 ").append(start).append(" 至 ").append(end)
+                    .append("，模型 ").append(data.path("modelVersion").asText())
+                    .append("，来源 ").append(data.path("datasetSource").asText()).append("/")
+                    .append(data.path("predictionSource").asText()).append("。");
+            JsonNode items = data.path("items");
+            int count = Math.min(10, items.size());
+            if (count == 0) {
+                answer.append("当前运行没有已发布的热点文件。");
+            } else {
+                answer.append("Top").append(count).append(" 热点：");
+                for (int index = 0; index < count; index++) {
+                    JsonNode item = items.get(index);
+                    if (index > 0) answer.append("；");
+                    answer.append(item.path("rank").asInt(index + 1)).append(". ")
+                            .append(item.path("fileKey").asText())
+                            .append("，预测窗口累计 ").append(item.path("predictedBytes").asText()).append(" B");
+                }
+                answer.append("。");
+            }
+            return response(answer.toString(), responseContext, evidence, uncertainties, "DETERMINISTIC_BUSINESS_FACT");
+        } catch (PredictionProblem problem) {
+            throw new AgentProblem(problem.httpStatus(), problem.code(), problem.getMessage());
+        }
+    }
+
+    private ObjectNode overdueTemplate(ObjectNode context) {
+        ArrayNode evidence = mapper.createArrayNode();
+        ArrayNode uncertainties = mapper.createArrayNode().add("逾期清单只基于已发布的真实预测和登记状态，不推定未登记文件。");
+        try {
+            ObjectNode overdueEvidence = operations.evidence("getOverdueFiles", context.deepCopy(), mapper.createObjectNode());
+            evidence.add(overdueEvidence.deepCopy());
+            JsonNode data = overdueEvidence.path("data");
+            String runId = overdueEvidence.path("context").path("runId").asText();
+            if (runId.isBlank()) throw new AgentProblem(404, "NO_CURRENT_RUN", "没有可用的最新成功预测运行。");
+            ObjectNode responseContext = runContext(context, data, runId);
+            JsonNode items = data.path("items");
+            int count = items.size();
+            int shown = Math.min(10, count);
+            StringBuilder answer = new StringBuilder("当前 App ").append(context.path("appId").asText())
+                    .append(" 运行 ").append(runId)
+                    .append(" 截至 ").append(data.path("asOf").asText("服务端查询时间"))
+                    .append("，处理时限 ").append(data.path("handlingHours").asInt()).append(" 小时，")
+                    .append(count == 0 ? "没有逾期未处理文件。" : "共有 " + count + " 个逾期未处理文件。");
+            if (shown > 0) {
+                answer.append("前 ").append(shown).append(" 项：");
+                for (int index = 0; index < shown; index++) {
+                    JsonNode item = items.get(index);
+                    if (index > 0) answer.append("；");
+                    answer.append(item.path("rank").asInt(index + 1)).append(". ")
+                            .append(item.path("fileKey").asText())
+                            .append("，状态 ").append(item.path("compressionStatus").asText("PENDING"))
+                            .append("，应处理时间 ").append(item.path("dueAt").asText("未提供"));
+                }
+                answer.append("。");
+                if (count > shown) uncertainties.add("页面仅列出前 " + shown + " 项，完整清单见证据。");
+            }
+            return response(answer.toString(), responseContext, evidence, uncertainties, "DETERMINISTIC_BUSINESS_FACT");
+        } catch (PredictionProblem problem) {
+            throw new AgentProblem(problem.httpStatus(), problem.code(), problem.getMessage());
+        }
+    }
+
+    private ObjectNode runContext(ObjectNode context, JsonNode data, String runId) {
+        return context.deepCopy().put("runId", runId)
+                .put("modelVersion", data.path("modelVersion").asText())
+                .put("predictionStartDate", data.path("predictionStartDate").asText())
+                .put("predictionEndDate", data.path("predictionEndDate").asText())
+                .put("resultMode", data.path("datasetSource").asText() + "/" + data.path("predictionSource").asText());
     }
 
     private ObjectNode context(JsonNode request) {

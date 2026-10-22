@@ -18,6 +18,7 @@ export const notificationApi = {
   runs: (appId, horizonDays, businessDate, fetchService = fetch, signal) => requestJson(`/api/operations/runs?${query({ appId, horizonDays, businessDate })}`, fetchService, { signal }),
   preview: (params, fetchService = fetch, signal) => requestJson(`/api/notifications/preview?${query(params)}`, fetchService, signal ? { signal } : undefined),
   list: (params, fetchService = fetch, signal) => requestJson(`/api/notifications?${query({ ...params, page: params.page ?? 1, pageSize: params.pageSize ?? 20 })}`, fetchService, { signal }),
+  monitor: (appId, fetchService = fetch, signal) => requestJson(`/api/notifications/monitor?${query({ appId })}`, fetchService, { signal }),
   overdue: (params, fetchService = fetch, signal) => requestJson(`/api/overdue?${query(params)}`, fetchService, { signal }),
   send: (body, idempotencyKey, fetchService = fetch, signal) => requestJson('/api/notifications/send', async (url, options) => {
     const response = await fetchService(url, options)

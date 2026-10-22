@@ -223,6 +223,25 @@ public class NotificationService {
         repository.list(appId, runId, type, pageSize, (page - 1) * pageSize).forEach(items::add);
         return result;
     }
+    public ObjectNode monitor(String appId) {
+        require(appId, "appId");
+        var counts = repository.statusCounts(appId);
+        int total = counts.values().stream().mapToInt(Integer::intValue).sum();
+        var result = mapper.createObjectNode().put("appId", appId).put("generatedAt", clock.instant().toString())
+                .put("total", total);
+        var statuses = result.putObject("statusCounts");
+        for (String status : java.util.List.of("PENDING", "SENDING", "SENT", "FAILED", "UNKNOWN", "SKIPPED"))
+            statuses.put(status, counts.getOrDefault(status, 0));
+        result.set("destinations", settings.publicDestinations());
+        var problems = result.putArray("recentProblems");
+        repository.recentProblems(appId, 5).forEach(problems::add);
+        var reasons = result.putArray("reasonCodes");
+        if (settings.publicDestinations().isEmpty()) reasons.add("NO_DESTINATION_CONFIGURED");
+        if (total == 0) reasons.add("NO_DELIVERY_RECORD");
+        if (statuses.path("FAILED").asInt() > 0) reasons.add("DELIVERY_FAILED");
+        if (statuses.path("UNKNOWN").asInt() > 0) reasons.add("DELIVERY_UNCONFIRMED");
+        return result.put("monitorMode", "DELIVERY_RECORDS_ONLY");
+    }
     public void automatic(String type) {
         type(type);
         for (String app : operations.configuredApps()) {

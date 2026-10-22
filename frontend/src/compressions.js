@@ -18,6 +18,14 @@ export async function listCompressions(run, fileKey, fetchService = fetch) {
   return result.items.map(row => matching(row, run, fileKey))
 }
 
+export async function listRunCompressions(run, fetchService = fetch) {
+  if (!run?.runId || !run?.appId) throw new Error('须选择已有预测运行。')
+  const params = new URLSearchParams({ appId: run.appId, runId: run.runId, page: '1', pageSize: '100' })
+  const result = await requestJson(`/api/compressions?${params}`, fetchService)
+  if (!Array.isArray(result?.items)) throw new Error('压缩登记列表响应无效。')
+  return result.items.filter(row => row.runId === run.runId && row.appId === run.appId)
+}
+
 export async function createCompression(run, fileKey, fields, idempotencyKey, fetchService = fetch) {
   valid(run, fileKey)
   if (fields.evidenceSource === 'REAL' && run.datasetSource !== 'REAL') throw new Error('FAKE 运行不能使用 REAL 处理证据。')

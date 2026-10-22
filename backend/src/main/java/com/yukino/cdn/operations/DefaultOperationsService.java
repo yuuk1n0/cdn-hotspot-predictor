@@ -88,10 +88,11 @@ public class DefaultOperationsService implements OperationsService {
     }
     public ObjectNode latestRun(String app, LocalDate businessDate, int horizon) {
         id(app);
-        if (businessDate == null) throw problem(422, "INVALID_DATE", "最新成功运行查询必须指定业务日期。");
         if (horizon != 1 && horizon != 7) throw problem(422, "INVALID_HORIZON", "跨度须为1或7。");
         var values = predictions.published(app, null, null, horizon).stream()
+                .filter(DefaultOperationsService::isRealModelRun)
                 .filter(row -> {
+                    if (businessDate == null) return true;
                     String start = row.path("predictionStartDate").asText("");
                     return !start.isBlank() && !LocalDate.parse(start).isAfter(businessDate);
                 })
@@ -99,7 +100,7 @@ public class DefaultOperationsService implements OperationsService {
         if (values.isEmpty()) throw problem(404, "NO_CURRENT_RUN", "该App在业务日期及以前没有匹配跨度的成功运行；未使用未来或旧App数据代替。");
         ObjectNode result = values.get(0).deepCopy();
         result.put("businessDate", result.path("predictionStartDate").asText());
-        result.put("requestedBusinessDate", businessDate.toString());
+        if (businessDate != null) result.put("requestedBusinessDate", businessDate.toString());
         result.put("selectionMode", "LATEST_SUCCESS");
         return result;
     }
@@ -107,9 +108,13 @@ public class DefaultOperationsService implements OperationsService {
         id(app);
         if (horizon != 1 && horizon != 7) throw problem(422, "INVALID_HORIZON", "跨度须为1或7。");
         var result = object().put("appId", app); var items = result.putArray("items");
-        predictions.published(app, null, date, horizon).forEach(run -> {
+        predictions.published(app, null, date, horizon).stream().filter(DefaultOperationsService::isRealModelRun).forEach(run -> {
             var summary = run.deepCopy(); summary.remove("items"); items.add(summary);
         }); return result;
+    }
+    private static boolean isRealModelRun(ObjectNode run) {
+        return "REAL".equals(run.path("datasetSource").asText())
+                && "MODEL".equals(run.path("predictionSource").asText());
     }
     public ObjectNode pending(String app, String runId, String evidenceSource) {
         source(evidenceSource);
@@ -146,6 +151,7 @@ public class DefaultOperationsService implements OperationsService {
         var reasons = result.putArray("reasonCodes"); if (observations == 0) reasons.add("NO_COMPRESSION_OBSERVATION");
         result.putNull("realizedBillSavingYuan"); return result;
     }
+    public ObjectNode modelMetrics(String app, int horizon) { return models.metrics(id(app), horizon); }
     public ObjectNode suggestion(String app, int horizon, String backtestId) {
         id(app);
         if (horizon != 1 && horizon != 7) throw problem(422, "INVALID_HORIZON", "跨度须为1或7。");

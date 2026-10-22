@@ -1,0 +1,729 @@
+- generic [ref=f5e1]:
+  - generic [ref=f5e3]:
+    - link "跳到主内容" [ref=f5e4] [cursor=pointer]:
+      - /url: "#main-content"
+    - banner [ref=f5e5]:
+      - link "CDN 系统首页" [ref=f5e6] [cursor=pointer]:
+        - /url: /overview
+        - generic [ref=f5e12]: CDN 热点文件动态预测与压缩降本系统
+      - generic [ref=f5e13]:
+        - generic "全局 AppID 切换" [ref=f5e14]:
+          - generic [ref=f5e15]: AppID
+          - combobox "AppID" [ref=f5e16] [cursor=pointer]:
+            - option "10350"
+            - option "10066" [selected]
+        - generic [ref=f5e17]: 本地前端预览
+        - button "界面说明" [ref=f5e19] [cursor=pointer]
+        - generic [ref=f5e23]: UI
+        - generic [ref=f5e24]: 预览工作台
+    - complementary [ref=f5e25]:
+      - generic [ref=f5e26]:
+        - text: 运营工作台
+        - generic [ref=f5e27]: WORKSPACE
+      - navigation "主导航" [ref=f5e28]:
+        - link "业务总览" [ref=f5e29] [cursor=pointer]:
+          - /url: /overview
+        - link "热点预测" [ref=f5e33] [cursor=pointer]:
+          - /url: /prediction
+        - link "模型回测" [ref=f5e37] [cursor=pointer]:
+          - /url: /backtest
+        - link "压缩降本" [ref=f5e41] [cursor=pointer]:
+          - /url: /compression
+        - link "通知中心" [ref=f5e46] [cursor=pointer]:
+          - /url: /notifications
+        - link "智能 Agent" [ref=f5e50] [cursor=pointer]:
+          - /url: /agent
+      - generic [ref=f5e54]:
+        - strong [ref=f5e59]: 从热点洞察到降本决策
+        - generic [ref=f5e60]: CDN OPERATIONS CONSOLE
+        - generic [ref=f5e61]: 业务工作台
+    - main [ref=f5e62]:
+      - generic [ref=f5e63]:
+        - generic [ref=f5e64]: 工作台
+        - strong [ref=f5e67]: 压缩降本决策
+        - generic [ref=f5e68]: CDN 流量运营
+      - generic [ref=f5e69]:
+        - generic [ref=f5e70]:
+          - generic [ref=f5e71]:
+            - heading "压缩降本决策" [level=1] [ref=f5e72]
+            - paragraph [ref=f5e73]: 从真实 Top50 运行登记处理结果；预测收益、测试证据和实际账单收益分开呈现。
+          - generic "压缩页面数据来源" [ref=f5e74]:
+            - button "真实业务" [ref=f5e75] [cursor=pointer]
+            - button "UI 演示" [ref=f5e76] [cursor=pointer]
+        - generic [ref=f5e77]:
+          - generic [ref=f5e78]:
+            - generic [ref=f5e79]: AppID
+            - combobox "AppID" [ref=f5e80] [cursor=pointer]:
+              - option "10350 · 内容分发"
+              - option "10066 · 应用资源" [selected]
+          - generic [ref=f5e81]:
+            - generic [ref=f5e82]: 处理状态
+            - combobox "处理状态" [ref=f5e83] [cursor=pointer]:
+              - option "全部状态" [selected]
+              - option "待处理"
+              - option "处理中"
+              - option "已压缩"
+          - generic [ref=f5e84]:
+            - button "日榜" [ref=f5e85] [cursor=pointer]
+            - button "周榜" [ref=f5e86] [cursor=pointer]
+          - button "刷新" [ref=f5e792] [cursor=pointer]
+        - generic [ref=f5e793]:
+          - generic [ref=f5e794]: App 10066 · 2026-04-16 — 2026-04-16 · hotspot-simple-v1
+          - generic [ref=f5e795]: run_3ed97fd12794dcdb654dcf19a8affcce0521e050cee0f4f24d1facf1328a679d
+        - generic [ref=f5e93]:
+          - article [ref=f5e94]:
+            - generic [ref=f5e95]: 待压缩文件
+            - generic [ref=f5e100]: 50个
+            - generic [ref=f5e101]: 来自当前真实运行 Top50 与登记状态
+          - article [ref=f5e103]:
+            - generic [ref=f5e104]: 处理中
+            - generic [ref=f5e109]: 0个
+            - generic [ref=f5e110]: 已登记 PROCESSING
+          - article [ref=f5e112]:
+            - generic [ref=f5e113]: 已压缩
+            - generic [ref=f5e118]: 0个
+            - generic [ref=f5e119]: 已登记 COMPRESSED
+          - article [ref=f5e121]:
+            - generic [ref=f5e122]: 预测窗口累计
+            - generic [ref=f5e127]: 14.7 TB
+            - generic [ref=f5e128]: 仅当前运行 Top50，不等于实际节省
+          - article [ref=f5e130]:
+            - generic [ref=f5e131]: 实际账单降本
+            - generic [ref=f5e136]: 未验证
+            - generic [ref=f5e137]: NO_COMPRESSION_OBSERVATION
+        - generic [ref=f5e139]:
+          - generic [ref=f5e140]:
+            - generic [ref=f5e141]:
+              - heading "真实压缩候选与登记状态" [level=2] [ref=f5e142]
+              - paragraph [ref=f5e143]: 点击“登记/详情”进入文件详情；REAL 原大小需 CStore，无法取得时不得伪造。
+            - generic [ref=f5e144]: 50 条
+          - table [ref=f5e146]:
+            - rowgroup [ref=f5e147]:
+              - row [ref=f5e148]:
+                - columnheader "排名" [ref=f5e149]
+                - columnheader "FileKey" [ref=f5e150]
+                - columnheader "预测流量" [ref=f5e151]
+                - columnheader "处理状态" [ref=f5e152]
+                - columnheader "证据来源" [ref=f5e153]
+                - columnheader "处理人" [ref=f5e154]
+                - columnheader "操作" [ref=f5e155]
+            - rowgroup [ref=f5e156]:
+              - row [ref=f5e796]:
+                - cell "1" [ref=f5e797]
+                - cell "easinote/uwixmovwhhpljhhvhmlwxjwkmphhihhi App · hotspot-simple-v1" [ref=f5e798]:
+                  - generic "easinote/uwixmovwhhpljhhvhmlwxjwkmphhihhi" [ref=f5e799]
+                  - generic [ref=f5e800]: App · hotspot-simple-v1
+                - cell "848 GB" [ref=f5e801]
+                - cell "待处理" [ref=f5e802]
+                - cell "TEST" [ref=f5e804]
+                - cell "验收测试员" [ref=f5e805]
+                - cell [ref=f5e806]:
+                  - button "登记处理" [ref=f5e807] [cursor=pointer]
+              - row [ref=f5e808]:
+                - cell "2" [ref=f5e809]
+                - cell "easinote/encloud-1649238127781baa22af0 App · hotspot-simple-v1" [ref=f5e810]:
+                  - generic "easinote/encloud-1649238127781baa22af0" [ref=f5e811]
+                  - generic [ref=f5e812]: App · hotspot-simple-v1
+                - cell "804 GB" [ref=f5e813]
+                - cell "待处理" [ref=f5e814]
+                - cell "未登记" [ref=f5e816]
+                - cell "—" [ref=f5e817]
+                - cell [ref=f5e818]:
+                  - button "登记处理" [ref=f5e819] [cursor=pointer]
+              - row [ref=f5e820]:
+                - cell "3" [ref=f5e821]
+                - cell "easinote/uwixjqpnhhpljhhvhwuxmwwlxohhihjk App · hotspot-simple-v1" [ref=f5e822]:
+                  - generic "easinote/uwixjqpnhhpljhhvhwuxmwwlxohhihjk" [ref=f5e823]
+                  - generic [ref=f5e824]: App · hotspot-simple-v1
+                - cell "744 GB" [ref=f5e825]
+                - cell "待处理" [ref=f5e826]
+                - cell "未登记" [ref=f5e828]
+                - cell "—" [ref=f5e829]
+                - cell [ref=f5e830]:
+                  - button "登记处理" [ref=f5e831] [cursor=pointer]
+              - row [ref=f5e832]:
+                - cell "4" [ref=f5e833]
+                - cell "easinote/uwizuhohhhpljhhvhwilpijlvqphihjh App · hotspot-simple-v1" [ref=f5e834]:
+                  - generic "easinote/uwizuhohhhpljhhvhwilpijlvqphihjh" [ref=f5e835]
+                  - generic [ref=f5e836]: App · hotspot-simple-v1
+                - cell "619 GB" [ref=f5e837]
+                - cell "待处理" [ref=f5e838]
+                - cell "未登记" [ref=f5e840]
+                - cell "—" [ref=f5e841]
+                - cell [ref=f5e842]:
+                  - button "登记处理" [ref=f5e843] [cursor=pointer]
+              - row [ref=f5e844]:
+                - cell "5" [ref=f5e845]
+                - cell "easinote/uwixkjoyhhpljhhvhwuyxkmjzihhihhj App · hotspot-simple-v1" [ref=f5e846]:
+                  - generic "easinote/uwixkjoyhhpljhhvhwuyxkmjzihhihhj" [ref=f5e847]
+                  - generic [ref=f5e848]: App · hotspot-simple-v1
+                - cell "616 GB" [ref=f5e849]
+                - cell "待处理" [ref=f5e850]
+                - cell "未登记" [ref=f5e852]
+                - cell "—" [ref=f5e853]
+                - cell [ref=f5e854]:
+                  - button "登记处理" [ref=f5e855] [cursor=pointer]
+              - row [ref=f5e856]:
+                - cell "6" [ref=f5e857]
+                - cell "easinote/uwixhwyphhpljhhvhmlznwnjpqphihhm App · hotspot-simple-v1" [ref=f5e858]:
+                  - generic "easinote/uwixhwyphhpljhhvhmlznwnjpqphihhm" [ref=f5e859]
+                  - generic [ref=f5e860]: App · hotspot-simple-v1
+                - cell "479 GB" [ref=f5e861]
+                - cell "待处理" [ref=f5e862]
+                - cell "未登记" [ref=f5e864]
+                - cell "—" [ref=f5e865]
+                - cell [ref=f5e866]:
+                  - button "登记处理" [ref=f5e867] [cursor=pointer]
+              - row [ref=f5e868]:
+                - cell "7" [ref=f5e869]
+                - cell "easinote/uwixhiuqhhpljhhvhmkkkihqiuphihhq App · hotspot-simple-v1" [ref=f5e870]:
+                  - generic "easinote/uwixhiuqhhpljhhvhmkkkihqiuphihhq" [ref=f5e871]
+                  - generic [ref=f5e872]: App · hotspot-simple-v1
+                - cell "434 GB" [ref=f5e873]
+                - cell "待处理" [ref=f5e874]
+                - cell "未登记" [ref=f5e876]
+                - cell "—" [ref=f5e877]
+                - cell [ref=f5e878]:
+                  - button "登记处理" [ref=f5e879] [cursor=pointer]
+              - row [ref=f5e880]:
+                - cell "8" [ref=f5e881]
+                - cell "easinote/uwizpmkhhhpljhhvhwmmquxuxuhhihjq App · hotspot-simple-v1" [ref=f5e882]:
+                  - generic "easinote/uwizpmkhhhpljhhvhwmmquxuxuhhihjq" [ref=f5e883]
+                  - generic [ref=f5e884]: App · hotspot-simple-v1
+                - cell "408 GB" [ref=f5e885]
+                - cell "待处理" [ref=f5e886]
+                - cell "未登记" [ref=f5e888]
+                - cell "—" [ref=f5e889]
+                - cell [ref=f5e890]:
+                  - button "登记处理" [ref=f5e891] [cursor=pointer]
+              - row [ref=f5e892]:
+                - cell "9" [ref=f5e893]
+                - cell "easinote/uwizqxzqhhpljhhvhvynjnuhwohhihhw App · hotspot-simple-v1" [ref=f5e894]:
+                  - generic "easinote/uwizqxzqhhpljhhvhvynjnuhwohhihhw" [ref=f5e895]
+                  - generic [ref=f5e896]: App · hotspot-simple-v1
+                - cell "384 GB" [ref=f5e897]
+                - cell "待处理" [ref=f5e898]
+                - cell "未登记" [ref=f5e900]
+                - cell "—" [ref=f5e901]
+                - cell [ref=f5e902]:
+                  - button "登记处理" [ref=f5e903] [cursor=pointer]
+              - row [ref=f5e904]:
+                - cell "10" [ref=f5e905]
+                - cell "easinote/encloud-164595152457812d245b4 App · hotspot-simple-v1" [ref=f5e906]:
+                  - generic "easinote/encloud-164595152457812d245b4" [ref=f5e907]
+                  - generic [ref=f5e908]: App · hotspot-simple-v1
+                - cell "363 GB" [ref=f5e909]
+                - cell "待处理" [ref=f5e910]
+                - cell "未登记" [ref=f5e912]
+                - cell "—" [ref=f5e913]
+                - cell [ref=f5e914]:
+                  - button "登记处理" [ref=f5e915] [cursor=pointer]
+              - row [ref=f5e916]:
+                - cell "11" [ref=f5e917]
+                - cell "easinote/uwiwhokxhhpljhhvhpvuxwihmkhhihhm App · hotspot-simple-v1" [ref=f5e918]:
+                  - generic "easinote/uwiwhokxhhpljhhvhpvuxwihmkhhihhm" [ref=f5e919]
+                  - generic [ref=f5e920]: App · hotspot-simple-v1
+                - cell "363 GB" [ref=f5e921]
+                - cell "待处理" [ref=f5e922]
+                - cell "未登记" [ref=f5e924]
+                - cell "—" [ref=f5e925]
+                - cell [ref=f5e926]:
+                  - button "登记处理" [ref=f5e927] [cursor=pointer]
+              - row [ref=f5e928]:
+                - cell "12" [ref=f5e929]
+                - cell "easinote/uwizukyvhhpljhhvhvypuqwyxzhhihhk App · hotspot-simple-v1" [ref=f5e930]:
+                  - generic "easinote/uwizukyvhhpljhhvhvypuqwyxzhhihhk" [ref=f5e931]
+                  - generic [ref=f5e932]: App · hotspot-simple-v1
+                - cell "349 GB" [ref=f5e933]
+                - cell "待处理" [ref=f5e934]
+                - cell "未登记" [ref=f5e936]
+                - cell "—" [ref=f5e937]
+                - cell [ref=f5e938]:
+                  - button "登记处理" [ref=f5e939] [cursor=pointer]
+              - row [ref=f5e940]:
+                - cell "13" [ref=f5e941]
+                - cell "easinote/uwizuhohhhpljhhvhwilpijlvqphihhy App · hotspot-simple-v1" [ref=f5e942]:
+                  - generic "easinote/uwizuhohhhpljhhvhwilpijlvqphihhy" [ref=f5e943]
+                  - generic [ref=f5e944]: App · hotspot-simple-v1
+                - cell "336 GB" [ref=f5e945]
+                - cell "待处理" [ref=f5e946]
+                - cell "未登记" [ref=f5e948]
+                - cell "—" [ref=f5e949]
+                - cell [ref=f5e950]:
+                  - button "登记处理" [ref=f5e951] [cursor=pointer]
+              - row [ref=f5e952]:
+                - cell "14" [ref=f5e953]
+                - cell "easinote/uwixlzuzhhpljhhvhwwkqxoyviphihhl App · hotspot-simple-v1" [ref=f5e954]:
+                  - generic "easinote/uwixlzuzhhpljhhvhwwkqxoyviphihhl" [ref=f5e955]
+                  - generic [ref=f5e956]: App · hotspot-simple-v1
+                - cell "326 GB" [ref=f5e957]
+                - cell "待处理" [ref=f5e958]
+                - cell "未登记" [ref=f5e960]
+                - cell "—" [ref=f5e961]
+                - cell [ref=f5e962]:
+                  - button "登记处理" [ref=f5e963] [cursor=pointer]
+              - row [ref=f5e964]:
+                - cell "15" [ref=f5e965]
+                - cell "easinote/uwixonokhhpljhhvhwpymunnxphhihjk App · hotspot-simple-v1" [ref=f5e966]:
+                  - generic "easinote/uwixonokhhpljhhvhwpymunnxphhihjk" [ref=f5e967]
+                  - generic [ref=f5e968]: App · hotspot-simple-v1
+                - cell "324 GB" [ref=f5e969]
+                - cell "待处理" [ref=f5e970]
+                - cell "未登记" [ref=f5e972]
+                - cell "—" [ref=f5e973]
+                - cell [ref=f5e974]:
+                  - button "登记处理" [ref=f5e975] [cursor=pointer]
+              - row [ref=f5e976]:
+                - cell "16" [ref=f5e977]
+                - cell "easinote/uwixlplwhhpljhhvhwnjjuwyuwphihim App · hotspot-simple-v1" [ref=f5e978]:
+                  - generic "easinote/uwixlplwhhpljhhvhwnjjuwyuwphihim" [ref=f5e979]
+                  - generic [ref=f5e980]: App · hotspot-simple-v1
+                - cell "307 GB" [ref=f5e981]
+                - cell "待处理" [ref=f5e982]
+                - cell "未登记" [ref=f5e984]
+                - cell "—" [ref=f5e985]
+                - cell [ref=f5e986]:
+                  - button "登记处理" [ref=f5e987] [cursor=pointer]
+              - row [ref=f5e988]:
+                - cell "17" [ref=f5e989]
+                - cell "easinote/uwizuonjhhpljhhvhwlxlmlpkwphihhh.mp4 App · hotspot-simple-v1" [ref=f5e990]:
+                  - generic "easinote/uwizuonjhhpljhhvhwlxlmlpkwphihhh.mp4" [ref=f5e991]
+                  - generic [ref=f5e992]: App · hotspot-simple-v1
+                - cell "303 GB" [ref=f5e993]
+                - cell "待处理" [ref=f5e994]
+                - cell "未登记" [ref=f5e996]
+                - cell "—" [ref=f5e997]
+                - cell [ref=f5e998]:
+                  - button "登记处理" [ref=f5e999] [cursor=pointer]
+              - row [ref=f5e1000]:
+                - cell "18" [ref=f5e1001]
+                - cell "easinote/encloud-171539712684232d2c63e App · hotspot-simple-v1" [ref=f5e1002]:
+                  - generic "easinote/encloud-171539712684232d2c63e" [ref=f5e1003]
+                  - generic [ref=f5e1004]: App · hotspot-simple-v1
+                - cell "285 GB" [ref=f5e1005]
+                - cell "待处理" [ref=f5e1006]
+                - cell "未登记" [ref=f5e1008]
+                - cell "—" [ref=f5e1009]
+                - cell [ref=f5e1010]:
+                  - button "登记处理" [ref=f5e1011] [cursor=pointer]
+              - row [ref=f5e1012]:
+                - cell "19" [ref=f5e1013]
+                - cell "easinote/uwixmlulhhpljhhvhwoioziyxxhhihjv App · hotspot-simple-v1" [ref=f5e1014]:
+                  - generic "easinote/uwixmlulhhpljhhvhwoioziyxxhhihjv" [ref=f5e1015]
+                  - generic [ref=f5e1016]: App · hotspot-simple-v1
+                - cell "284 GB" [ref=f5e1017]
+                - cell "待处理" [ref=f5e1018]
+                - cell "未登记" [ref=f5e1020]
+                - cell "—" [ref=f5e1021]
+                - cell [ref=f5e1022]:
+                  - button "登记处理" [ref=f5e1023] [cursor=pointer]
+              - row [ref=f5e1024]:
+                - cell "20" [ref=f5e1025]
+                - cell "easinote/uwixiynqhhpljhhvhwqoyolnyzphihho App · hotspot-simple-v1" [ref=f5e1026]:
+                  - generic "easinote/uwixiynqhhpljhhvhwqoyolnyzphihho" [ref=f5e1027]
+                  - generic [ref=f5e1028]: App · hotspot-simple-v1
+                - cell "284 GB" [ref=f5e1029]
+                - cell "待处理" [ref=f5e1030]
+                - cell "未登记" [ref=f5e1032]
+                - cell "—" [ref=f5e1033]
+                - cell [ref=f5e1034]:
+                  - button "登记处理" [ref=f5e1035] [cursor=pointer]
+              - row [ref=f5e1036]:
+                - cell "21" [ref=f5e1037]
+                - cell "easinote/uwixlnophhpljhhvhmjwomhlzqhhihhi App · hotspot-simple-v1" [ref=f5e1038]:
+                  - generic "easinote/uwixlnophhpljhhvhmjwomhlzqhhihhi" [ref=f5e1039]
+                  - generic [ref=f5e1040]: App · hotspot-simple-v1
+                - cell "270 GB" [ref=f5e1041]
+                - cell "待处理" [ref=f5e1042]
+                - cell "未登记" [ref=f5e1044]
+                - cell "—" [ref=f5e1045]
+                - cell [ref=f5e1046]:
+                  - button "登记处理" [ref=f5e1047] [cursor=pointer]
+              - row [ref=f5e1048]:
+                - cell "22" [ref=f5e1049]
+                - cell "easinote/encloud-16476989711087866bdd1 App · hotspot-simple-v1" [ref=f5e1050]:
+                  - generic "easinote/encloud-16476989711087866bdd1" [ref=f5e1051]
+                  - generic [ref=f5e1052]: App · hotspot-simple-v1
+                - cell "267 GB" [ref=f5e1053]
+                - cell "待处理" [ref=f5e1054]
+                - cell "未登记" [ref=f5e1056]
+                - cell "—" [ref=f5e1057]
+                - cell [ref=f5e1058]:
+                  - button "登记处理" [ref=f5e1059] [cursor=pointer]
+              - row [ref=f5e1060]:
+                - cell "23" [ref=f5e1061]
+                - cell "easinote/encloud-17715931137282fdc1210 App · hotspot-simple-v1" [ref=f5e1062]:
+                  - generic "easinote/encloud-17715931137282fdc1210" [ref=f5e1063]
+                  - generic [ref=f5e1064]: App · hotspot-simple-v1
+                - cell "255 GB" [ref=f5e1065]
+                - cell "待处理" [ref=f5e1066]
+                - cell "未登记" [ref=f5e1068]
+                - cell "—" [ref=f5e1069]
+                - cell [ref=f5e1070]:
+                  - button "登记处理" [ref=f5e1071] [cursor=pointer]
+              - row [ref=f5e1072]:
+                - cell "24" [ref=f5e1073]
+                - cell "easinote/uwixhlhnhhpljhhvhmhvnlqqpophihil App · hotspot-simple-v1" [ref=f5e1074]:
+                  - generic "easinote/uwixhlhnhhpljhhvhmhvnlqqpophihil" [ref=f5e1075]
+                  - generic [ref=f5e1076]: App · hotspot-simple-v1
+                - cell "238 GB" [ref=f5e1077]
+                - cell "待处理" [ref=f5e1078]
+                - cell "未登记" [ref=f5e1080]
+                - cell "—" [ref=f5e1081]
+                - cell [ref=f5e1082]:
+                  - button "登记处理" [ref=f5e1083] [cursor=pointer]
+              - row [ref=f5e1084]:
+                - cell "25" [ref=f5e1085]
+                - cell "easinote/encloud-16774092240326959e2de App · hotspot-simple-v1" [ref=f5e1086]:
+                  - generic "easinote/encloud-16774092240326959e2de" [ref=f5e1087]
+                  - generic [ref=f5e1088]: App · hotspot-simple-v1
+                - cell "236 GB" [ref=f5e1089]
+                - cell "待处理" [ref=f5e1090]
+                - cell "未登记" [ref=f5e1092]
+                - cell "—" [ref=f5e1093]
+                - cell [ref=f5e1094]:
+                  - button "登记处理" [ref=f5e1095] [cursor=pointer]
+              - row [ref=f5e1096]:
+                - cell "26" [ref=f5e1097]
+                - cell "easinote/uwixljzjhhpljhhvhwoyhpnxovphihkn App · hotspot-simple-v1" [ref=f5e1098]:
+                  - generic "easinote/uwixljzjhhpljhhvhwoyhpnxovphihkn" [ref=f5e1099]
+                  - generic [ref=f5e1100]: App · hotspot-simple-v1
+                - cell "231 GB" [ref=f5e1101]
+                - cell "待处理" [ref=f5e1102]
+                - cell "未登记" [ref=f5e1104]
+                - cell "—" [ref=f5e1105]
+                - cell [ref=f5e1106]:
+                  - button "登记处理" [ref=f5e1107] [cursor=pointer]
+              - row [ref=f5e1108]:
+                - cell "27" [ref=f5e1109]
+                - cell "pro-ali-pri/easinote/encloud-158659909720531150d1a App · hotspot-simple-v1" [ref=f5e1110]:
+                  - generic "pro-ali-pri/easinote/encloud-158659909720531150d1a" [ref=f5e1111]
+                  - generic [ref=f5e1112]: App · hotspot-simple-v1
+                - cell "226 GB" [ref=f5e1113]
+                - cell "待处理" [ref=f5e1114]
+                - cell "未登记" [ref=f5e1116]
+                - cell "—" [ref=f5e1117]
+                - cell [ref=f5e1118]:
+                  - button "登记处理" [ref=f5e1119] [cursor=pointer]
+              - row [ref=f5e1120]:
+                - cell "28" [ref=f5e1121]
+                - cell "easinote/uwixomlqhhpljhhvhwpqwoqnpwhhihhm App · hotspot-simple-v1" [ref=f5e1122]:
+                  - generic "easinote/uwixomlqhhpljhhvhwpqwoqnpwhhihhm" [ref=f5e1123]
+                  - generic [ref=f5e1124]: App · hotspot-simple-v1
+                - cell "224 GB" [ref=f5e1125]
+                - cell "待处理" [ref=f5e1126]
+                - cell "未登记" [ref=f5e1128]
+                - cell "—" [ref=f5e1129]
+                - cell [ref=f5e1130]:
+                  - button "登记处理" [ref=f5e1131] [cursor=pointer]
+              - row [ref=f5e1132]:
+                - cell "29" [ref=f5e1133]
+                - cell "pro-ali-pri/easinote/encloud-1586183647994f7f53b10 App · hotspot-simple-v1" [ref=f5e1134]:
+                  - generic "pro-ali-pri/easinote/encloud-1586183647994f7f53b10" [ref=f5e1135]
+                  - generic [ref=f5e1136]: App · hotspot-simple-v1
+                - cell "220 GB" [ref=f5e1137]
+                - cell "待处理" [ref=f5e1138]
+                - cell "未登记" [ref=f5e1140]
+                - cell "—" [ref=f5e1141]
+                - cell [ref=f5e1142]:
+                  - button "登记处理" [ref=f5e1143] [cursor=pointer]
+              - row [ref=f5e1144]:
+                - cell "30" [ref=f5e1145]
+                - cell "easinote/uwizujinhhpljhhvhwviqvpjihphihhk App · hotspot-simple-v1" [ref=f5e1146]:
+                  - generic "easinote/uwizujinhhpljhhvhwviqvpjihphihhk" [ref=f5e1147]
+                  - generic [ref=f5e1148]: App · hotspot-simple-v1
+                - cell "210 GB" [ref=f5e1149]
+                - cell "待处理" [ref=f5e1150]
+                - cell "未登记" [ref=f5e1152]
+                - cell "—" [ref=f5e1153]
+                - cell [ref=f5e1154]:
+                  - button "登记处理" [ref=f5e1155] [cursor=pointer]
+              - row [ref=f5e1156]:
+                - cell "31" [ref=f5e1157]
+                - cell "pro-ali-pri/easinote/encloud-158246146378291a06133 App · hotspot-simple-v1" [ref=f5e1158]:
+                  - generic "pro-ali-pri/easinote/encloud-158246146378291a06133" [ref=f5e1159]
+                  - generic [ref=f5e1160]: App · hotspot-simple-v1
+                - cell "209 GB" [ref=f5e1161]
+                - cell "待处理" [ref=f5e1162]
+                - cell "未登记" [ref=f5e1164]
+                - cell "—" [ref=f5e1165]
+                - cell [ref=f5e1166]:
+                  - button "登记处理" [ref=f5e1167] [cursor=pointer]
+              - row [ref=f5e1168]:
+                - cell "32" [ref=f5e1169]
+                - cell "easinote/uwixpupphhpljhhvhpqlxunvjxhhihhh.mp4 App · hotspot-simple-v1" [ref=f5e1170]:
+                  - generic "easinote/uwixpupphhpljhhvhpqlxunvjxhhihhh.mp4" [ref=f5e1171]
+                  - generic [ref=f5e1172]: App · hotspot-simple-v1
+                - cell "203 GB" [ref=f5e1173]
+                - cell "待处理" [ref=f5e1174]
+                - cell "未登记" [ref=f5e1176]
+                - cell "—" [ref=f5e1177]
+                - cell [ref=f5e1178]:
+                  - button "登记处理" [ref=f5e1179] [cursor=pointer]
+              - row [ref=f5e1180]:
+                - cell "33" [ref=f5e1181]
+                - cell "easinote/encloud-1676273197265684d823b App · hotspot-simple-v1" [ref=f5e1182]:
+                  - generic "easinote/encloud-1676273197265684d823b" [ref=f5e1183]
+                  - generic [ref=f5e1184]: App · hotspot-simple-v1
+                - cell "201 GB" [ref=f5e1185]
+                - cell "待处理" [ref=f5e1186]
+                - cell "未登记" [ref=f5e1188]
+                - cell "—" [ref=f5e1189]
+                - cell [ref=f5e1190]:
+                  - button "登记处理" [ref=f5e1191] [cursor=pointer]
+              - row [ref=f5e1192]:
+                - cell "34" [ref=f5e1193]
+                - cell "easinote/uwixijyjhhpljhhvhmlxowxipjhhihhq App · hotspot-simple-v1" [ref=f5e1194]:
+                  - generic "easinote/uwixijyjhhpljhhvhmlxowxipjhhihhq" [ref=f5e1195]
+                  - generic [ref=f5e1196]: App · hotspot-simple-v1
+                - cell "198 GB" [ref=f5e1197]
+                - cell "待处理" [ref=f5e1198]
+                - cell "未登记" [ref=f5e1200]
+                - cell "—" [ref=f5e1201]
+                - cell [ref=f5e1202]:
+                  - button "登记处理" [ref=f5e1203] [cursor=pointer]
+              - row [ref=f5e1204]:
+                - cell "35" [ref=f5e1205]
+                - cell "easinote/uwixplpkhhpljhhvhpwvwpvklzphihjv App · hotspot-simple-v1" [ref=f5e1206]:
+                  - generic "easinote/uwixplpkhhpljhhvhpwvwpvklzphihjv" [ref=f5e1207]
+                  - generic [ref=f5e1208]: App · hotspot-simple-v1
+                - cell "197 GB" [ref=f5e1209]
+                - cell "待处理" [ref=f5e1210]
+                - cell "未登记" [ref=f5e1212]
+                - cell "—" [ref=f5e1213]
+                - cell [ref=f5e1214]:
+                  - button "登记处理" [ref=f5e1215] [cursor=pointer]
+              - row [ref=f5e1216]:
+                - cell "36" [ref=f5e1217]
+                - cell "easinote/encloud-1700119556670894d7fe9 App · hotspot-simple-v1" [ref=f5e1218]:
+                  - generic "easinote/encloud-1700119556670894d7fe9" [ref=f5e1219]
+                  - generic [ref=f5e1220]: App · hotspot-simple-v1
+                - cell "196 GB" [ref=f5e1221]
+                - cell "待处理" [ref=f5e1222]
+                - cell "未登记" [ref=f5e1224]
+                - cell "—" [ref=f5e1225]
+                - cell [ref=f5e1226]:
+                  - button "登记处理" [ref=f5e1227] [cursor=pointer]
+              - row [ref=f5e1228]:
+                - cell "37" [ref=f5e1229]
+                - cell "easinote/uwizqhxvhhpljhhvhwjwlolwluhhihhj App · hotspot-simple-v1" [ref=f5e1230]:
+                  - generic "easinote/uwizqhxvhhpljhhvhwjwlolwluhhihhj" [ref=f5e1231]
+                  - generic [ref=f5e1232]: App · hotspot-simple-v1
+                - cell "196 GB" [ref=f5e1233]
+                - cell "待处理" [ref=f5e1234]
+                - cell "未登记" [ref=f5e1236]
+                - cell "—" [ref=f5e1237]
+                - cell [ref=f5e1238]:
+                  - button "登记处理" [ref=f5e1239] [cursor=pointer]
+              - row [ref=f5e1240]:
+                - cell "38" [ref=f5e1241]
+                - cell "easinote/uwixvzuvhhpljhhvhpqyoolxxmhhihhi App · hotspot-simple-v1" [ref=f5e1242]:
+                  - generic "easinote/uwixvzuvhhpljhhvhpqyoolxxmhhihhi" [ref=f5e1243]
+                  - generic [ref=f5e1244]: App · hotspot-simple-v1
+                - cell "192 GB" [ref=f5e1245]
+                - cell "待处理" [ref=f5e1246]
+                - cell "未登记" [ref=f5e1248]
+                - cell "—" [ref=f5e1249]
+                - cell [ref=f5e1250]:
+                  - button "登记处理" [ref=f5e1251] [cursor=pointer]
+              - row [ref=f5e1252]:
+                - cell "39" [ref=f5e1253]
+                - cell "easinote/uwixmvolhhpljhhvhmkivhupqxphihhi App · hotspot-simple-v1" [ref=f5e1254]:
+                  - generic "easinote/uwixmvolhhpljhhvhmkivhupqxphihhi" [ref=f5e1255]
+                  - generic [ref=f5e1256]: App · hotspot-simple-v1
+                - cell "192 GB" [ref=f5e1257]
+                - cell "待处理" [ref=f5e1258]
+                - cell "未登记" [ref=f5e1260]
+                - cell "—" [ref=f5e1261]
+                - cell [ref=f5e1262]:
+                  - button "登记处理" [ref=f5e1263] [cursor=pointer]
+              - row [ref=f5e1264]:
+                - cell "40" [ref=f5e1265]
+                - cell "easinote/uwixjqmjhhpljhhvhpuvnxqvkqphihhh App · hotspot-simple-v1" [ref=f5e1266]:
+                  - generic "easinote/uwixjqmjhhpljhhvhpuvnxqvkqphihhh" [ref=f5e1267]
+                  - generic [ref=f5e1268]: App · hotspot-simple-v1
+                - cell "192 GB" [ref=f5e1269]
+                - cell "待处理" [ref=f5e1270]
+                - cell "未登记" [ref=f5e1272]
+                - cell "—" [ref=f5e1273]
+                - cell [ref=f5e1274]:
+                  - button "登记处理" [ref=f5e1275] [cursor=pointer]
+              - row [ref=f5e1276]:
+                - cell "41" [ref=f5e1277]
+                - cell "pro-ali-pri/easinote/encloud-16164909780379a5a67d2 App · hotspot-simple-v1" [ref=f5e1278]:
+                  - generic "pro-ali-pri/easinote/encloud-16164909780379a5a67d2" [ref=f5e1279]
+                  - generic [ref=f5e1280]: App · hotspot-simple-v1
+                - cell "192 GB" [ref=f5e1281]
+                - cell "待处理" [ref=f5e1282]
+                - cell "未登记" [ref=f5e1284]
+                - cell "—" [ref=f5e1285]
+                - cell [ref=f5e1286]:
+                  - button "登记处理" [ref=f5e1287] [cursor=pointer]
+              - row [ref=f5e1288]:
+                - cell "42" [ref=f5e1289]
+                - cell "easinote/uwizpmkhhhpljhhvhwkpoyjqquhhihki App · hotspot-simple-v1" [ref=f5e1290]:
+                  - generic "easinote/uwizpmkhhhpljhhvhwkpoyjqquhhihki" [ref=f5e1291]
+                  - generic [ref=f5e1292]: App · hotspot-simple-v1
+                - cell "187 GB" [ref=f5e1293]
+                - cell "待处理" [ref=f5e1294]
+                - cell "未登记" [ref=f5e1296]
+                - cell "—" [ref=f5e1297]
+                - cell [ref=f5e1298]:
+                  - button "登记处理" [ref=f5e1299] [cursor=pointer]
+              - row [ref=f5e1300]:
+                - cell "43" [ref=f5e1301]
+                - cell "easinote/uwixlmjkhhpljhhvhwvqqhhomyphihhm App · hotspot-simple-v1" [ref=f5e1302]:
+                  - generic "easinote/uwixlmjkhhpljhhvhwvqqhhomyphihhm" [ref=f5e1303]
+                  - generic [ref=f5e1304]: App · hotspot-simple-v1
+                - cell "187 GB" [ref=f5e1305]
+                - cell "待处理" [ref=f5e1306]
+                - cell "未登记" [ref=f5e1308]
+                - cell "—" [ref=f5e1309]
+                - cell [ref=f5e1310]:
+                  - button "登记处理" [ref=f5e1311] [cursor=pointer]
+              - row [ref=f5e1312]:
+                - cell "44" [ref=f5e1313]
+                - cell "easinote/uwixwlzvhhpljhhvhqjnioiwjpphihhl App · hotspot-simple-v1" [ref=f5e1314]:
+                  - generic "easinote/uwixwlzvhhpljhhvhqjnioiwjpphihhl" [ref=f5e1315]
+                  - generic [ref=f5e1316]: App · hotspot-simple-v1
+                - cell "183 GB" [ref=f5e1317]
+                - cell "待处理" [ref=f5e1318]
+                - cell "未登记" [ref=f5e1320]
+                - cell "—" [ref=f5e1321]
+                - cell [ref=f5e1322]:
+                  - button "登记处理" [ref=f5e1323] [cursor=pointer]
+              - row [ref=f5e1324]:
+                - cell "45" [ref=f5e1325]
+                - cell "easinote/uwixnplhhhpljhhvhwpqiqzpqyhhihhm App · hotspot-simple-v1" [ref=f5e1326]:
+                  - generic "easinote/uwixnplhhhpljhhvhwpqiqzpqyhhihhm" [ref=f5e1327]
+                  - generic [ref=f5e1328]: App · hotspot-simple-v1
+                - cell "180 GB" [ref=f5e1329]
+                - cell "待处理" [ref=f5e1330]
+                - cell "未登记" [ref=f5e1332]
+                - cell "—" [ref=f5e1333]
+                - cell [ref=f5e1334]:
+                  - button "登记处理" [ref=f5e1335] [cursor=pointer]
+              - row [ref=f5e1336]:
+                - cell "46" [ref=f5e1337]
+                - cell "pro-ali-pri/easinote/encloud-1582806795529d43f0558 App · hotspot-simple-v1" [ref=f5e1338]:
+                  - generic "pro-ali-pri/easinote/encloud-1582806795529d43f0558" [ref=f5e1339]
+                  - generic [ref=f5e1340]: App · hotspot-simple-v1
+                - cell "179 GB" [ref=f5e1341]
+                - cell "待处理" [ref=f5e1342]
+                - cell "未登记" [ref=f5e1344]
+                - cell "—" [ref=f5e1345]
+                - cell [ref=f5e1346]:
+                  - button "登记处理" [ref=f5e1347] [cursor=pointer]
+              - row [ref=f5e1348]:
+                - cell "47" [ref=f5e1349]
+                - cell "easinote/encloud-16455847802499df0e00b App · hotspot-simple-v1" [ref=f5e1350]:
+                  - generic "easinote/encloud-16455847802499df0e00b" [ref=f5e1351]
+                  - generic [ref=f5e1352]: App · hotspot-simple-v1
+                - cell "179 GB" [ref=f5e1353]
+                - cell "待处理" [ref=f5e1354]
+                - cell "未登记" [ref=f5e1356]
+                - cell "—" [ref=f5e1357]
+                - cell [ref=f5e1358]:
+                  - button "登记处理" [ref=f5e1359] [cursor=pointer]
+              - row [ref=f5e1360]:
+                - cell "48" [ref=f5e1361]
+                - cell "easinote/encloud-1649746106129f3112461 App · hotspot-simple-v1" [ref=f5e1362]:
+                  - generic "easinote/encloud-1649746106129f3112461" [ref=f5e1363]
+                  - generic [ref=f5e1364]: App · hotspot-simple-v1
+                - cell "176 GB" [ref=f5e1365]
+                - cell "待处理" [ref=f5e1366]
+                - cell "未登记" [ref=f5e1368]
+                - cell "—" [ref=f5e1369]
+                - cell [ref=f5e1370]:
+                  - button "登记处理" [ref=f5e1371] [cursor=pointer]
+              - row [ref=f5e1372]:
+                - cell "49" [ref=f5e1373]
+                - cell "pro-ali-pri/easinote/encloud-1584430285393bc69e431 App · hotspot-simple-v1" [ref=f5e1374]:
+                  - generic "pro-ali-pri/easinote/encloud-1584430285393bc69e431" [ref=f5e1375]
+                  - generic [ref=f5e1376]: App · hotspot-simple-v1
+                - cell "175 GB" [ref=f5e1377]
+                - cell "待处理" [ref=f5e1378]
+                - cell "未登记" [ref=f5e1380]
+                - cell "—" [ref=f5e1381]
+                - cell [ref=f5e1382]:
+                  - button "登记处理" [ref=f5e1383] [cursor=pointer]
+              - row [ref=f5e1384]:
+                - cell "50" [ref=f5e1385]
+                - cell "easinote/uwixhyhnhhpljhhvhmhzqmilppphihjy App · hotspot-simple-v1" [ref=f5e1386]:
+                  - generic "easinote/uwixhyhnhhpljhhvhmhzqmilppphihjy" [ref=f5e1387]
+                  - generic [ref=f5e1388]: App · hotspot-simple-v1
+                - cell "173 GB" [ref=f5e1389]
+                - cell "待处理" [ref=f5e1390]
+                - cell "未登记" [ref=f5e1392]
+                - cell "—" [ref=f5e1393]
+                - cell [ref=f5e1394]:
+                  - button "登记处理" [ref=f5e1395] [cursor=pointer]
+          - generic [ref=f5e757]:
+            - generic [ref=f5e758]: 预测总额与实际节省独立；压缩率与收益未凭空估算。
+            - generic [ref=f5e759]: run_3ed97fd12794dcdb654dcf19a8affcce0521e050cee0f4f24d1facf1328a679d
+        - generic [ref=f5e760]:
+          - generic [ref=f5e761]:
+            - generic [ref=f5e762]:
+              - heading "从推荐到效果追踪" [level=2] [ref=f5e763]
+              - generic [ref=f5e764]: 真实流程
+            - generic [ref=f5e765]:
+              - generic [ref=f5e766]:
+                - generic [ref=f5e767]: "1"
+                - strong [ref=f5e768]: 真实 Top50
+                - generic [ref=f5e769]: runId 对应快照
+              - generic [ref=f5e772]:
+                - generic [ref=f5e773]: "2"
+                - strong [ref=f5e774]: 登记处理证据
+                - generic [ref=f5e775]: REAL 或显式 TEST
+              - generic [ref=f5e778]:
+                - generic [ref=f5e779]: "3"
+                - strong [ref=f5e780]: 成熟观测
+                - generic [ref=f5e781]: 实际效果与账单
+          - generic [ref=f5e785]:
+            - heading "收益证据边界" [level=3] [ref=f5e786]
+            - paragraph [ref=f5e787]: 当前尚未登记效果观测，实际节省金额保持未验证。
+            - generic [ref=f5e788]: 真实账单降本未验证
+      - generic [ref=f5e789]:
+        - text: CDN 热点预测与压缩降本系统
+        - generic [ref=f5e790]: 界面样例与接口数据均标明来源
+  - dialog [ref=f5e1396]:
+    - banner [ref=f5e1397]:
+      - heading "easinote/uwixmovwhhpljhhvhmlwxjwkmphhihhi" [level=2] [ref=f5e1398]
+      - button "关闭弹窗" [active] [ref=f5e1399] [cursor=pointer]
+    - generic [ref=f5e1402]:
+      - generic [ref=f5e1403]: REAL / MODEL
+      - generic [ref=f5e1404]: App
+    - navigation "文件详情 Tab" [ref=f5e1405]:
+      - button "基本信息" [ref=f5e1406] [cursor=pointer]
+      - button "预测信息" [ref=f5e1407] [cursor=pointer]
+      - button "压缩信息" [pressed] [ref=f5e1408] [cursor=pointer]
+      - button "历史趋势" [ref=f5e1409] [cursor=pointer]
+    - region "压缩登记" [ref=f5e1411]:
+      - heading "压缩处理登记" [level=3] [ref=f5e1412]
+      - paragraph [ref=f5e1413]: 预测运行 run_3ed97fd12794dcdb654dcf19a8affcce0521e050cee0f4f24d1facf1328a679d · App 10066 · 原文件 easinote/uwixmovwhhpljhhvhmlwxjwkmphhihhi
+      - paragraph [ref=f5e1414]: 登记只记录处理证据；压缩降本效果需完成后续观测。
+      - generic [ref=f5e1415]:
+        - strong [ref=f5e1416]: 现有登记（1）
+        - list [ref=f5e1417]:
+          - listitem [ref=f5e1418]:
+            - button "COMPRESSED · TEST · 验收测试员 · v2" [ref=f5e1419] [cursor=pointer]
+            - text: · 1000000000 → 600000000 B · 压缩率 40.0% · 30%门槛 达到 · 质量 通过 · 效果待后续观察
+      - button "新建登记" [ref=f5e1420] [cursor=pointer]
+      - generic [ref=f5e1421]:
+        - generic [ref=f5e1422]:
+          - text: 证据来源
+          - combobox "证据来源" [ref=f5e1423] [cursor=pointer]:
+            - option "REAL · CStore 原大小" [selected]
+            - option "TEST · 人工测试证据"
+        - generic [ref=f5e1424]:
+          - text: 状态
+          - combobox "状态" [ref=f5e1425] [cursor=pointer]:
+            - option "处理中" [selected]
+            - option "已压缩"
+        - generic [ref=f5e1426]:
+          - text: 处理人
+          - textbox "处理人" [ref=f5e1427]
+        - generic [ref=f5e1428]:
+          - text: 备注
+          - textbox "备注" [ref=f5e1429]
+        - button "新建登记" [ref=f5e1430] [cursor=pointer]
