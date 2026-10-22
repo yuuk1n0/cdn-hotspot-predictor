@@ -1,11 +1,17 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-import { createCsvImport } from '../src/imports.js'
+import { createCsvImport, maxFileBytes } from '../src/imports.js'
 
 const file = () => new File(['文件标识,日期,当日流量（B）,AppID\na,2026/1/5,1E3,10350'], '10350.csv', { type: 'text/csv' })
 const response = (body, status = 202) => ({ ok: status >= 200 && status < 300, status, json: async () => body })
 const accepted = { importTaskId: 'imp_1', status: 'PENDING' }
+
+function sizedCsv(size) {
+  const selected = new File(['x'], 'sized.csv', { type: 'text/csv' })
+  Object.defineProperty(selected, 'size', { value: size })
+  return selected
+}
 
 function prepared(fetchService, extra = {}) {
   const flow = createCsvImport({ fetchService, ...extra })
@@ -49,7 +55,7 @@ test('blocks missing, empty, non-CSV and oversized files before sending', async 
     [null, /CSV/],
     [new File([], 'empty.csv'), /为空/],
     [new File(['bad'], 'bad.txt'), /CSV/],
-    [new File([new Uint8Array(5 * 1024 * 1024 + 1)], 'large.csv'), /5 MiB/]
+    [sizedCsv(200 * 1024 * 1024 + 1), /200 MiB/]
   ]) {
     flow.selectFile(selected)
     await flow.submit()
@@ -57,6 +63,16 @@ test('blocks missing, empty, non-CSV and oversized files before sending', async 
     assert.match(flow.state.error, message)
   }
   assert.equal(calls, 0)
+})
+
+test('accepts a CSV at exactly 200 MiB and sends one request', async () => {
+  let calls = 0
+  const flow = prepared(async () => { calls++; return response(accepted) })
+  flow.selectFile(sizedCsv(200 * 1024 * 1024))
+  await flow.submit()
+  assert.equal(maxFileBytes, 200 * 1024 * 1024)
+  assert.equal(calls, 1)
+  assert.equal(flow.state.phase, 'ACCEPTED')
 })
 
 test('requires a confirmed B unit and sends custom mapping, source and optional App ID unchanged', async () => {

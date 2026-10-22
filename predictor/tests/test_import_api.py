@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from app.main import create_app
+from app.main import DEFAULT_IMPORT_MAX_BYTES, create_app, resolve_import_max_bytes
 from app.csv_import import ImportConfig
 from app.import_store import ImportStore
 from test_csv_import import MAPPING, csv_bytes
@@ -30,6 +30,16 @@ def terminal(client, task_id):
         assert task["datasetId"] is None
         time.sleep(0.01)
     pytest.fail("import did not reach a terminal state")
+
+
+def test_upload_limit_defaults_to_200_mib_and_preserves_overrides(monkeypatch):
+    monkeypatch.delenv("IMPORT_MAX_BYTES", raising=False)
+    assert DEFAULT_IMPORT_MAX_BYTES == 209715200
+    assert resolve_import_max_bytes(None) == 209715200
+
+    monkeypatch.setenv("IMPORT_MAX_BYTES", "1048576")
+    assert resolve_import_max_bytes(None) == 1048576
+    assert resolve_import_max_bytes(512) == 512
 
 
 def test_durable_upload_ready_dataset_and_quality(tmp_path):

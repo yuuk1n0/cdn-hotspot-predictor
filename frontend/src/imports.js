@@ -3,7 +3,7 @@ import { reactive } from 'vue'
 import { requestJson } from './http.js'
 
 const storageKey = 'cdn.csv-import.task'
-export const maxFileBytes = 5 * 1024 * 1024
+export const maxFileBytes = 200 * 1024 * 1024
 
 // All data-service requests use the existing Python proxy, never the Java /api proxy.
 export const dataApi = {
@@ -186,7 +186,7 @@ export function createCsvImport({ fetchService = fetch, storage = null } = {}) {
   function validate() {
     if (!state.file || !/\.csv$/i.test(state.file.name)) throw new Error('请选择 CSV 文件。')
     if (!state.file.size) throw new Error('CSV 文件为空，请重新选择。')
-    if (state.file.size > maxFileBytes) throw new Error('当前仅支持不超过 5 MiB 的 CSV；不会自动截取大文件。')
+    if (state.file.size > maxFileBytes) throw new Error('当前仅支持不超过 200 MiB 的 CSV；不会自动截取大文件。')
     if (state.options.sourceUnit !== 'B') throw new Error('请先确认流量单位为 B；单位待确认的数据不能提交。')
     const mapping = state.options.mapping
     if (![mapping.fileKey, mapping.date, mapping.trafficBytes].every(value => value.trim())) {

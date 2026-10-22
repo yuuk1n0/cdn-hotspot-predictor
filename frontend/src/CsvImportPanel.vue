@@ -71,7 +71,7 @@ onUnmounted(() => { upload.dispose(); monitor.dispose() })
           <label for="csv-file">CSV 文件</label>
           <input id="csv-file" ref="fileInput" type="file" accept=".csv,text/csv" @change="upload.selectFile($event.target.files?.[0])">
           <p v-if="state.file" class="upload-filename">{{ state.file.name }} <span>{{ state.file.size.toLocaleString() }} B</span></p>
-          <p class="upload-hint">上限 5 MiB，支持 UTF-8 / GB18030，由导入服务解析。请先确认实际表头及单位。</p>
+          <p class="upload-hint">上限 200 MiB，支持 UTF-8 / GB18030，由导入服务解析。请先确认实际表头及单位。</p>
         </div>
 
         <div class="upload-options">

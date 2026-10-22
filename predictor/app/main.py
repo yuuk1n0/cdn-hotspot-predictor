@@ -18,10 +18,19 @@ from .model_evidence import model_evidence
 from .upload_stream import stage_upload
 
 
+DEFAULT_IMPORT_MAX_BYTES = 200 * 1024 * 1024
+
+
+def resolve_import_max_bytes(explicit: int | None) -> int:
+    if explicit is not None:
+        return explicit
+    return int(os.getenv("IMPORT_MAX_BYTES", str(DEFAULT_IMPORT_MAX_BYTES)))
+
+
 def create_app(data_dir=None, *, max_file_bytes=None, max_rows=None, prediction_mode=None,
                prediction_model_version=None, mock_delay_seconds=None, prediction_timeout_seconds=None):
     root = Path(data_dir or os.getenv("PREDICTOR_DATA_DIR", Path(__file__).resolve().parents[2] / "runtime" / "predictor"))
-    max_file_bytes = max_file_bytes if max_file_bytes is not None else int(os.getenv("IMPORT_MAX_BYTES", 128 * 1024 * 1024))
+    max_file_bytes = resolve_import_max_bytes(max_file_bytes)
     max_rows = max_rows if max_rows is not None else int(os.getenv("IMPORT_MAX_ROWS", 1200000))
     if max_file_bytes <= 0 or max_rows <= 0:
         raise ValueError("导入文件和行数上限必须大于零。")

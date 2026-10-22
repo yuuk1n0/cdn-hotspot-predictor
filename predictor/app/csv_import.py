@@ -7,10 +7,13 @@ from collections import Counter
 from dataclasses import dataclass
 from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation
+from urllib.parse import urlsplit
 
 
-PARSER_VERSION = "file-daily-v2"
-IDENTITY_VERSION = "opaque-v1"
+PARSER_VERSION = "file-daily-v3"
+IDENTITY_VERSION = "filekey-v1"
+_HTTP_URL = re.compile(r"^https?://", re.IGNORECASE)
+_CONTROL_CHARACTER = re.compile(r"[\x00-\x1f\x7f]")
 
 
 class ImportProblem(Exception):
@@ -20,6 +23,52 @@ class ImportProblem(Exception):
 
     def as_dict(self):
         return {"code": self.code, "message": self.message}
+
+
+def normalize_file_identity(raw: str) -> dict[str, str | None]:
+    value = raw.strip()
+    if not value:
+        raise ImportProblem("EMPTY_FILE_KEY", "文件标识不能为空。")
+    is_url = _HTTP_URL.match(value) is not None
+    if _CONTROL_CHARACTER.search(value):
+        code = "INVALID_URL" if is_url else "INVALID_FILE_KEY"
+        raise ImportProblem(code, "文件 URL 或标识含控制字符。")
+    if is_url:
+        try:
+            parsed = urlsplit(value)
+            hostname = parsed.hostname
+            parsed.port
+        except ValueError:
+            raise ImportProblem("INVALID_URL", "HTTP(S) URL 格式无效。") from None
+        file_key = parsed.path.lstrip("/")
+        if parsed.scheme.lower() not in {"http", "https"} or not hostname or not file_key:
+            raise ImportProblem("INVALID_URL", "HTTP(S) URL 必须包含主机和非空路径。")
+        return {"fileKey": file_key, "sourceUrl": value, "parseStatus": "URL_PATH"}
+    file_key = value.lstrip("/")
+    if not file_key:
+        raise ImportProblem("EMPTY_FILE_KEY", "文件标识不能为空。")
+    return {"fileKey": file_key, "sourceUrl": None, "parseStatus": "PLAIN_KEY"}
+
+
+_IDENTITY_ERROR_COUNTER = {
+    "EMPTY_FILE_KEY": "emptyFileKeyRows",
+    "INVALID_URL": "invalidUrlRows",
+    "INVALID_FILE_KEY": "invalidFileKeyRows",
+}
+
+
+def _normalize_file_identity_for_quality(raw: str, quality: dict) -> dict[str, str | None]:
+    try:
+        identity = normalize_file_identity(raw)
+    except ImportProblem as error:
+        counter = _IDENTITY_ERROR_COUNTER.get(error.code)
+        if counter:
+            quality[counter] += 1
+        raise
+    quality["fileKeyParsedRows"] += 1
+    counter = "fullUrlRows" if identity["parseStatus"] == "URL_PATH" else "plainKeyRows"
+    quality[counter] += 1
+    return identity
 
 
 @dataclass(frozen=True)
@@ -66,13 +115,20 @@ def new_quality() -> dict:
         "appDateRanges": {}, "missingDates": [], "missingDateCount": 0,
         "missingDatesTruncated": False, "dailyRows": [], "warnings": [],
         "sourceUnit": "B", "unitConfirmed": True, "unitConfirmationSource": "UPLOAD_DECLARATION",
-        "fileIdentityStatus": "UNCONFIRMED", "identityMappingVersion": IDENTITY_VERSION,
+        "fileIdentityStatus": "NORMALIZED", "identityMappingVersion": IDENTITY_VERSION,
         "completeness": "UNKNOWN", "parserVersion": PARSER_VERSION,
         "scientificNotationRows": 0, "errorSamples": [],
+        "fullUrlRows": 0, "plainKeyRows": 0, "emptyFileKeyRows": 0,
+        "invalidUrlRows": 0, "invalidFileKeyRows": 0, "fileKeyParsedRows": 0,
+        "fileKeyParseSuccessRate": 0.0, "normalizationCollisionRows": 0,
     }
 
 
 def finalize_quality(quality: dict, days_by_app: dict, daily_rows: dict) -> None:
+    quality["fileKeyParseSuccessRate"] = (
+        round(quality["fileKeyParsedRows"] / quality["totalRows"], 6)
+        if quality["totalRows"] else 0.0
+    )
     quality["dailyRows"] = [
         {"appId": app, "date": day, "rowCount": count}
         for (app, day), count in sorted(daily_rows.items())
@@ -92,7 +148,7 @@ def finalize_quality(quality: dict, days_by_app: dict, daily_rows: dict) -> None
     quality["missingDatesTruncated"] = quality["missingDateCount"] > len(quality["missingDates"])
     quality["warnings"].extend([
         "文件覆盖完整性未确认；READY 不代表全量数据。",
-        "原始 URL、无协议路径与 CStore fileKey 映射未确认；保留原始标识，不自动合并。",
+        "完整 URL 已按 path 提取 fileKey 并保持百分号转义；该映射不证明 CStore 文件存在。",
     ])
     if quality["missingDateCount"]:
         quality["warnings"].append("存在缺失日期，表示无观测；未补为零流量。")
@@ -103,6 +159,7 @@ def finalize_quality(quality: dict, days_by_app: dict, daily_rows: dict) -> None
 def parse_csv(raw: bytes, config: ImportConfig, max_rows: int = 20000) -> ParsedCsv:
     quality = new_quality()
     observations = {}
+    observation_sources = {}
     days_by_app = {}
     daily_rows = Counter()
     first_error = None
@@ -129,9 +186,10 @@ def parse_csv(raw: bytes, config: ImportConfig, max_rows: int = 20000) -> Parsed
             try:
                 if None in row or any(value is None for value in row.values()):
                     raise ImportProblem("INVALID_CSV", "CSV 行列数与表头不一致。")
-                file_key = row[config.mapping["fileKey"]]
-                if not file_key.strip() or "\x00" in file_key:
-                    raise ImportProblem("INVALID_CSV", "文件标识为空或含非法字符。")
+                raw_identity = row[config.mapping["fileKey"]]
+                identity = _normalize_file_identity_for_quality(raw_identity, quality)
+                file_key = identity["fileKey"]
+                source_identity = raw_identity.strip()
                 app_id = row[config.mapping["appId"]].strip() if config.mapping.get("appId") else config.appId
                 if not app_id:
                     raise ImportProblem("INVALID_CSV", "App ID 不能为空。")
@@ -144,13 +202,23 @@ def parse_csv(raw: bytes, config: ImportConfig, max_rows: int = 20000) -> Parsed
                     quality["scientificNotationRows"] += 1
                 key = (app_id, file_key, observed_date.isoformat())
                 if key in observations:
+                    if observation_sources[key] != source_identity:
+                        quality["normalizationCollisionRows"] += 1
                     if observations[key]["trafficBytes"] == traffic:
                         quality["duplicateRows"] += 1
                     else:
                         quality["conflictRows"] += 1
-                        record_error("DUPLICATE_CONFLICT", "同 App、原始文件标识和日期存在不同流量值。", row_number)
+                        record_error("DUPLICATE_CONFLICT", "同 App、规范 fileKey 和日期存在不同流量值。", row_number)
                     continue
-                observations[key] = {"fileKey": file_key, "date": observed_date.isoformat(), "trafficBytes": traffic, "appId": app_id}
+                observations[key] = {
+                    "fileKey": file_key,
+                    "date": observed_date.isoformat(),
+                    "trafficBytes": traffic,
+                    "appId": app_id,
+                    "sourceUrl": identity["sourceUrl"],
+                    "parseStatus": identity["parseStatus"],
+                }
+                observation_sources[key] = source_identity
                 days_by_app.setdefault(app_id, set()).add(observed_date)
                 daily_rows[(app_id, observed_date.isoformat())] += 1
             except ImportProblem as error:

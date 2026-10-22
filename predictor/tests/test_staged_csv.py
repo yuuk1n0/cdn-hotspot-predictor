@@ -38,8 +38,8 @@ def test_staged_normalizer_writes_sorted_observations_and_exact_daily_totals(tmp
     assert result.app_ids == ("10066",)
     assert not hasattr(result, "rows")
     assert read_csv(result.normalized_path) == [
-        {"fileKey": "a", "date": "2026-01-01", "trafficBytes": "10", "appId": "10066"},
-        {"fileKey": "b", "date": "2026-01-01", "trafficBytes": "11", "appId": "10066"},
+        {"fileKey": "a", "date": "2026-01-01", "trafficBytes": "10", "appId": "10066", "sourceUrl": "", "parseStatus": "PLAIN_KEY"},
+        {"fileKey": "b", "date": "2026-01-01", "trafficBytes": "11", "appId": "10066", "sourceUrl": "", "parseStatus": "PLAIN_KEY"},
     ]
     assert read_csv(result.daily_totals_path) == [
         {"appId": "10066", "date": "2026-01-01", "totalTrafficBytes": "21", "fileCount": "2"}
@@ -51,6 +51,48 @@ def test_staged_normalizer_writes_sorted_observations_and_exact_daily_totals(tmp
     assert quality["validRows"] == 2
     assert quality["duplicateRows"] == 1
     assert not list((tmp_path / "work").glob("*.sqlite*"))
+
+
+def test_staged_normalizer_exports_url_provenance_and_collision_quality(tmp_path):
+    source = tmp_path / "source.csv"
+    source.write_bytes(csv_bytes([
+        ["https://one.example.test/path/a%2Fb?token=1", "2026/1/1", "10", "10066"],
+        ["https://two.example.test/path/a%2Fb#preview", "2026/1/1", "10", "10066"],
+        ["/plain/key", "2026/1/1", "11", "10066"],
+    ]))
+
+    result = normalize_staged_csv(source, config(), tmp_path / "work", max_rows=10)
+    quality = json.loads(result.quality_path.read_text(encoding="utf-8"))
+
+    assert result.error is None
+    assert read_csv(result.normalized_path) == [
+        {
+            "fileKey": "path/a%2Fb", "date": "2026-01-01", "trafficBytes": "10", "appId": "10066",
+            "sourceUrl": "https://one.example.test/path/a%2Fb?token=1", "parseStatus": "URL_PATH",
+        },
+        {
+            "fileKey": "plain/key", "date": "2026-01-01", "trafficBytes": "11", "appId": "10066",
+            "sourceUrl": "", "parseStatus": "PLAIN_KEY",
+        },
+    ]
+    assert quality["fullUrlRows"] == 2
+    assert quality["plainKeyRows"] == 1
+    assert quality["normalizationCollisionRows"] == 1
+    assert quality["duplicateRows"] == 1
+    assert quality["fileKeyParseSuccessRate"] == 1.0
+
+
+def test_staged_normalizer_reports_invalid_url_without_publishable_success(tmp_path):
+    source = tmp_path / "source.csv"
+    source.write_bytes(csv_bytes([["https:///missing-host", "2026/1/1", "10", "10066"]]))
+
+    result = normalize_staged_csv(source, config(), tmp_path / "work", max_rows=10)
+    quality = json.loads(result.quality_path.read_text(encoding="utf-8"))
+
+    assert result.error["code"] == "INVALID_URL"
+    assert quality["invalidUrlRows"] == 1
+    assert quality["invalidRows"] == 1
+    assert quality["validRows"] == 0
 
 
 def test_utf8_bom_and_128_digit_integer_are_preserved_exactly(tmp_path):

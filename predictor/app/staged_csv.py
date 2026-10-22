@@ -12,6 +12,7 @@ from pathlib import Path
 from .csv_import import (
     ImportConfig,
     ImportProblem,
+    _normalize_file_identity_for_quality,
     finalize_quality,
     new_quality,
     parse_bytes,
@@ -101,6 +102,9 @@ def normalize_staged_csv(
               file_key TEXT NOT NULL,
               observed_date TEXT NOT NULL,
               traffic_bytes TEXT NOT NULL,
+              source_url TEXT,
+              parse_status TEXT NOT NULL,
+              source_identity TEXT NOT NULL,
               PRIMARY KEY(app_id, file_key, observed_date)
             );
             CREATE TABLE daily_total(
@@ -127,9 +131,10 @@ def normalize_staged_csv(
                     try:
                         if None in row or any(value is None for value in row.values()):
                             raise ImportProblem("INVALID_CSV", "CSV 行列数与表头不一致。")
-                        file_key = row[config.mapping["fileKey"]]
-                        if not file_key.strip() or "\x00" in file_key:
-                            raise ImportProblem("INVALID_CSV", "文件标识为空或含非法字符。")
+                        raw_identity = row[config.mapping["fileKey"]]
+                        identity = _normalize_file_identity_for_quality(raw_identity, quality)
+                        file_key = identity["fileKey"]
+                        source_identity = raw_identity.strip()
                         app_id = row[config.mapping["appId"]].strip() if config.mapping.get("appId") else config.appId
                         if not app_id:
                             raise ImportProblem("INVALID_CSV", "App ID 不能为空。")
@@ -143,21 +148,29 @@ def normalize_staged_csv(
                             quality["scientificNotationRows"] += 1
                         try:
                             connection.execute(
-                                "INSERT INTO observation(app_id,file_key,observed_date,traffic_bytes) VALUES(?,?,?,?)",
-                                (app_id, file_key, observed_date, traffic_bytes),
+                                "INSERT INTO observation("
+                                "app_id,file_key,observed_date,traffic_bytes,source_url,parse_status,source_identity"
+                                ") VALUES(?,?,?,?,?,?,?)",
+                                (
+                                    app_id, file_key, observed_date, traffic_bytes,
+                                    identity["sourceUrl"], identity["parseStatus"], source_identity,
+                                ),
                             )
                         except sqlite3.IntegrityError:
                             existing = connection.execute(
-                                "SELECT traffic_bytes FROM observation WHERE app_id=? AND file_key=? AND observed_date=?",
+                                "SELECT traffic_bytes,source_identity FROM observation "
+                                "WHERE app_id=? AND file_key=? AND observed_date=?",
                                 (app_id, file_key, observed_date),
                             ).fetchone()
+                            if existing and existing[1] != source_identity:
+                                quality["normalizationCollisionRows"] += 1
                             if existing and existing[0] == traffic_bytes:
                                 quality["duplicateRows"] += 1
                             else:
                                 quality["conflictRows"] += 1
                                 record_error(
                                     "DUPLICATE_CONFLICT",
-                                    "同 App、原始文件标识和日期存在不同流量值。",
+                                    "同 App、规范 fileKey 和日期存在不同流量值。",
                                     row_number,
                                 )
                             continue
@@ -189,11 +202,11 @@ def normalize_staged_csv(
         quality_path = work_dir / "quality.json"
         _write_csv(
             normalized_path,
-            ["fileKey", "date", "trafficBytes", "appId"],
+            ["fileKey", "date", "trafficBytes", "appId", "sourceUrl", "parseStatus"],
             (
-                (file_key, observed_date, traffic_bytes, app_id)
-                for app_id, file_key, observed_date, traffic_bytes in connection.execute(
-                    "SELECT app_id,file_key,observed_date,traffic_bytes FROM observation "
+                (file_key, observed_date, traffic_bytes, app_id, source_url, parse_status)
+                for app_id, file_key, observed_date, traffic_bytes, source_url, parse_status in connection.execute(
+                    "SELECT app_id,file_key,observed_date,traffic_bytes,source_url,parse_status FROM observation "
                     "ORDER BY app_id,file_key,observed_date"
                 )
             ),
