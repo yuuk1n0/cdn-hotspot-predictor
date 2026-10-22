@@ -1,1 +1,0 @@
-"""CDN hotspot adapters module."""

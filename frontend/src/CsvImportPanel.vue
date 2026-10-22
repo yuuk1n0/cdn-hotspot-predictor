@@ -39,12 +39,12 @@ async function chooseDataset() {
   chosenContext.value = null
   emit('dataset-selected', null)
   const dataset = await monitor.selectDataset(datasetId.value)
-  if (dataset?.appIds.length === 1) appId.value = dataset.appIds[0]
+  if (dataset?.datasetType === 'FILE_DAILY' && dataset.appIds.length === 1) appId.value = dataset.appIds[0]
 }
 
 function useDataset() {
   const dataset = progress.selectedDataset
-  if (!dataset || dataset.datasetId !== datasetId.value || !dataset.appIds.includes(appId.value)) return
+  if (!dataset || dataset.datasetType !== 'FILE_DAILY' || dataset.datasetId !== datasetId.value || !dataset.appIds.includes(appId.value)) return
   chosenContext.value = { datasetId: dataset.datasetId, appId: appId.value, datasetSource: dataset.datasetSource, dateRange: dataset.dateRange, appDateRanges: dataset.appDateRanges }
   emit('dataset-selected', chosenContext.value)
 }
@@ -76,6 +76,13 @@ onUnmounted(() => { upload.dispose(); monitor.dispose() })
 
         <div class="upload-options">
           <label>
+            <span>数据类型</span>
+            <select :value="state.options.datasetType" @change="upload.setDatasetType($event.target.value)">
+              <option value="FILE_DAILY">文件日流量 · FILE_DAILY</option>
+              <option value="APP_DAILY_TOTAL">App 每日总流量 · APP_DAILY_TOTAL</option>
+            </select>
+          </label>
+          <label>
             <span>数据来源</span>
             <select v-model="state.options.datasetSource">
               <option value="REAL">真实业务数据 · REAL</option>
@@ -86,7 +93,8 @@ onUnmounted(() => { upload.dispose(); monitor.dispose() })
             <span>流量单位</span>
             <select v-model="state.options.sourceUnit">
               <option value="">请选择已确认的单位</option>
-              <option value="B">B · 已确认是字节</option>
+              <option v-if="state.options.datasetType === 'FILE_DAILY'" value="B">B · 已确认是字节</option>
+              <option v-else value="GB_DECIMAL">十进制 GB · 1 GB = 10^9 B</option>
             </select>
           </label>
           <label>
@@ -97,13 +105,19 @@ onUnmounted(() => { upload.dispose(); monitor.dispose() })
 
         <details class="upload-mapping" open>
           <summary>CSV 字段映射 · 按文件实际列名填写</summary>
-          <div class="upload-mapping-grid">
+          <div v-if="state.options.datasetType === 'FILE_DAILY'" class="upload-mapping-grid">
             <label><span>文件标识列</span><input v-model="state.options.mapping.fileKey" type="text" autocomplete="off"></label>
             <label><span>日期列</span><input v-model="state.options.mapping.date" type="text" autocomplete="off"></label>
             <label><span>流量列</span><input v-model="state.options.mapping.trafficBytes" type="text" autocomplete="off"></label>
             <label><span>App ID 列（可留空）</span><input v-model="state.options.mapping.appId" type="text" autocomplete="off"></label>
           </div>
-          <p class="upload-hint">数据类型：文件日流量（FILE_DAILY）。默认映射适用于“文件标识、日期、当日流量（B）、AppID”四列。</p>
+          <div v-else class="upload-mapping-grid">
+            <label><span>日期列</span><input v-model="state.options.mapping.date" type="text" autocomplete="off"></label>
+            <label><span>App 每日总流量列（flux GB）</span><input v-model="state.options.mapping.totalTraffic" type="text" autocomplete="off"></label>
+            <label><span>App ID 列（可留空）</span><input v-model="state.options.mapping.appId" type="text" autocomplete="off"></label>
+          </div>
+          <p v-if="state.options.datasetType === 'FILE_DAILY'" class="upload-hint">文件日流量用于热点候选；完整 URL 由 Python 提取 path 作为 fileKey，查询参数和域名不进入业务身份。</p>
+          <p v-else class="upload-hint">该数据是独立的全量分母，不会与文件观测求和混用；必须确认 flux 列为十进制 GB，缺日不补零。默认映射适用于“日期、AppId、费用、flux(GB)”。</p>
         </details>
       </fieldset>
 
@@ -138,9 +152,9 @@ onUnmounted(() => { upload.dispose(); monitor.dispose() })
       <p v-if="progress.phase === 'FAILED' && chosenContext" class="upload-hint">保留的是此前选择，不是本次失败导入的输出。</p>
       <p v-if="progress.listError" class="upload-error" role="alert">{{ progress.listError }}</p>
       <div class="upload-options">
-        <label><span>数据集（第 {{ progress.page }} 页 / 共 {{ progress.total }} 份）</span><select v-model="datasetId" :disabled="progress.listBusy" @change="chooseDataset"><option value="">选择 READY 数据集</option><option v-for="dataset in progress.datasets" :key="dataset.datasetId" :value="dataset.datasetId">{{ dataset.datasetSource }} · {{ dataset.datasetId }} · {{ dataset.rowCount }}行</option></select></label>
+        <label><span>数据集（第 {{ progress.page }} 页 / 共 {{ progress.total }} 份）</span><select v-model="datasetId" :disabled="progress.listBusy" @change="chooseDataset"><option value="">选择 READY 数据集</option><option v-for="dataset in progress.datasets" :key="dataset.datasetId" :value="dataset.datasetId">{{ dataset.datasetType === 'APP_DAILY_TOTAL' ? '总流量' : '文件日流量' }} · {{ dataset.datasetSource }} · {{ dataset.datasetId }} · {{ dataset.rowCount }}行</option></select></label>
         <label><span>业务 App</span><select v-model="appId" :disabled="progress.selectionBusy || !progress.selectedDataset" @change="emit('dataset-selected', null); chosenContext = null"><option value="">选择 App</option><option v-for="app in progress.selectedDataset?.appIds || []" :key="app" :value="app">{{ app }}</option></select></label>
-        <button class="button button--primary" type="button" :disabled="!appId || progress.selectionBusy" @click="useDataset">使用所选数据集和 App</button>
+        <button class="button button--primary" type="button" :disabled="!appId || progress.selectionBusy || progress.selectedDataset?.datasetType !== 'FILE_DAILY'" @click="useDataset">使用所选文件数据集和 App</button>
       </div>
       <div class="upload-actions">
         <button class="button button--ghost" type="button" :disabled="progress.listBusy" @click="monitor.loadDatasets(progress.page)">刷新数据集列表</button>
@@ -184,7 +198,7 @@ input[type='file']::file-selector-button { margin-right: 1rem; padding: 0.4rem 0
 .upload-filename { display: flex; flex-wrap: wrap; gap: 1rem; margin: 0.75rem 0 0; overflow-wrap: anywhere; font-family: 'Cascadia Code', monospace; font-size: 0.8rem; }
 .upload-filename span { color: #8facad; }
 .upload-hint { margin: 0.75rem 0 0; color: #8facad; font-size: 0.75rem; line-height: 1.7; }
-.upload-options { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 1rem; margin-top: 1.5rem; }
+.upload-options { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; margin-top: 1.5rem; }
 .upload-mapping { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(122, 167, 167, 0.18); }
 .upload-mapping summary { color: #b6ccca; font-size: 0.8rem; cursor: pointer; }
 .upload-mapping-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; margin-top: 1rem; }

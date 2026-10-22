@@ -12,7 +12,8 @@ export const predictionApi = {
     return response
   }, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': key }, body: JSON.stringify(body), signal }),
   task: (id, fetchService = fetch, signal) => requestJson(`/api/tasks/${encodeURIComponent(id)}`, fetchService, { signal }),
-  run: (id, fetchService = fetch, signal) => requestJson(`/api/predictions/${encodeURIComponent(id)}`, fetchService, { signal })
+  run: (id, fetchService = fetch, signal) => requestJson(`/api/predictions/${encodeURIComponent(id)}`, fetchService, { signal }),
+  metrics: (id, fetchService = fetch, signal) => requestJson(`/api/predictions/${encodeURIComponent(id)}/metrics`, fetchService, { signal })
 }
 
 const storageKey = 'cdn.prediction.lookup'

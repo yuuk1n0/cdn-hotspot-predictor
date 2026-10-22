@@ -22,7 +22,7 @@ npm run dev -- --strictPort
 
 > 2026-10-21 状态更正：Python导入及异步Mock、Java任务与Top50快照接口已经实现；当前网页仍缺导入状态/质量报告/数据集选择和预测提交。先执行[T01导入监控](../output/20261021_架构与半天开发规划_v01/modules/01-data-import.md)，再执行[T02预测提交](../output/20261021_架构与半天开发规划_v01/modules/03-prediction-task.md)。完整浏览器链路尚未在本轮验收。
 
-在 `frontend/` 运行 `npm run dev`，打开 `http://localhost:5173`。使用现有看板中的“上传流量观测文件”面板：选择不超过 5 MiB 的非空 `.csv`，确认数据来源、字节单位 B 和实际列名后，点击“上传 CSV”。默认映射对应仓库 `datasets/10350.csv` 的实际表头；不从文件名推断 App ID。其他文件按实际表头修改，无 App 列时清空该列映射并填写默认 App ID。
+在 `frontend/` 运行 `npm run dev`，打开 `http://localhost:5173`。使用现有看板中的“上传流量观测文件”面板：选择不超过 200 MiB（209,715,200 B）的非空 `.csv`，确认数据来源、字节单位 B 和实际列名后，点击“上传 CSV”。约 107.7 MiB 的 `datasets/10066.csv` 不再被前端大小限制拦截；默认映射对应仓库 `datasets/10350.csv` 的实际表头，`10066.csv` 需按实际表头修改映射。不从文件名推断 App ID；其他文件按实际表头修改，无 App 列时清空该列映射并填写默认 App ID。超过 200 MiB 时前端明确拒绝，且 Python 服务端仍执行相同的默认上限校验。
 
 ## 请求契约
 

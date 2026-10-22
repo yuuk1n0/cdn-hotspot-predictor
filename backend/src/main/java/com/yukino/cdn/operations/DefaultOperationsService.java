@@ -86,6 +86,23 @@ public class DefaultOperationsService implements OperationsService {
         result.put("businessDate", result.path("predictionStartDate").asText());
         return result;
     }
+    public ObjectNode latestRun(String app, LocalDate businessDate, int horizon) {
+        id(app);
+        if (businessDate == null) throw problem(422, "INVALID_DATE", "最新成功运行查询必须指定业务日期。");
+        if (horizon != 1 && horizon != 7) throw problem(422, "INVALID_HORIZON", "跨度须为1或7。");
+        var values = predictions.published(app, null, null, horizon).stream()
+                .filter(row -> {
+                    String start = row.path("predictionStartDate").asText("");
+                    return !start.isBlank() && !LocalDate.parse(start).isAfter(businessDate);
+                })
+                .toList();
+        if (values.isEmpty()) throw problem(404, "NO_CURRENT_RUN", "该App在业务日期及以前没有匹配跨度的成功运行；未使用未来或旧App数据代替。");
+        ObjectNode result = values.get(0).deepCopy();
+        result.put("businessDate", result.path("predictionStartDate").asText());
+        result.put("requestedBusinessDate", businessDate.toString());
+        result.put("selectionMode", "LATEST_SUCCESS");
+        return result;
+    }
     public ObjectNode runList(String app, LocalDate date, int horizon) {
         id(app);
         if (horizon != 1 && horizon != 7) throw problem(422, "INVALID_HORIZON", "跨度须为1或7。");
@@ -176,15 +193,19 @@ public class DefaultOperationsService implements OperationsService {
         int horizon = context.path("horizonDays").asInt();
         if (horizon != 1 && horizon != 7) throw problem(422, "INVALID_HORIZON", "跨度须为1或7。");
         String runId = context.hasNonNull("runId") && !context.path("runId").asText().isBlank() ? context.path("runId").asText() : null;
+        ObjectNode effectiveContext = context.deepCopy();
         ObjectNode data;
         switch (tool) {
             case "getTopHotspots" -> {
-                data = run(app, runId, date, horizon); var rows = data.path("items").deepCopy(); var top = data.putArray("items");
+                data = runId == null ? latestRun(app, date, horizon) : run(app, runId, date, horizon);
+                if (runId == null) effectiveContext.put("runId", data.path("runId").asText());
+                var rows = data.path("items").deepCopy(); var top = data.putArray("items");
                 for (int i = 0; i < Math.min(10, rows.size()); i++) top.add(rows.get(i));
                 data.put("scope", "PUBLISHED_TOP50_FIRST10");
             }
             case "explainFile" -> {
-                var selected = run(app, runId, date, horizon);
+                var selected = runId == null ? latestRun(app, date, horizon) : run(app, runId, date, horizon);
+                if (runId == null) effectiveContext.put("runId", selected.path("runId").asText());
                 String key = arguments.hasNonNull("fileKey") ? text(arguments, "fileKey", 4096) : text(context, "fileKey", 4096);
                 data = selected.deepCopy(); data.remove("items"); JsonNode found = null;
                 for (var row : selected.path("items")) if (key.equals(row.path("fileKey").asText())) found = row;
@@ -197,13 +218,15 @@ public class DefaultOperationsService implements OperationsService {
                 data.put("isDailyBacktestForRequestedDate", false);
             }
             case "getOverdueFiles" -> {
-                var selected = run(app, runId, date, horizon); data = overdue(app, selected.path("runId").asText(), "REAL");
+                var selected = runId == null ? latestRun(app, date, horizon) : run(app, runId, date, horizon);
+                if (runId == null) effectiveContext.put("runId", selected.path("runId").asText());
+                data = overdue(app, selected.path("runId").asText(), "REAL");
             }
             case "getModelSuggestion" -> data = suggestion(app, horizon, arguments.hasNonNull("backtestId") ? arguments.path("backtestId").asText() : null);
             default -> throw problem(422, "UNKNOWN_TOOL", "工具不在只读白名单中。");
         }
         var result = object().put("tool", tool).put("appId", app).put("queriedAt", clock.instant().toString());
-        result.set("context", context.deepCopy()); result.set("data", data); result.set("reasonCodes", data.has("reasonCodes") ? data.path("reasonCodes").deepCopy() : mapper.createArrayNode());
+        result.set("context", effectiveContext); result.set("data", data); result.set("reasonCodes", data.has("reasonCodes") ? data.path("reasonCodes").deepCopy() : mapper.createArrayNode());
         return result;
     }
 }

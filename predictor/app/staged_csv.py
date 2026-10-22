@@ -1,6 +1,7 @@
 """Disk-backed CSV normalization for large immutable import snapshots."""
 
 import csv
+import hashlib
 import json
 import os
 import shutil
@@ -83,6 +84,8 @@ def normalize_staged_csv(
     database_path = work_dir / "normalization.sqlite"
     connection = None
     quality = new_quality()
+    quality["aggregatedRows"] = 0
+    quality["aggregationRule"] = "SUM_NORMALIZED_SLICES"
     days_by_app: dict[str, set] = {}
     daily_rows = Counter()
     daily_totals: dict[tuple[str, str], list[int]] = {}
@@ -102,10 +105,20 @@ def normalize_staged_csv(
               file_key TEXT NOT NULL,
               observed_date TEXT NOT NULL,
               traffic_bytes TEXT NOT NULL,
-              source_url TEXT,
               parse_status TEXT NOT NULL,
-              source_identity TEXT NOT NULL,
+              source_identity_hash TEXT NOT NULL,
+              source_row_count INTEGER NOT NULL,
+              source_identity_count INTEGER NOT NULL,
+              aggregation_rule TEXT NOT NULL,
               PRIMARY KEY(app_id, file_key, observed_date)
+            );
+            CREATE TABLE source_slice(
+              app_id TEXT NOT NULL,
+              file_key TEXT NOT NULL,
+              observed_date TEXT NOT NULL,
+              source_identity TEXT NOT NULL,
+              traffic_bytes TEXT NOT NULL,
+              PRIMARY KEY(app_id, file_key, observed_date, source_identity)
             );
             CREATE TABLE daily_total(
               app_id TEXT NOT NULL,
@@ -146,24 +159,20 @@ def normalize_staged_csv(
                         traffic_bytes = parse_bytes(traffic_text)
                         if "e" in traffic_text.lower():
                             quality["scientificNotationRows"] += 1
+                        slice_inserted = False
                         try:
                             connection.execute(
-                                "INSERT INTO observation("
-                                "app_id,file_key,observed_date,traffic_bytes,source_url,parse_status,source_identity"
-                                ") VALUES(?,?,?,?,?,?,?)",
-                                (
-                                    app_id, file_key, observed_date, traffic_bytes,
-                                    identity["sourceUrl"], identity["parseStatus"], source_identity,
-                                ),
+                                "INSERT INTO source_slice(app_id,file_key,observed_date,source_identity,traffic_bytes) "
+                                "VALUES(?,?,?,?,?)",
+                                (app_id, file_key, observed_date, source_identity, traffic_bytes),
                             )
+                            slice_inserted = True
                         except sqlite3.IntegrityError:
                             existing = connection.execute(
-                                "SELECT traffic_bytes,source_identity FROM observation "
-                                "WHERE app_id=? AND file_key=? AND observed_date=?",
-                                (app_id, file_key, observed_date),
+                                "SELECT traffic_bytes FROM source_slice WHERE app_id=? AND file_key=? "
+                                "AND observed_date=? AND source_identity=?",
+                                (app_id, file_key, observed_date, source_identity),
                             ).fetchone()
-                            if existing and existing[1] != source_identity:
-                                quality["normalizationCollisionRows"] += 1
                             if existing and existing[0] == traffic_bytes:
                                 quality["duplicateRows"] += 1
                             else:
@@ -174,11 +183,39 @@ def normalize_staged_csv(
                                     row_number,
                                 )
                             continue
-                        days_by_app.setdefault(app_id, set()).add(observed)
-                        daily_rows[(app_id, observed_date)] += 1
+                        existing = connection.execute(
+                            "SELECT traffic_bytes,parse_status,source_identity_hash,source_row_count,source_identity_count "
+                            "FROM observation WHERE app_id=? AND file_key=? AND observed_date=?",
+                            (app_id, file_key, observed_date),
+                        ).fetchone()
+                        if existing is None:
+                            connection.execute(
+                                "INSERT INTO observation(app_id,file_key,observed_date,traffic_bytes,parse_status,"
+                                "source_identity_hash,source_row_count,source_identity_count,aggregation_rule) "
+                                "VALUES(?,?,?,?,?,?,?,?,?)",
+                                (app_id, file_key, observed_date, traffic_bytes, identity["parseStatus"],
+                                 hashlib.sha256(source_identity.encode("utf-8")).hexdigest(), 1, 1, "NONE"),
+                            )
+                            days_by_app.setdefault(app_id, set()).add(observed)
+                            daily_rows[(app_id, observed_date)] += 1
+                            is_new_observation = True
+                        else:
+                            quality["normalizationCollisionRows"] += 1
+                            quality["aggregatedRows"] += 1
+                            combined = str(int(existing[0]) + int(traffic_bytes))
+                            digest = hashlib.sha256((existing[2] + "\n" + source_identity).encode("utf-8")).hexdigest()
+                            parse_status = existing[1] if existing[1] == identity["parseStatus"] else "MIXED"
+                            connection.execute(
+                                "UPDATE observation SET traffic_bytes=?,parse_status=?,source_identity_hash=?,"
+                                "source_row_count=?,source_identity_count=?,aggregation_rule=? "
+                                "WHERE app_id=? AND file_key=? AND observed_date=?",
+                                (combined, parse_status, digest, existing[3] + 1, existing[4] + 1,
+                                 "SUM_NORMALIZED_SLICES", app_id, file_key, observed_date),
+                            )
+                            is_new_observation = False
                         aggregate = daily_totals.setdefault((app_id, observed_date), [0, 0])
                         aggregate[0] += int(traffic_bytes)
-                        aggregate[1] += 1
+                        aggregate[1] += 1 if is_new_observation else 0
                     except ImportProblem as error:
                         quality["invalidRows"] += 1
                         record_error(error.code, error.message, row_number)
@@ -202,11 +239,15 @@ def normalize_staged_csv(
         quality_path = work_dir / "quality.json"
         _write_csv(
             normalized_path,
-            ["fileKey", "date", "trafficBytes", "appId", "sourceUrl", "parseStatus"],
+            ["fileKey", "date", "trafficBytes", "appId", "sourceIdentityHash", "parseStatus",
+             "sourceRowCount", "sourceIdentityCount", "aggregationRule"],
             (
-                (file_key, observed_date, traffic_bytes, app_id, source_url, parse_status)
-                for app_id, file_key, observed_date, traffic_bytes, source_url, parse_status in connection.execute(
-                    "SELECT app_id,file_key,observed_date,traffic_bytes,source_url,parse_status FROM observation "
+                (file_key, observed_date, traffic_bytes, app_id, source_hash, parse_status,
+                 source_rows, source_identities, aggregation_rule)
+                for app_id, file_key, observed_date, traffic_bytes, parse_status, source_hash,
+                    source_rows, source_identities, aggregation_rule in connection.execute(
+                    "SELECT app_id,file_key,observed_date,traffic_bytes,parse_status,source_identity_hash,"
+                    "source_row_count,source_identity_count,aggregation_rule FROM observation "
                     "ORDER BY app_id,file_key,observed_date"
                 )
             ),

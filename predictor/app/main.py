@@ -13,6 +13,8 @@ from fastapi.responses import JSONResponse
 from .csv_import import ImportConfig, ImportProblem
 from .import_store import ImportStore
 from .prediction_store import PredictionStore
+from .alerts import JavaAlertSink
+from .mysql_store import MySqlDataStore, MySqlSettings
 from .history import observations
 from .model_evidence import model_evidence
 from .upload_stream import stage_upload
@@ -28,22 +30,33 @@ def resolve_import_max_bytes(explicit: int | None) -> int:
 
 
 def create_app(data_dir=None, *, max_file_bytes=None, max_rows=None, prediction_mode=None,
-               prediction_model_version=None, mock_delay_seconds=None, prediction_timeout_seconds=None):
+               prediction_model_version=None, mock_delay_seconds=None, prediction_timeout_seconds=None,
+               data_source=None, alert_sink=None):
     root = Path(data_dir or os.getenv("PREDICTOR_DATA_DIR", Path(__file__).resolve().parents[2] / "runtime" / "predictor"))
     max_file_bytes = resolve_import_max_bytes(max_file_bytes)
     max_rows = max_rows if max_rows is not None else int(os.getenv("IMPORT_MAX_ROWS", 1200000))
     if max_file_bytes <= 0 or max_rows <= 0:
         raise ValueError("导入文件和行数上限必须大于零。")
-    store = ImportStore(root, max_rows)
+    source_mode = os.getenv("PREDICTION_DATA_SOURCE", "FILES").strip().upper()
+    if source_mode not in {"FILES", "MYSQL"}:
+        raise ValueError("PREDICTION_DATA_SOURCE 仅支持 FILES 或 MYSQL，不允许静默降级。")
+    if data_source is None and source_mode == "MYSQL":
+        data_source = MySqlDataStore(MySqlSettings.from_env())
+    if alert_sink is None:
+        alert_sink = JavaAlertSink.from_env()
+    store = ImportStore(root, max_rows, data_store=data_source, alert_sink=alert_sink)
     predictions = PredictionStore(
         root, store, mode=prediction_mode if prediction_mode is not None else os.getenv("PREDICTION_MODE", "MOCK"),
         model_version=prediction_model_version if prediction_model_version is not None else os.getenv("PREDICTION_MODEL_VERSION", "contract-demo-v1"),
         delay_seconds=mock_delay_seconds if mock_delay_seconds is not None else float(os.getenv("MOCK_DELAY_SECONDS", "0")),
         timeout_seconds=prediction_timeout_seconds if prediction_timeout_seconds is not None else float(os.getenv("PREDICTION_TASK_TIMEOUT_SECONDS", "180")),
+        data_source=data_source,
     )
 
     @asynccontextmanager
     async def lifespan(app):
+        if data_source is not None:
+            await asyncio.to_thread(data_source.check_schema)
         await asyncio.to_thread(store.initialize)
         await asyncio.to_thread(predictions.initialize)
         stop = asyncio.Event()

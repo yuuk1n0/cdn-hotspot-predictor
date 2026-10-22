@@ -37,10 +37,13 @@ def test_staged_normalizer_writes_sorted_observations_and_exact_daily_totals(tmp
     assert result.row_count == 2
     assert result.app_ids == ("10066",)
     assert not hasattr(result, "rows")
-    assert read_csv(result.normalized_path) == [
-        {"fileKey": "a", "date": "2026-01-01", "trafficBytes": "10", "appId": "10066", "sourceUrl": "", "parseStatus": "PLAIN_KEY"},
-        {"fileKey": "b", "date": "2026-01-01", "trafficBytes": "11", "appId": "10066", "sourceUrl": "", "parseStatus": "PLAIN_KEY"},
+    rows = read_csv(result.normalized_path)
+    assert [(row["fileKey"], row["trafficBytes"], row["sourceRowCount"], row["sourceIdentityCount"], row["aggregationRule"]) for row in rows] == [
+        ("a", "10", "1", "1", "NONE"),
+        ("b", "11", "1", "1", "NONE"),
     ]
+    assert all(len(row["sourceIdentityHash"]) == 64 for row in rows)
+    assert all("sourceUrl" not in row for row in rows)
     assert read_csv(result.daily_totals_path) == [
         {"appId": "10066", "date": "2026-01-01", "totalTrafficBytes": "21", "fileCount": "2"}
     ]
@@ -53,7 +56,7 @@ def test_staged_normalizer_writes_sorted_observations_and_exact_daily_totals(tmp
     assert not list((tmp_path / "work").glob("*.sqlite*"))
 
 
-def test_staged_normalizer_exports_url_provenance_and_collision_quality(tmp_path):
+def test_staged_normalizer_sums_distinct_raw_identities_after_normalization(tmp_path):
     source = tmp_path / "source.csv"
     source.write_bytes(csv_bytes([
         ["https://one.example.test/path/a%2Fb?token=1", "2026/1/1", "10", "10066"],
@@ -65,20 +68,16 @@ def test_staged_normalizer_exports_url_provenance_and_collision_quality(tmp_path
     quality = json.loads(result.quality_path.read_text(encoding="utf-8"))
 
     assert result.error is None
-    assert read_csv(result.normalized_path) == [
-        {
-            "fileKey": "path/a%2Fb", "date": "2026-01-01", "trafficBytes": "10", "appId": "10066",
-            "sourceUrl": "https://one.example.test/path/a%2Fb?token=1", "parseStatus": "URL_PATH",
-        },
-        {
-            "fileKey": "plain/key", "date": "2026-01-01", "trafficBytes": "11", "appId": "10066",
-            "sourceUrl": "", "parseStatus": "PLAIN_KEY",
-        },
+    rows = read_csv(result.normalized_path)
+    assert [(row["fileKey"], row["trafficBytes"], row["sourceRowCount"], row["sourceIdentityCount"], row["aggregationRule"]) for row in rows] == [
+        ("path/a%2Fb", "20", "2", "2", "SUM_NORMALIZED_SLICES"),
+        ("plain/key", "11", "1", "1", "NONE"),
     ]
     assert quality["fullUrlRows"] == 2
     assert quality["plainKeyRows"] == 1
     assert quality["normalizationCollisionRows"] == 1
-    assert quality["duplicateRows"] == 1
+    assert quality["duplicateRows"] == 0
+    assert quality["aggregatedRows"] == 1
     assert quality["fileKeyParseSuccessRate"] == 1.0
 
 

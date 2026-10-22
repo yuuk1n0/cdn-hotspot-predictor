@@ -15,7 +15,7 @@ conda run --no-capture-output -n cdn-predictor python -m uvicorn app.main:app --
 
 默认持久目录是项目的 `runtime/predictor/`，与进程工作目录无关。可通过 `PREDICTOR_DATA_DIR` 指定持久卷绝对路径。本阶段使用单实例、单 worker，勿对同一目录同时启动多个服务实例或使用 `--workers > 1`。
 
-默认文件上限 128 MiB（`IMPORT_MAX_BYTES=134217728`），数据行上限 1,200,000（`IMPORT_MAX_ROWS=1200000`）。上传按 1 MiB 分块暂存，归一化使用临时 SQLite 去重和磁盘 CSV 导出，不在 Python 内存保留全部观测行；超过任一上限会明确失败，不静默截断。已安装的 `python-multipart=0.0.32` 已补入 `environment.yml`；本次未执行环境安装或更新。
+默认文件上限 200 MiB（`IMPORT_MAX_BYTES=209715200`），与前端上传限制一致；数据行上限 1,200,000（`IMPORT_MAX_ROWS=1200000`）。上传按 1 MiB 分块暂存，归一化使用临时 SQLite 去重和磁盘 CSV 导出，不在 Python 内存保留全部观测行；超过任一上限会明确失败，不静默截断。已安装的 `python-multipart=0.0.32` 已补入 `environment.yml`；本次未执行环境安装或更新。
 
 从项目根目录发送真实文件：
 

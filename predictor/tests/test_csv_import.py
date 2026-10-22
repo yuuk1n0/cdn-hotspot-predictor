@@ -102,26 +102,30 @@ def test_decimal_encoding_missing_days_and_normalized_file_identity():
     assert quality["warnings"]
 
 
-def test_normalized_collision_is_visible_before_same_traffic_deduplication():
+def test_normalized_collision_with_distinct_raw_identity_is_summed():
     result = parse_csv(csv_bytes([
         ["https://one.example.test/path/file?token=1", "2026/1/5", "100", "10350"],
         ["https://two.example.test/path/file?token=2", "2026/1/5", "100", "10350"],
     ]), config())
     assert result.error is None
     assert result.quality["validRows"] == 1
-    assert result.quality["duplicateRows"] == 1
+    assert result.quality["duplicateRows"] == 0
+    assert result.quality["aggregatedRows"] == 1
     assert result.quality["normalizationCollisionRows"] == 1
     assert result.rows[0]["fileKey"] == "path/file"
+    assert result.rows[0]["trafficBytes"] == "200"
 
 
-def test_normalized_collision_with_different_traffic_is_blocking():
+def test_normalized_collision_with_different_traffic_is_summed():
     result = parse_csv(csv_bytes([
         ["https://one.example.test/path/file", "2026/1/5", "100", "10350"],
         ["https://two.example.test/path/file", "2026/1/5", "200", "10350"],
     ]), config())
-    assert result.error["code"] == "DUPLICATE_CONFLICT"
-    assert result.quality["conflictRows"] == 1
+    assert result.error is None
+    assert result.quality["conflictRows"] == 0
+    assert result.quality["aggregatedRows"] == 1
     assert result.quality["normalizationCollisionRows"] == 1
+    assert result.rows[0]["trafficBytes"] == "300"
 
 
 @pytest.mark.parametrize("traffic", ["-1", "NaN", "Infinity", "0.5", "", "abc", "1e999999"])

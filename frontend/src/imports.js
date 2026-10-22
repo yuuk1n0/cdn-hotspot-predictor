@@ -33,7 +33,8 @@ function requireContract(condition, message) {
 
 function readyDataset(value, id) {
   requireContract(value?.datasetId === id && value.status === 'READY', '数据集必须为对应编号的 READY 快照。')
-  requireContract(value.datasetType === 'FILE_DAILY' && value.sourceUnit === 'B' && ['REAL', 'FAKE'].includes(value.datasetSource), '数据集类型、单位或来源无效。')
+  const units = { FILE_DAILY: 'B', APP_DAILY_TOTAL: 'GB_DECIMAL' }
+  requireContract(Object.hasOwn(units, value.datasetType) && value.sourceUnit === units[value.datasetType] && ['REAL', 'FAKE'].includes(value.datasetSource), '数据集类型、单位或来源无效。')
   requireContract(Array.isArray(value.appIds) && value.appIds.length > 0 && value.appIds.every(app => typeof app === 'string' && app.length), '缺少有效 App 列表。')
   requireContract(value.appIds.every(app => value.appDateRanges?.[app]?.start && value.appDateRanges[app].end), '缺少 App 日期范围。')
   return value
@@ -167,7 +168,7 @@ export function createCsvImport({ fetchService = fetch, storage = null } = {}) {
   const state = reactive({
     file: null,
     options: {
-      datasetSource: 'REAL', sourceUnit: '', appId: '',
+      datasetType: 'FILE_DAILY', datasetSource: 'REAL', sourceUnit: '', appId: '',
       mapping: { fileKey: '文件标识', date: '日期', trafficBytes: '当日流量（B）', appId: 'AppID' }
     },
     busy: false, phase: 'IDLE', error: '', importTaskId: ''
@@ -187,12 +188,36 @@ export function createCsvImport({ fetchService = fetch, storage = null } = {}) {
     if (!state.file || !/\.csv$/i.test(state.file.name)) throw new Error('请选择 CSV 文件。')
     if (!state.file.size) throw new Error('CSV 文件为空，请重新选择。')
     if (state.file.size > maxFileBytes) throw new Error('当前仅支持不超过 200 MiB 的 CSV；不会自动截取大文件。')
-    if (state.options.sourceUnit !== 'B') throw new Error('请先确认流量单位为 B；单位待确认的数据不能提交。')
     const mapping = state.options.mapping
-    if (![mapping.fileKey, mapping.date, mapping.trafficBytes].every(value => value.trim())) {
-      throw new Error('请填写文件标识、日期和流量对应的 CSV 列名。')
+    if (state.options.datasetType === 'FILE_DAILY') {
+      if (state.options.sourceUnit !== 'B') throw new Error('请先确认文件流量单位为 B；单位待确认的数据不能提交。')
+      if (![mapping.fileKey, mapping.date, mapping.trafficBytes].every(value => value.trim())) {
+        throw new Error('请填写文件标识、日期和流量对应的 CSV 列名。')
+      }
+    } else if (state.options.datasetType === 'APP_DAILY_TOTAL') {
+      if (state.options.sourceUnit !== 'GB_DECIMAL') throw new Error('请确认总流量列为十进制 GB（1 GB = 10^9 B）；不会推断单位。')
+      if (![mapping.date, mapping.totalTraffic].every(value => value.trim())) {
+        throw new Error('请填写日期和 App 总流量对应的 CSV 列名。')
+      }
+    } else {
+      throw new Error('未知的数据集类型。')
     }
     if (!mapping.appId.trim() && !state.options.appId.trim()) throw new Error('没有 App 列时，必须填写默认 App ID。')
+  }
+
+  function setDatasetType(type) {
+    if (state.busy || state.phase === 'ACCEPTED') return
+    if (type === 'APP_DAILY_TOTAL') {
+      state.options.datasetType = type
+      state.options.sourceUnit = ''
+      state.options.mapping = { date: '日期', totalTraffic: 'flux(GB)', appId: 'AppId' }
+    } else {
+      state.options.datasetType = 'FILE_DAILY'
+      state.options.sourceUnit = ''
+      state.options.mapping = { fileKey: '文件标识', date: '日期', trafficBytes: '当日流量（B）', appId: 'AppID' }
+    }
+    operation = null
+    state.error = ''
   }
 
   async function submit() {
@@ -207,7 +232,7 @@ export function createCsvImport({ fetchService = fetch, storage = null } = {}) {
         const body = new FormData()
         body.set('file', state.file)
         body.set('mapping', JSON.stringify(state.options.mapping))
-        body.set('datasetType', 'FILE_DAILY')
+        body.set('datasetType', state.options.datasetType)
         body.set('datasetSource', state.options.datasetSource)
         body.set('sourceUnit', state.options.sourceUnit)
         if (state.options.appId.trim()) body.set('appId', state.options.appId.trim())
@@ -255,5 +280,5 @@ export function createCsvImport({ fetchService = fetch, storage = null } = {}) {
     try { storage?.removeItem(storageKey) } catch {}
   }
 
-  return { state, selectFile, submit, restore, reset, dispose: () => controller?.abort() }
+  return { state, selectFile, setDatasetType, submit, restore, reset, dispose: () => controller?.abort() }
 }

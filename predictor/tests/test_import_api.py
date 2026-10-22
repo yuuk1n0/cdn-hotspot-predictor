@@ -14,6 +14,78 @@ from app.import_store import ImportStore
 from test_csv_import import MAPPING, csv_bytes
 
 
+class RecordingDataStore:
+    def __init__(self):
+        self.tasks = {}
+        self.statuses = []
+        self.imported = []
+
+    def check_schema(self):
+        return None
+
+    def ensure_import_task(self, task):
+        self.tasks.setdefault(task["importTaskId"], dict(task))
+        self.statuses.append(task["status"])
+
+    def update_import_task(self, task):
+        self.tasks[task["importTaskId"]] = dict(task)
+        self.statuses.append(task["status"])
+
+    def get_import_task(self, task_id):
+        task = self.tasks[task_id]
+        return {key: task[key] for key in (
+            "importTaskId", "status", "datasetId", "error", "quality", "createdAt", "updatedAt"
+        )}
+
+    def import_dataset(self, metadata, normalized_path):
+        self.imported.append((metadata["datasetId"], normalized_path.name))
+
+
+class FailingDataStore(RecordingDataStore):
+    def import_dataset(self, metadata, normalized_path):
+        raise RuntimeError("database write failed")
+
+
+def test_mysql_mode_records_authoritative_import_lifecycle(tmp_path):
+    data_store = RecordingDataStore()
+    store = ImportStore(tmp_path, data_store=data_store)
+    store.initialize()
+    receipt = store.accept(
+        csv_bytes([["a", "2026/1/5", "100", "10350"]]),
+        ImportConfig(MAPPING, "FILE_DAILY", "REAL", "B"),
+        "mysql-ledger",
+        "history.csv",
+    )
+    assert store.process_next() is True
+    task = store.get_import(receipt["importTaskId"])
+
+    assert task["status"] == "SUCCEEDED"
+    assert data_store.statuses[0] == "PENDING"
+    assert "RUNNING" in data_store.statuses
+    assert data_store.statuses[-1] == "SUCCEEDED"
+    assert data_store.imported == [(task["datasetId"], "normalized.csv")]
+    assert task["quality"]["totalRows"] == 1
+    assert task["quality"]["validRows"] == 1
+
+
+def test_database_write_failure_cannot_publish_success(tmp_path):
+    data_store = FailingDataStore()
+    store = ImportStore(tmp_path, data_store=data_store)
+    store.initialize()
+    receipt = store.accept(
+        csv_bytes([["a", "2026/1/5", "100", "10350"]]),
+        ImportConfig(MAPPING, "FILE_DAILY", "REAL", "B"),
+        "mysql-failure",
+        "history.csv",
+    )
+
+    assert store.process_next() is True
+    task = store.get_import(receipt["importTaskId"])
+    assert task["status"] == "FAILED"
+    assert task["datasetId"] is None
+    assert data_store.statuses[-1] == "FAILED"
+
+
 def upload(client, raw=None, key="upload-one", **fields):
     data = {"mapping": json.dumps(MAPPING), "datasetType": "FILE_DAILY", "datasetSource": "REAL", "sourceUnit": "B", **fields}
     return client.post("/api/v1/imports", data=data, files={"file": ("arbitrary.csv", raw if raw is not None else csv_bytes([["a", "2026/1/5", "1E3", "10350"]]), "text/csv")}, headers={"Idempotency-Key": key})
@@ -269,7 +341,9 @@ def test_actual_10350_file_matches_observed_quality_without_guessed_app(tmp_path
         task = terminal(client, result.json()["importTaskId"])
         assert task["status"] == "SUCCEEDED"
         quality = client.get(f"/api/v1/datasets/{task['datasetId']}/quality").json()
-        assert quality["totalRows"] == quality["validRows"] == 4478
+        assert quality["totalRows"] == 4478
+        assert quality["validRows"] == 4453
+        assert quality["aggregatedRows"] == quality["normalizationCollisionRows"] == 25
         assert quality["duplicateRows"] == quality["conflictRows"] == quality["invalidRows"] == 0
         assert quality["scientificNotationRows"] == 862
         assert quality["missingDateCount"] == 34

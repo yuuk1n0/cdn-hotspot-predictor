@@ -28,6 +28,35 @@ def finish(store):
     assert asyncio.run(store.process_next(asyncio.Event())) is True
 
 
+class DatasetBoundSource:
+    def __init__(self):
+        self.has_calls = []
+        self.read_calls = []
+
+    def has_observations(self, dataset_id, app_id, cutoff_date):
+        self.has_calls.append((dataset_id, app_id, cutoff_date))
+        return True
+
+    def observations(self, dataset_id, app_id, cutoff_date):
+        self.read_calls.append((dataset_id, app_id, cutoff_date))
+        return iter([{"appId": app_id, "fileKey": "a", "date": "2026-01-05", "trafficBytes": "100"}])
+
+
+def test_mysql_prediction_reads_the_requested_dataset_version_only(tmp_path):
+    source = DatasetBoundSource()
+    store, body = prepared(tmp_path)
+    store.data_source = source
+    store.accept(body)
+
+    task = store._claim()
+    store._validate_input(task)
+    store._compute_publish(task)
+
+    expected = (body["datasetId"], "10350", "2026-01-07")
+    assert source.has_calls == [expected]
+    assert source.read_calls == [expected]
+
+
 def test_receipt_is_durable_idempotent_and_hashes_paths_without_changing_task_id(tmp_path):
     store, body = prepared(tmp_path)
     body["taskId"] = "task/java?opaque"

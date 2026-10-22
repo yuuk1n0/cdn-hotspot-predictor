@@ -23,7 +23,8 @@ RESULT_MODES = {"MOCK": "MOCK", "MODEL": "REAL"}
 
 
 class PredictionStore:
-    def __init__(self, root, imports, *, mode="MOCK", model_version="contract-demo-v1", delay_seconds=0, timeout_seconds=180):
+    def __init__(self, root, imports, *, mode="MOCK", model_version="contract-demo-v1", delay_seconds=0,
+                 timeout_seconds=180, data_source=None):
         if mode not in {"MOCK", "MODEL"}:
             raise ValueError("PREDICTION_MODE 仅支持 MOCK 或 MODEL，不允许静默回退。")
         if not isinstance(model_version, str) or not model_version.strip() or len(model_version) > 64 or model_version != model_version.strip():
@@ -31,6 +32,7 @@ class PredictionStore:
         if not math.isfinite(delay_seconds) or delay_seconds < 0 or not math.isfinite(timeout_seconds) or timeout_seconds <= 0:
             raise ValueError("Mock 延迟必须非负，任务总超时必须大于零，且均为有限秒数。")
         self.root, self.imports = Path(root), imports
+        self.data_source = data_source
         self.tasks, self.runs = self.root / "tasks", self.root / "runs"
         self.execution = {"mode": mode, "modelVersion": model_version, "delaySeconds": delay_seconds, "timeoutSeconds": timeout_seconds}
         self.lock = threading.RLock()
@@ -188,6 +190,9 @@ class PredictionStore:
             if task["modelVersion"] != MODEL_VERSION:
                 raise ImportProblem("MODEL_VERSION_UNSUPPORTED", "当前真实模式仅批准 hotspot-simple-v1。")
             self._check_algorithm(task)
+        if self.data_source is not None and not self.data_source.has_observations(
+                task["datasetId"], task["appId"], task["cutoffDate"]):
+            raise ImportProblem("NO_OBSERVATIONS_IN_MYSQL", "MySQL 没有该 App、cutoff 和来源范围内的观测数据。")
         self._update(task, stage="COMPUTING", datasetSource=metadata["datasetSource"], predictionSource=policy["mode"])
 
     @staticmethod
@@ -201,16 +206,25 @@ class PredictionStore:
         request = PredictionRequest.from_json({key: task[key] for key in PredictionRequest.__dataclass_fields__})
         # The service reads its own immutable normalized input, never the original CSV again.
         model_info = None
-        with (self.imports.datasets / request.datasetId / "normalized.csv").open(encoding="utf-8", newline="") as stream:
+        if self.data_source is not None:
+            rows = self.data_source.observations(request.datasetId, request.appId, request.cutoffDate)
+        else:
+            stream = (self.imports.datasets / request.datasetId / "normalized.csv").open(encoding="utf-8", newline="")
+            rows = None
+        try:
+            source_rows = rows if rows is not None else csv.DictReader(stream)
             if task["execution"]["mode"] == "MOCK":
-                items = mock_items(csv.DictReader(stream), request)
+                items = mock_items(source_rows, request)
             else:
                 self._check_algorithm(task)
-                computed = predict_real(csv.DictReader(stream), request)
+                computed = predict_real(source_rows, request)
                 items, model_info = computed["items"], computed["modelInfo"]
                 self._check_algorithm(task)
                 if model_info["algorithmFingerprint"] != task["execution"]["algorithmFingerprint"]:
                     raise ImportProblem("MODEL_ARTIFACT_CHANGED", "计算结果的算法摘要与已接收任务不一致。")
+        finally:
+            if rows is None:
+                stream.close()
         self._check_deadline(task)
         run_id = self._run_id(task["taskId"])
         cutoff = date.fromisoformat(task["cutoffDate"])

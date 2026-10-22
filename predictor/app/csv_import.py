@@ -6,12 +6,14 @@ import re
 from collections import Counter
 from dataclasses import dataclass
 from datetime import date, timedelta
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation, localcontext
 from urllib.parse import urlsplit
 
 
 PARSER_VERSION = "file-daily-v3"
 IDENTITY_VERSION = "filekey-v1"
+TOTAL_PARSER_VERSION = "app-daily-total-v1"
+GB_DECIMAL_BYTES = Decimal(1_000_000_000)
 _HTTP_URL = re.compile(r"^https?://", re.IGNORECASE)
 _CONTROL_CHARACTER = re.compile(r"[\x00-\x1f\x7f]")
 
@@ -80,18 +82,28 @@ class ImportConfig:
     appId: str | None = None
 
     def __post_init__(self):
-        if self.datasetType != "FILE_DAILY":
-            raise ImportProblem("DATASET_TYPE_UNSUPPORTED", "本环节仅支持 FILE_DAILY 文件日流量。")
+        if self.datasetType not in {"FILE_DAILY", "APP_DAILY_TOTAL"}:
+            raise ImportProblem("DATASET_TYPE_UNSUPPORTED", "仅支持 FILE_DAILY 或 APP_DAILY_TOTAL。")
         if self.datasetSource not in {"REAL", "FAKE"}:
             raise ImportProblem("INVALID_REQUEST", "datasetSource 必须为 REAL 或 FAKE。")
-        if self.sourceUnit != "B":
-            raise ImportProblem("UNIT_UNCONFIRMED", "必须明确确认 sourceUnit=B，不推断未知流量单位。")
-        if not isinstance(self.mapping, dict) or set(self.mapping) - {"fileKey", "date", "trafficBytes", "appId"}:
+        if not isinstance(self.mapping, dict):
             raise ImportProblem("INVALID_MAPPING", "mapping 必须为字段映射 JSON 对象。")
-        required = [self.mapping.get(key) for key in ("fileKey", "date", "trafficBytes")]
+        if self.datasetType == "FILE_DAILY":
+            if self.sourceUnit != "B":
+                raise ImportProblem("UNIT_UNCONFIRMED", "FILE_DAILY 必须明确确认 sourceUnit=B，不推断未知流量单位。")
+            allowed = {"fileKey", "date", "trafficBytes", "appId"}
+            required_names = ("fileKey", "date", "trafficBytes")
+        else:
+            if self.sourceUnit != "GB_DECIMAL":
+                raise ImportProblem("UNIT_UNCONFIRMED", "APP_DAILY_TOTAL 必须明确确认 sourceUnit=GB_DECIMAL（1 GB = 10^9 B）。")
+            allowed = {"date", "totalTraffic", "appId"}
+            required_names = ("date", "totalTraffic")
+        if set(self.mapping) - allowed:
+            raise ImportProblem("INVALID_MAPPING", "mapping 必须为字段映射 JSON 对象。")
+        required = [self.mapping.get(key) for key in required_names]
         values = list(self.mapping.values())
         if any(not isinstance(v, str) for v in values) or any(not isinstance(v, str) or not v.strip() for v in required):
-            raise ImportProblem("INVALID_MAPPING", "缺少文件标识、日期或流量的列名映射。")
+            raise ImportProblem("INVALID_MAPPING", "缺少日期或流量等必需列名映射。")
         columns = [v for v in values if v]
         if len(columns) != len(set(columns)):
             raise ImportProblem("INVALID_MAPPING", "不同字段不能映射到相同 CSV 列。")
@@ -110,7 +122,7 @@ class ParsedCsv:
 
 def new_quality() -> dict:
     return {
-        "encoding": None, "totalRows": 0, "validRows": 0, "duplicateRows": 0,
+        "encoding": None, "totalRows": 0, "validRows": 0, "duplicateRows": 0, "aggregatedRows": 0,
         "conflictRows": 0, "invalidRows": 0, "dateRange": None,
         "appDateRanges": {}, "missingDates": [], "missingDateCount": 0,
         "missingDatesTruncated": False, "dailyRows": [], "warnings": [],
@@ -121,6 +133,7 @@ def new_quality() -> dict:
         "fullUrlRows": 0, "plainKeyRows": 0, "emptyFileKeyRows": 0,
         "invalidUrlRows": 0, "invalidFileKeyRows": 0, "fileKeyParsedRows": 0,
         "fileKeyParseSuccessRate": 0.0, "normalizationCollisionRows": 0,
+        "aggregationRule": "SUM_NORMALIZED_SLICES",
     }
 
 
@@ -202,13 +215,19 @@ def parse_csv(raw: bytes, config: ImportConfig, max_rows: int = 20000) -> Parsed
                     quality["scientificNotationRows"] += 1
                 key = (app_id, file_key, observed_date.isoformat())
                 if key in observations:
-                    if observation_sources[key] != source_identity:
-                        quality["normalizationCollisionRows"] += 1
-                    if observations[key]["trafficBytes"] == traffic:
+                    prior = observation_sources[key].get(source_identity)
+                    if prior == traffic:
                         quality["duplicateRows"] += 1
-                    else:
+                    elif prior is not None:
                         quality["conflictRows"] += 1
                         record_error("DUPLICATE_CONFLICT", "同 App、规范 fileKey 和日期存在不同流量值。", row_number)
+                    else:
+                        quality["normalizationCollisionRows"] += 1
+                        quality["aggregatedRows"] += 1
+                        observations[key]["trafficBytes"] = str(int(observations[key]["trafficBytes"]) + int(traffic))
+                        if observations[key]["parseStatus"] != identity["parseStatus"]:
+                            observations[key]["parseStatus"] = "MIXED"
+                        observation_sources[key][source_identity] = traffic
                     continue
                 observations[key] = {
                     "fileKey": file_key,
@@ -218,7 +237,7 @@ def parse_csv(raw: bytes, config: ImportConfig, max_rows: int = 20000) -> Parsed
                     "sourceUrl": identity["sourceUrl"],
                     "parseStatus": identity["parseStatus"],
                 }
-                observation_sources[key] = source_identity
+                observation_sources[key] = {source_identity: traffic}
                 days_by_app.setdefault(app_id, set()).add(observed_date)
                 daily_rows[(app_id, observed_date.isoformat())] += 1
             except ImportProblem as error:
@@ -266,3 +285,26 @@ def parse_bytes(value: str) -> str:
         return "0" if number == 0 else format(number, "f").split(".")[0]
     except InvalidOperation:
         raise ImportProblem("INVALID_CSV", "流量必须为非负整数 B，且整数部分不超过 128 位。") from None
+
+
+def parse_decimal_gb(value: str) -> str:
+    """Convert an explicitly declared decimal-GB value to exact bytes without float/rounding."""
+    if len(value) > 256 or not re.fullmatch(r"[+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?", value):
+        raise ImportProblem("INVALID_TOTAL_TRAFFIC", "总流量必须为非负十进制 GB 数值。")
+    try:
+        number = Decimal(value)
+        if not number.is_finite() or number < 0 or number.adjusted() >= 128:
+            raise InvalidOperation
+        with localcontext() as context:
+            context.prec = 160
+            converted = number * GB_DECIMAL_BYTES
+        return format(converted, "f")
+    except InvalidOperation:
+        raise ImportProblem("INVALID_TOTAL_TRAFFIC", "总流量必须为非负有限十进制 GB，且整数部分不超过 128 位。") from None
+
+
+def normalize_decimal_gb(value: str) -> tuple[str, str]:
+    total_bytes = parse_decimal_gb(value)
+    number = Decimal(value)
+    raw_value = "0" if number == 0 else format(number, "f")
+    return raw_value, total_bytes

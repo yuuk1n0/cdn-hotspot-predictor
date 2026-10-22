@@ -13,7 +13,8 @@ from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .csv_import import IDENTITY_VERSION, PARSER_VERSION, ImportConfig, ImportProblem
+from .csv_import import IDENTITY_VERSION, PARSER_VERSION, TOTAL_PARSER_VERSION, ImportConfig, ImportProblem
+from .app_total_csv import normalize_total_staged_csv
 from .staged_csv import normalize_staged_csv
 from .upload_stream import StagedUpload
 
@@ -64,12 +65,14 @@ def read_json(path):
 
 
 class ImportStore:
-    def __init__(self, root: Path, max_rows: int = 1200000):
+    def __init__(self, root: Path, max_rows: int = 1200000, data_store=None, alert_sink=None):
         self.root = Path(root)
         self.incoming = self.root / "incoming"
         self.imports = self.root / "imports"
         self.datasets = self.root / "datasets"
         self.max_rows = max_rows
+        self.data_store = data_store
+        self.alert_sink = alert_sink
         self.lock = threading.RLock()
 
     def initialize(self):
@@ -115,6 +118,8 @@ class ImportStore:
                     task = read_json(path / "task.json")
                     if task["requestHash"] != fingerprint:
                         raise ImportProblem("IDEMPOTENCY_CONFLICT", "同一幂等键已用于不同文件内容或导入配置。", 409)
+                    if self.data_store is not None:
+                        self.data_store.ensure_import_task(task)
                     return {"importTaskId": task_id, "status": task["status"]}
                 task = {
                     "importTaskId": task_id, "status": "PENDING", "datasetId": None,
@@ -131,6 +136,8 @@ class ImportStore:
                 sync_directory(staging)
                 os.rename(staging, path)
                 sync_directory(self.imports)
+                if self.data_store is not None:
+                    self.data_store.ensure_import_task(task)
             # This receipt is returned only after both original bytes and the task are durable.
             return {"importTaskId": task_id, "status": "PENDING"}
         finally:
@@ -140,6 +147,8 @@ class ImportStore:
                 shutil.rmtree(staging, ignore_errors=True)
 
     def get_import(self, task_id):
+        if self.data_store is not None:
+            return self.data_store.get_import_task(task_id)
         path = self._path(self.imports, task_id, "imp_")
         if path is None or not (path / "task.json").is_file():
             raise ImportProblem("IMPORT_NOT_FOUND", "导入任务不存在。", 404)
@@ -189,7 +198,8 @@ class ImportStore:
             dataset_path = self.datasets / dataset_id
             if not self._complete(dataset_path):
                 staging = self.datasets / f".dataset-{uuid.uuid4().hex}"
-                normalized = normalize_staged_csv(source, config, staging, self.max_rows)
+                normalize = normalize_staged_csv if config.datasetType == "FILE_DAILY" else normalize_total_staged_csv
+                normalized = normalize(source, config, staging, self.max_rows)
                 quality = read_json(normalized.quality_path)
                 if normalized.error:
                     shutil.rmtree(staging, ignore_errors=True)
@@ -201,7 +211,8 @@ class ImportStore:
                     "appIds": list(normalized.app_ids),
                     "dateRange": quality["dateRange"], "appDateRanges": normalized.app_date_ranges,
                     "rowCount": normalized.row_count, "sha256": task["sha256"],
-                    "parserVersion": PARSER_VERSION, "identityMappingVersion": IDENTITY_VERSION,
+                    "parserVersion": PARSER_VERSION if config.datasetType == "FILE_DAILY" else TOTAL_PARSER_VERSION,
+                    "identityMappingVersion": IDENTITY_VERSION if config.datasetType == "FILE_DAILY" else None,
                     "unitConfirmationSource": "UPLOAD_DECLARATION", "completeness": "UNKNOWN",
                     "importTaskId": task_id, "createdAt": now(),
                 }
@@ -212,8 +223,12 @@ class ImportStore:
                 os.rename(staging, dataset_path)
                 staging = None
                 sync_directory(self.datasets)
+            metadata = read_json(dataset_path / "metadata.json")
+            quality = read_json(dataset_path / "quality.json")
+            if self.data_store is not None:
+                self.data_store.import_dataset(metadata, dataset_path / "normalized.csv")
             # A complete immutable directory is published before the success task record.
-            self._update(task, status="SUCCEEDED", datasetId=dataset_id, error=None)
+            self._update(task, status="SUCCEEDED", datasetId=dataset_id, error=None, quality=quality)
             logger.info("import succeeded importTaskId=%s datasetId=%s", task_id, dataset_id)
         except Exception as error:
             logger.exception("import failed importTaskId=%s", task_id)
@@ -221,6 +236,12 @@ class ImportStore:
                 shutil.rmtree(staging, ignore_errors=True)
             problem = error if isinstance(error, ImportProblem) else ImportProblem("IMPORT_FAILED", "导入处理失败，未发布可用数据集。")
             self._update(task, status="FAILED", datasetId=None, error=problem.as_dict())
+            if self.alert_sink is not None:
+                try:
+                    self.alert_sink.import_failed(task_id, task.get("config", {}).get("appId"),
+                                                  problem.code, problem.message)
+                except Exception:
+                    logger.exception("import alert delivery failed importTaskId=%s", task_id)
         return True
 
     def recover(self):
@@ -239,6 +260,8 @@ class ImportStore:
     def _update(self, task, **changes):
         with self.lock:
             updated = {**task, **changes, "updatedAt": now()}
+            if self.data_store is not None:
+                self.data_store.update_import_task(updated)
             replace_json(self.imports / task["importTaskId"] / "task.json", updated)
             task.update(updated)
 

@@ -7,8 +7,8 @@ const file = () => new File(['文件标识,日期,当日流量（B）,AppID\na,2
 const response = (body, status = 202) => ({ ok: status >= 200 && status < 300, status, json: async () => body })
 const accepted = { importTaskId: 'imp_1', status: 'PENDING' }
 
-function sizedCsv(size) {
-  const selected = new File(['x'], 'sized.csv', { type: 'text/csv' })
+function sizedCsv(size, name = 'sized.csv') {
+  const selected = new File(['x'], name, { type: 'text/csv' })
   Object.defineProperty(selected, 'size', { value: size })
   return selected
 }
@@ -71,6 +71,15 @@ test('accepts a CSV at exactly 200 MiB and sends one request', async () => {
   flow.selectFile(sizedCsv(200 * 1024 * 1024))
   await flow.submit()
   assert.equal(maxFileBytes, 200 * 1024 * 1024)
+  assert.equal(calls, 1)
+  assert.equal(flow.state.phase, 'ACCEPTED')
+})
+
+test('accepts the real 10066.csv size below the 200 MiB ceiling', async () => {
+  let calls = 0
+  const flow = prepared(async () => { calls++; return response(accepted) })
+  flow.selectFile(sizedCsv(107656723, '10066.csv'))
+  await flow.submit()
   assert.equal(calls, 1)
   assert.equal(flow.state.phase, 'ACCEPTED')
 })
