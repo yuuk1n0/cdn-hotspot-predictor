@@ -152,6 +152,61 @@ class MySqlDataStore:
                 ) from None
             raise
 
+    def model_spec(self, app_id: str, horizon_days: int):
+        """Return the App/horizon parameter override, or None when not configured."""
+        field = "dailyModelSpec" if horizon_days == 1 else "weeklyModelSpec"
+        try:
+            with self._connect() as connection, connection.cursor() as cursor:
+                cursor.execute("SELECT settings_json FROM app_config WHERE app_id=%s", (app_id,))
+                row = cursor.fetchone()
+        except Exception as error:
+            if error.__class__.__name__ == "ProgrammingError":
+                return None
+            raise
+        if not row:
+            return None
+        try:
+            settings = json.loads(row[0])
+        except (TypeError, ValueError):
+            raise ImportProblem("APP_MODEL_SPEC_INVALID", "app_config.settings_json 不是合法 JSON。", 503) from None
+        spec = settings.get(field) if isinstance(settings, dict) else None
+        if spec is None:
+            return None
+        if not isinstance(spec, dict) or not isinstance(spec.get("method"), str) \
+                or type(spec.get("window")) is not int \
+                or spec.get("halfLife") is not None and not isinstance(spec.get("halfLife"), str):
+            raise ImportProblem("APP_MODEL_SPEC_INVALID", f"{app_id}/{horizon_days} 的 App 参数配置无效。", 503)
+        return {"spec": spec, "configVersion": settings.get("version")}
+
+    def review_observations(self, app_id: str, lookback_days: int = 40):
+        """Load only a bounded recent window for rolling review; never fills missing days."""
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT MAX(o.observed_date) FROM file_daily_observation o "
+                "JOIN imported_dataset d ON d.dataset_id=o.dataset_id "
+                "WHERE d.app_id=%s AND d.dataset_source='REAL' AND d.status='READY'",
+                (app_id,),
+            )
+            latest = cursor.fetchone()
+            if not latest or latest[0] is None:
+                raise ImportProblem("NO_REAL_OBSERVATIONS", "该 App 没有可评估的真实观测。", 404)
+            end_date = latest[0]
+            cursor.execute(
+                "SELECT o.observed_date,o.file_key,SUM(o.traffic_bytes) "
+                "FROM file_daily_observation o "
+                "JOIN imported_dataset d ON d.dataset_id=o.dataset_id "
+                "WHERE d.app_id=%s AND d.dataset_source='REAL' AND d.status='READY' "
+                "AND o.observed_date BETWEEN DATE_SUB(%s, INTERVAL %s DAY) AND %s "
+                "GROUP BY o.observed_date,o.file_key",
+                (app_id, end_date, lookback_days - 1, end_date),
+            )
+            days = {}
+            for observed_date, file_key, traffic in cursor:
+                days.setdefault(observed_date, {})[file_key] = int(traffic)
+        if not days:
+            raise ImportProblem("NO_REAL_OBSERVATIONS", "该 App 没有可评估的真实观测。", 404)
+        return days, min(days), max(days)
+
     def ensure_import_task(self, task: dict):
         config = task["config"]
         values = (

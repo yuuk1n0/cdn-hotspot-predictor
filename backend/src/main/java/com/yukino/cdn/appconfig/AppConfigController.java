@@ -31,6 +31,25 @@ public class AppConfigController {
         return operations.suggestion(appId, body.path("horizonDays").intValue(), report.isTextual() ? report.asText() : null);
     }
 
+    @PostMapping("/model-reviews")
+    public ObjectNode review(@PathVariable String appId, @RequestBody(required = false) JsonNode body) {
+        var result = com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.objectNode();
+        result.put("appId", appId);
+        if (body != null && !body.isObject()) throw invalid();
+        int requested = body != null && body.has("horizonDays") ? body.path("horizonDays").asInt() : 0;
+        if (requested != 0 && requested != 1 && requested != 7) throw invalid();
+        var reviews = result.putArray("reviews");
+        for (int horizon : requested == 0 ? new int[]{1, 7} : new int[]{requested}) {
+            try {
+                reviews.add(operations.suggestion(appId, horizon, null));
+            } catch (com.yukino.cdn.prediction.PredictionProblem problem) {
+                reviews.addObject().put("appId", appId).put("horizonDays", horizon)
+                        .put("errorCode", problem.code()).put("errorMessage", problem.getMessage());
+            }
+        }
+        return result;
+    }
+
     @PostMapping("/model-switches")
     public ObjectNode switchModel(@PathVariable String appId, @RequestBody JsonNode body) {
         if (!body.isObject()) throw invalid();

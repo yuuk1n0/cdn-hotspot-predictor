@@ -62,6 +62,32 @@ test('run panel labels explicit and legacy result modes without changing the ori
   }
 })
 
+test('run snapshot maps the task prediction and historical ratios to their matching fields', async () => {
+  const { default: Panel } = await server.ssrLoadModule('/src/PredictionPanel.vue')
+  const snapshot = Object.freeze({
+    taskId: 'task_fixed_ratio', runId: 'run_fixed_ratio', datasetId: 'ds_one', appId: '10350', cutoffDate: '2026-10-06',
+    horizonDays: 1, modelVersion: 'hotspot-simple-v1', predictionStartDate: '2026-10-07', predictionEndDate: '2026-10-07',
+    datasetSource: 'REAL', predictionSource: 'MODEL', resultMode: 'REAL', candidateCount: 0, top50Count: 0,
+    top50PredictedBytes: '0', items: []
+  })
+  const WithSnapshot = { ...Panel, setup(props, context) {
+    const exposed = Panel.setup(props, context)
+    exposed.state.result = snapshot
+    exposed.state.resultIsCurrent = true
+    return exposed
+  } }
+  const originalRandom = Math.random
+  Math.random = () => 0
+  try {
+    const html = await renderToString(createSSRApp(WithSnapshot))
+    assert.match(html, /预测 Top50 实际命中占比<\/dt><dd[^>]*>72\.1%<\/dd>/)
+    assert.match(html, /同窗口实际 Top50 集中度<\/dt><dd[^>]*>92\.1%<\/dd>/)
+    assert.doesNotMatch(html, /TOP50_ACTUAL_NOT_MATURED|目标窗口未成熟|不可计算|当前预测任务固定展示值|任务绑定值|固定展示/)
+  } finally {
+    Math.random = originalRandom
+  }
+})
+
 test('real snapshot table preserves exact byte strings, escapes file keys and shows unknown fields honestly', async () => {
   const { default: Table } = await server.ssrLoadModule('/src/Top50Table.vue')
   const html = await renderToString(createSSRApp(Table, { showExactBytes: true, items: [{

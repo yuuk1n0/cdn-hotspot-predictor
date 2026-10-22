@@ -159,14 +159,41 @@ public class DefaultOperationsService implements OperationsService {
         var suggestion = object().put("suggestionId", "sug_" + UUID.randomUUID()).put("appId", app).put("horizonDays", horizon)
                 .put("createdAt", clock.instant().toString()).put("canSwitch", false).putNull("targetModelVersion");
         var reasons = suggestion.putArray("reasonCodes");
+        var recommendations = suggestion.putArray("recommendations");
         try {
-            var evidence = models.metrics(app, horizon); suggestion.set("evidence", evidence);
-            if (evidence.path("availableModels").size() < 2) reasons.add("MODEL_SWITCH_NOT_AVAILABLE");
-            reasons.add("UNCONFIRMED_LABELS").add("NO_CONFIRMED_COMPARABLE_BACKTEST");
-        } catch (PredictionProblem unavailable) { reasons.add(unavailable.code()); suggestion.putNull("evidence"); }
+            var review = models.review(app, horizon);
+            suggestion.set("evidence", review);
+            suggestion.put("modelVersion", review.path("modelVersion").asText("hotspot-simple-v1"));
+            suggestion.put("metricBasis", review.path("metricBasis").asText("REAL_OBSERVED_FUTURE_ROLLING_WINDOW"));
+            suggestion.put("currentMethod", review.path("currentMethod").asText(""));
+            suggestion.set("currentSpec", review.path("currentSpec").deepCopy());
+            suggestion.set("currentMetrics", review.path("currentMetrics").deepCopy());
+            suggestion.put("cutoffStartDate", review.path("cutoffStartDate").asText(""));
+            suggestion.put("cutoffEndDate", review.path("cutoffEndDate").asText(""));
+            suggestion.put("cutoffCount", review.path("cutoffCount").asInt());
+            suggestion.set("candidates", review.path("candidates").deepCopy());
+            suggestion.put("bestMethod", review.path("bestMethod").asText(""));
+            suggestion.set("bestSpec", review.path("bestSpec").deepCopy());
+            suggestion.set("bestMetrics", review.path("bestMetrics").deepCopy());
+            boolean canSwitch = review.path("canSwitch").asBoolean(false);
+            suggestion.put("canSwitch", canSwitch);
+            suggestion.put("targetModelVersion", review.path("targetModelVersion").asText("hotspot-simple-v1"));
+            suggestion.put("targetMethod", review.path("targetMethod").asText(""));
+            suggestion.set("targetSpec", review.path("targetSpec").deepCopy());
+            suggestion.put("improvementRecall", review.path("improvementRecall").asDouble());
+            suggestion.put("improvementNdcg", review.path("improvementNdcg").asDouble());
+            for (var reason : review.path("reasonCodes")) addOnce(reasons, reason.asText());
+            for (var recommendation : review.path("recommendations")) recommendations.add(recommendation.asText());
+            if (canSwitch) {
+                addOnce(reasons, "HUMAN_CONFIRMATION_REQUIRED");
+            }
+        } catch (PredictionProblem unavailable) {
+            reasons.add(unavailable.code());
+            suggestion.putNull("evidence");
+            recommendations.add("模型评审服务不可用；保持当前参数，不切换到未验证配置");
+        }
         if (backtestId != null && !backtestId.isBlank()) reasons.add("BACKTEST_API_NOT_AVAILABLE");
-        suggestion.putArray("recommendations").add("补齐同一App与跨度的成熟观测及完整标签证明")
-                .add("至少两个实际部署并验证的真实模型在相同成熟截止日上比较，当前不自动更换版本");
+        if (recommendations.isEmpty()) recommendations.add("补齐同一App与跨度的成熟观测及完整标签证明");
         configuration.set("latestSuggestion", suggestion);
         if (!configuration.path("latestSuggestions").isObject()) configuration.putObject("latestSuggestions");
         ((ObjectNode) configuration.path("latestSuggestions")).set(Integer.toString(horizon), suggestion);
@@ -177,10 +204,38 @@ public class DefaultOperationsService implements OperationsService {
         var configuration = config(id(app));
         if (!body.path("confirmed").isBoolean() || !body.path("confirmed").booleanValue()) throw problem(422, "CONFIRMATION_REQUIRED", "模型切换必须独立确认。");
         if (!body.path("expectedVersion").isIntegralNumber() || body.path("expectedVersion").asInt() != configuration.path("version").asInt()) throw problem(409, "VERSION_CONFLICT", "配置已变化，请重新查看建议。");
-        String requested = text(body, "suggestionId", 128); boolean owned = false;
-        for (var suggestion : configuration.path("latestSuggestions")) if (requested.equals(suggestion.path("suggestionId").asText())) owned = true;
-        if (!owned) throw problem(409, "SUGGESTION_EXPIRED", "建议不属于此App或已过期。");
-        throw problem(409, "MODEL_SWITCH_NOT_AVAILABLE", "当前没有两个已部署模型及合格可比评估，配置未改变。");
+        String requested = text(body, "suggestionId", 128);
+        JsonNode selected = null;
+        for (var suggestion : configuration.path("latestSuggestions")) {
+            if (requested.equals(suggestion.path("suggestionId").asText())) selected = suggestion;
+        }
+        if (selected == null) throw problem(409, "SUGGESTION_EXPIRED", "建议不属于此App或已过期。");
+        int horizon = selected.path("horizonDays").asInt();
+        if (horizon != 1 && horizon != 7) throw problem(409, "SUGGESTION_EXPIRED", "建议跨度无效，请重新评审。");
+        if (!selected.path("canSwitch").asBoolean(false)) throw problem(409, "MODEL_SWITCH_NOT_AVAILABLE", "本次评审未给出可替换建议，配置未改变。");
+        JsonNode targetSpec = selected.path("targetSpec");
+        if (!targetSpec.isObject()) throw problem(409, "MODEL_SWITCH_NOT_AVAILABLE", "建议缺少目标参数，配置未改变。");
+        String targetVersion = selected.path("targetModelVersion").asText("");
+        String currentVersion = configuration.path(horizon == 1 ? "dailyModelVersion" : "weeklyModelVersion").asText("");
+        if (!targetVersion.equals(currentVersion)) throw problem(409, "MODEL_VERSION_SWITCH_UNAVAILABLE", "只允许同日/周跨度参数替换，模型版本未变更。");
+        String field = horizon == 1 ? "dailyModelSpec" : "weeklyModelSpec";
+        String previousMethod = selected.path("currentMethod").asText("");
+        configuration.set(field, targetSpec.deepCopy());
+        if (!configuration.path("modelSwitchHistory").isArray()) configuration.putArray("modelSwitchHistory");
+        var switchRecord = object().put("appId", app).put("horizonDays", horizon)
+                .put("modelVersion", targetVersion).put("fromMethod", previousMethod)
+                .put("toMethod", selected.path("targetMethod").asText(""))
+                .put("suggestionId", requested).put("confirmedAt", clock.instant().toString())
+                .put("metricBasis", selected.path("metricBasis").asText("REAL_OBSERVED_FUTURE_ROLLING_WINDOW"));
+        switchRecord.set("targetSpec", targetSpec.deepCopy());
+        ((com.fasterxml.jackson.databind.node.ArrayNode) configuration.path("modelSwitchHistory")).add(switchRecord);
+        return persistConfig(app, configuration, configuration.path("version").asInt());
+    }
+
+    private static void addOnce(com.fasterxml.jackson.databind.node.ArrayNode values, String value) {
+        if (value == null || value.isBlank()) return;
+        for (var item : values) if (value.equals(item.asText())) return;
+        values.add(value);
     }
     public ObjectNode evidence(String tool, JsonNode context, JsonNode arguments) {
         String app = id(text(context, "appId", 32));

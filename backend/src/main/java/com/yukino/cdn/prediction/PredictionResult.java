@@ -46,6 +46,16 @@ final class PredictionResult {
                 "predictionStartDate", "predictionEndDate", "datasetSource", "predictionSource", "generatedAt")) result.set(key, page.get(key));
         result.put("taskId", task.taskId).put("candidateCount", total).put("top50Count", items.size());
         result.put("resultMode", resultMode);
+        JsonNode modelInfo = page.path("modelInfo");
+        if (modelInfo.isObject()) {
+            require(modelInfo.path("selectedMethod").isTextual() && !modelInfo.path("selectedMethod").asText().isBlank(),
+                    "模型方法缺失。");
+            require(modelInfo.path("selectedSpec").isObject(), "模型参数缺失。");
+            require(modelInfo.path("parameterSource").isTextual() && !modelInfo.path("parameterSource").asText().isBlank(),
+                    "模型参数来源缺失。");
+            require(modelInfo.path("algorithmFingerprint").asText("").matches("[0-9a-f]{64}"), "算法摘要无效。");
+            result.set("modelInfo", modelInfo.deepCopy());
+        }
         var selected = result.putArray("items");
         Set<String> identities = new HashSet<>();
         BigDecimal sum = BigDecimal.ZERO, previousBytes = null;

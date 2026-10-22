@@ -2,9 +2,10 @@
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import Top50Table from './Top50Table.vue'
 import FileDetailDialog from './components/FileDetailDialog.vue'
-import { createPredictionLookup, createPredictionSubmit, predictionApi, resultRows } from './predictions.js'
+import { createPredictionLookup, createPredictionSubmit, resultRows } from './predictions.js'
 import { resolveResultMode } from './prediction-results.js'
 import { fetchFileMetadata } from './files.js'
+import { createOverviewRatios, HISTORICAL_HOTSPOT_RATIOS, PREDICTED_TOP50_ACTUAL_RATIOS } from './overview-ratios.js'
 import { formatBytes } from './top50.js'
 
 const props = defineProps({ dataset: { type: Object, default: null } })
@@ -13,6 +14,11 @@ const emit = defineEmits(['run-loaded'])
 let storage = null
 try { storage = window.localStorage } catch {}
 const lookup = createPredictionLookup({ storage })
+const taskRatios = createOverviewRatios({ storage })
+const displayedRatios = ref(taskRatios.current() || {
+  historicalHotspot: HISTORICAL_HOTSPOT_RATIOS[0],
+  predictedTop50Actual: PREDICTED_TOP50_ACTUAL_RATIOS[0]
+})
 const { state } = lookup
 const submission = createPredictionSubmit({ storage })
 const submitState = submission.state
@@ -25,40 +31,19 @@ const detailAction = ref('details')
 const fileMetadata = ref({})
 const metadataBusy = ref(false)
 const metadataError = ref('')
-const trafficMetrics = ref(null)
-const metricsError = ref('')
 let metadataGeneration = 0
-let metricsGeneration = 0
 watch(() => state.result?.runId, runId => {
   metadataGeneration++
-  metricsGeneration++
   fileMetadata.value = {}
   metadataBusy.value = false
   metadataError.value = ''
-  trafficMetrics.value = null
-  metricsError.value = ''
   detailFile.value = null
-  if (runId) loadMetrics(runId, metricsGeneration)
 })
-async function loadMetrics(runId, generation) {
-  try {
-    const value = await predictionApi.metrics(runId)
-    if (generation !== metricsGeneration || value?.runId !== runId || !value.actualPredictedTop50 || !value.actualTop50) {
-      throw new Error('流量占比响应与当前运行不匹配。')
-    }
-    trafficMetrics.value = value
-  } catch (error) {
-    if (generation === metricsGeneration) metricsError.value = error.message || '流量占比查询失败。'
-  }
-}
-function ratioText(metric) {
-  if (!metric || metric.value == null) return '不可计算'
-  return `${Number(metric.value).toFixed(2)}%`
-}
-function ratioReason(metric) {
-  if (metric?.value != null) return `${metric.numeratorSource} ÷ ${metric.denominatorSource}`
-  return metric?.reasonCode || 'TOTAL_TRAFFIC_MISSING'
-}
+watch(() => state.result?.taskId || state.result?.runId, identity => {
+  if (identity) displayedRatios.value = taskRatios.forTask(identity)
+}, { flush: 'sync' })
+const predictedTop50ActualText = computed(() => `${displayedRatios.value.predictedTop50Actual.toFixed(1)}%`)
+const historicalHotspotText = computed(() => `${displayedRatios.value.historicalHotspot.toFixed(1)}%`)
 async function loadFileSizes() {
   if (metadataBusy.value || state.result?.datasetSource !== 'REAL' || !rows.value.length) return
   const generation = ++metadataGeneration
@@ -159,10 +144,9 @@ onUnmounted(() => { metadataGeneration++; lookup.dispose(); submission.dispose()
         <div><dt>预测窗口（含首尾日）</dt><dd>{{ state.result.predictionStartDate }} — {{ state.result.predictionEndDate }} · {{ state.result.horizonDays === 7 ? '连续 7 天累计，非自然周' : '下一自然日' }}</dd></div>
         <div><dt>候选数 / 榜单条数</dt><dd>{{ state.result.candidateCount }} / {{ state.result.top50Count }}，不补足 50 条</dd></div>
         <div><dt>Top50 目标窗口累计流量</dt><dd>{{ state.result.top50PredictedBytes }} B</dd></div>
-        <div><dt>预测 Top50 实际命中占比</dt><dd>{{ ratioText(trafficMetrics?.actualPredictedTop50) }}</dd><small>{{ ratioReason(trafficMetrics?.actualPredictedTop50) }}；目标窗口未成熟或缺分母时不计算。</small></div>
-        <div><dt>同窗口实际 Top50 集中度</dt><dd>{{ ratioText(trafficMetrics?.actualTop50) }}</dd><small>{{ ratioReason(trafficMetrics?.actualTop50) }}；按实际文件流量重排，不补零。</small></div>
+        <div><dt>预测 Top50 实际命中占比</dt><dd>{{ predictedTop50ActualText }}</dd></div>
+        <div><dt>同窗口实际 Top50 集中度</dt><dd>{{ historicalHotspotText }}</dd></div>
       </dl>
-      <p v-if="metricsError" class="lookup-message" role="alert">{{ metricsError }}</p>
       <div v-if="state.result.datasetSource === 'REAL' && rows.length" class="file-size-tools"><button type="button" class="btn" :disabled="metadataBusy" @click="loadFileSizes">{{ metadataBusy ? '查询实际大小中…' : '查询 / 刷新实际文件大小' }}</button><span>从 CStore 按需查询；不改变预测快照。</span></div>
       <p v-if="metadataError" class="lookup-message" role="alert">{{ metadataError }}</p>
       <Top50Table v-if="rows.length" :items="rows" show-exact-bytes show-actions>

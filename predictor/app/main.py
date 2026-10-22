@@ -17,7 +17,11 @@ from .alerts import JavaAlertSink
 from .mysql_store import MySqlDataStore, MySqlSettings
 from .history import observations
 from .model_evidence import model_evidence
+from .model_review import review_model
+from .algorithm_adapter import MODEL_VERSION
 from .upload_stream import stage_upload
+from hotspot.core.v1.config import config_for
+from hotspot.core.v1.spec import ModelSpec
 
 
 DEFAULT_IMPORT_MAX_BYTES = 200 * 1024 * 1024
@@ -126,6 +130,33 @@ def create_app(data_dir=None, *, max_file_bytes=None, max_rows=None, prediction_
     @app.get("/api/v1/models/{appId}/metrics")
     async def get_model_metrics(appId: str, horizonDays: str = Query("1", pattern="^(1|7)$")):
         return model_evidence(dict(predictions.execution), appId, int(horizonDays))
+
+    @app.get("/api/v1/models/{appId}/review")
+    async def review_app_model(appId: str, horizonDays: str = Query("1", pattern="^(1|7)$")):
+        if data_source is None:
+            raise ImportProblem("MYSQL_REQUIRED", "模型评审必须读取真实 MySQL 观测，当前不是 MySQL 数据源。", 409)
+        horizon = int(horizonDays)
+        configured = data_source.model_spec(appId, horizon)
+        if configured:
+            spec_dict = configured["spec"]
+            try:
+                current_spec = ModelSpec(spec_dict["method"], spec_dict["window"], spec_dict.get("halfLife"))
+            except (KeyError, TypeError, ValueError):
+                raise ImportProblem("APP_MODEL_SPEC_INVALID", f"{appId}/{horizon} 的 App 参数配置无效。", 503) from None
+            source, version = "APP_CONFIG", configured.get("configVersion")
+        else:
+            current_spec = config_for(appId, horizon)
+            source, version = "REVIEWED_CONFIG", None
+        days, _start, _end = await asyncio.to_thread(data_source.review_observations, appId, 40)
+        try:
+            result = await asyncio.to_thread(
+                review_model, days, appId, horizon, current_spec,
+                current_source=source, app_config_version=version,
+            )
+        except ValueError as error:
+            raise ImportProblem("INSUFFICIENT_REVIEW_WINDOW", f"真实观测不足以形成完整滚动窗口：{error}。", 422) from None
+        result["availableModels"] = [{"modelVersion": MODEL_VERSION, "predictionSource": "MODEL"}]
+        return result
 
     @app.post("/api/v1/imports", status_code=202)
     async def submit_import(

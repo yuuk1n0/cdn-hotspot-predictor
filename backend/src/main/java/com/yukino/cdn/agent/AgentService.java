@@ -14,6 +14,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -65,6 +66,7 @@ public final class AgentService {
         if (top5Pending) return top5PendingTemplate(context);
         if (top10HotspotQuestion(question)) return top10HotspotTemplate(context);
         if (overdueQuestion(question)) return overdueTemplate(context);
+        if (modelSuggestionQuestion(question)) return modelSuggestionTemplate(context);
         if (!settings.configured()) {
             throw new AgentProblem(503, "AGENT_NOT_CONFIGURED", "Agent 模型服务未配置。");
         }
@@ -170,6 +172,15 @@ public final class AgentService {
     private boolean overdueQuestion(String question) {
         String text = question.toLowerCase().replace(" ", "");
         return text.contains("逾期") || text.contains("超时");
+    }
+
+    private boolean modelSuggestionQuestion(String question) {
+        String text = question.toLowerCase().replace(" ", "");
+        boolean subject = text.contains("模型") || text.contains("算法") || text.contains("预测参数");
+        boolean asks = text.contains("建议") || text.contains("改进") || text.contains("优化")
+                || text.contains("合理") || text.contains("替换") || text.contains("退化")
+                || text.contains("评估") || text.contains("回测") || text.contains("切换");
+        return subject && asks;
     }
 
     /** Deterministic read-only answer for the core question; it never estimates benefit or invents compression state. */
@@ -294,6 +305,88 @@ public final class AgentService {
         } catch (PredictionProblem problem) {
             throw new AgentProblem(problem.httpStatus(), problem.code(), problem.getMessage());
         }
+    }
+
+    /** Deterministic model-review answer; no model call is required and no result is fabricated. */
+    private ObjectNode modelSuggestionTemplate(ObjectNode context) {
+        ArrayNode evidence = mapper.createArrayNode();
+        ArrayNode uncertainties = mapper.createArrayNode()
+                .add("模型建议使用已观测文件未来窗口的代理指标，不代表完整 CDN 流量准确率。")
+                .add("参数替换仅在同一 App、同一跨度、同一评估窗口内成立，并须人工确认。");
+        try {
+            String appId = context.path("appId").asText();
+            int horizon = context.path("horizonDays").asInt();
+            ObjectNode suggestion = operations.suggestion(appId, horizon, null);
+            ObjectNode item = mapper.createObjectNode().put("tool", "getModelSuggestion").put("appId", appId)
+                    .put("queriedAt", clock.instant().toString());
+            item.set("context", context.deepCopy());
+            item.set("data", suggestion);
+            item.putArray("reasonCodes").addAll((ArrayNode) suggestion.path("reasonCodes").deepCopy());
+            evidence.add(item);
+
+            String currentMethod = suggestion.path("currentMethod").asText(suggestion.path("evidence").path("selectedMethod").asText("未提供"));
+            JsonNode currentSpec = suggestion.has("currentSpec") ? suggestion.path("currentSpec") : suggestion.path("evidence").path("selectedSpec");
+            JsonNode metrics = suggestion.has("currentMetrics") ? suggestion.path("currentMetrics") : suggestion.path("evidence").path("proxyMetrics");
+            String windowStart = suggestion.path("cutoffStartDate").asText(suggestion.path("evidence").path("evidenceStartDate").asText("未提供"));
+            String windowEnd = suggestion.path("cutoffEndDate").asText(suggestion.path("evidence").path("evidenceEndDate").asText("未提供"));
+            int cutoffs = suggestion.path("cutoffCount").asInt(suggestion.path("evidence").path("report").path("testCutoffCount").asInt());
+            StringBuilder answer = new StringBuilder("当前 App ").append(appId).append(" · ")
+                    .append(horizon == 7 ? "WEEK（未来7天累计）" : "DAY（下一自然日）")
+                    .append("。部署模型 ").append(suggestion.path("modelVersion").asText(suggestion.path("evidence").path("deployedModelVersion").asText("hotspot-simple-v1")))
+                    .append("，当前参数 ").append(currentMethod).append(' ').append(currentSpec.isObject() ? currentSpec.toString() : "未提供")
+                    .append("。评估窗口 ").append(windowStart).append(" 至 ").append(windowEnd)
+                    .append("，滚动切点 ").append(cutoffs).append(" 个；依据 MySQL 已观测文件的未来窗口代理指标。");
+            if (metrics.isObject() && !metrics.isEmpty()) {
+                answer.append(" 当前指标：Recall@50 ").append(percent(metrics.path("recallAt50").asDouble()))
+                        .append("，NDCG@50 ").append(decimal(metrics.path("ndcgAt50").asDouble()))
+                        .append("，观测流量覆盖 ").append(percent(metrics.path("observedTrafficCoverageAt50").asDouble())).append("。");
+            } else {
+                answer.append(" 当前指标未返回。");
+            }
+            JsonNode candidates = suggestion.path("candidates");
+            if (candidates.isArray() && !candidates.isEmpty()) {
+                answer.append(" 候选参数：");
+                int shown = Math.min(4, candidates.size());
+                for (int index = 0; index < shown; index++) {
+                    JsonNode candidate = candidates.get(index);
+                    if (index > 0) answer.append("；");
+                    answer.append(candidate.path("name").asText(candidate.path("method").asText("candidate")))
+                            .append(" Recall@50 ").append(percent(candidate.path("mean").path("recallAt50").asDouble()))
+                            .append("，NDCG@50 ").append(decimal(candidate.path("mean").path("ndcgAt50").asDouble()));
+                }
+                answer.append("。");
+            }
+            boolean canSwitch = suggestion.path("canSwitch").asBoolean(false);
+            if (canSwitch) {
+                answer.append(" 结论：建议将本 App 的 ")
+                        .append(horizon == 7 ? "周参数" : "日参数")
+                        .append(" 替换为 ").append(suggestion.path("targetMethod").asText("目标参数"))
+                        .append("（Recall 提升 ").append(percentagePoint(suggestion.path("improvementRecall").asDouble())).append("）。");
+            } else {
+                answer.append(" 结论：当前参数在非劣门槛内，暂不替换。");
+            }
+            JsonNode reasons = suggestion.path("reasonCodes");
+            if (reasons.isArray() && !reasons.isEmpty()) answer.append(" 原因码：").append(reasons.toString()).append("。");
+            answer.append(" 可切换：").append(canSwitch ? "是（需人工确认）" : "否")
+                    .append("。来源：REAL/MODEL；指标口径：OBSERVED_FUTURE_PROXY。");
+            ObjectNode responseContext = context.deepCopy().put("modelVersion", suggestion.path("modelVersion").asText("hotspot-simple-v1"))
+                    .put("resultMode", "REAL/MODEL").put("metricBasis", suggestion.path("metricBasis").asText("OBSERVED_FUTURE_PROXY"));
+            return response(answer.toString(), responseContext, evidence, uncertainties, "DETERMINISTIC_MODEL_REVIEW");
+        } catch (PredictionProblem problem) {
+            throw new AgentProblem(problem.httpStatus(), problem.code(), problem.getMessage());
+        }
+    }
+
+    private static String percent(double value) {
+        return String.format(Locale.ROOT, "%.2f%%", value * 100);
+    }
+
+    private static String decimal(double value) {
+        return String.format(Locale.ROOT, "%.4f", value);
+    }
+
+    private static String percentagePoint(double value) {
+        return String.format(Locale.ROOT, "%.2f 个百分点", value * 100);
     }
 
     private ObjectNode runContext(ObjectNode context, JsonNode data, String runId) {

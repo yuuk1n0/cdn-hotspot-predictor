@@ -205,6 +205,20 @@ class AgentServiceTest {
         assertFalse(response.path("uncertainties").isEmpty());
     }
 
+    @Test void modelImprovementQuestionAnswersFromDeterministicReviewWithoutCallingLlm() throws Exception {
+        var response = service.chat(request("当前模型有哪些可验证的改进建议？"));
+        assertEquals("DETERMINISTIC_MODEL_REVIEW", response.path("groundingStatus").asText());
+        String answer = response.path("answer").asText();
+        assertTrue(answer.contains("App 10350"));
+        assertTrue(answer.contains("last_day"));
+        assertTrue(answer.contains("mean_7"));
+        assertTrue(answer.contains("Recall@50"));
+        assertTrue(answer.contains("可切换：是"));
+        assertTrue(answer.contains("REAL/MODEL"));
+        assertEquals("sug_test", response.path("suggestionId").asText());
+        server.verify();
+    }
+
     ObjectNode request(String message) {return mapper.createObjectNode().put("appId","10350").put("message",message);}
     String answer(String answer) throws Exception {return mapper.writeValueAsString(Map.of("choices",List.of(Map.of("message",Map.of("role","assistant","content",answer)))));}
     String call(String name,String arguments) throws Exception {return mapper.writeValueAsString(Map.of("choices",List.of(Map.of("message",Map.of("role","assistant","tool_calls",List.of(Map.of("id","call_1","type","function","function",Map.of("name",name,"arguments",arguments))))))));}
@@ -249,6 +263,21 @@ class AgentServiceTest {
             return result;
         }
         public ObjectNode overdue(String appId,String runId,String source){throw new UnsupportedOperationException();}
-        public ObjectNode suggestion(String appId,int horizon,String backtestId){throw new UnsupportedOperationException();}
+        public ObjectNode suggestion(String appId,int horizon,String backtestId){
+            var result=mapper.createObjectNode().put("suggestionId","sug_test").put("appId",appId)
+                    .put("horizonDays",horizon).put("modelVersion","hotspot-simple-v1")
+                    .put("currentMethod","last_day").put("metricBasis","REAL_OBSERVED_FUTURE_ROLLING_WINDOW")
+                    .put("cutoffStartDate","2026-09-01").put("cutoffEndDate","2026-10-10").put("cutoffCount",5)
+                    .put("canSwitch",true).put("targetModelVersion","hotspot-simple-v1")
+                    .put("targetMethod","mean_7").put("improvementRecall",0.03).put("improvementNdcg",0.01);
+            result.putObject("currentSpec").put("method","last_day").put("window",1).putNull("halfLife");
+            result.putObject("targetSpec").put("method","mean").put("window",7).putNull("halfLife");
+            result.putObject("currentMetrics").put("recallAt50",0.60).put("ndcgAt50",0.80).put("observedTrafficCoverageAt50",0.70);
+            var candidates=result.putArray("candidates");
+            candidates.addObject().put("name","current").put("method","last_day").putObject("mean").put("recallAt50",0.60).put("ndcgAt50",0.80);
+            candidates.addObject().put("name","mean_7").put("method","mean_7").putObject("mean").put("recallAt50",0.63).put("ndcgAt50",0.81);
+            result.putArray("reasonCodes").add("PARAMETER_REPLACEMENT_RECOMMENDED");
+            return result;
+        }
     }
 }

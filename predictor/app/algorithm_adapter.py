@@ -7,6 +7,7 @@ from pathlib import Path
 
 from hotspot.core.registry import get_algorithm
 from hotspot.core.v1.config import has_reviewed_config
+from hotspot.core.v1.candidates import COMPARISONS
 from hotspot.startup import annotate_file_history, assess_app_history, suspect_partial_cutoff
 from hotspot.training.auto import FALLBACK, auto_select_v1
 from hotspot.training.selection import load_selected_spec
@@ -34,7 +35,7 @@ def algorithm_fingerprint():
 LOADED_ALGORITHM_FINGERPRINT = algorithm_fingerprint()
 
 
-def predict_real(rows, request):
+def predict_real(rows, request, *, app_spec=None, app_config_version=None):
     """Return complete real candidates and provenance; never substitute a Mock."""
     if request.modelVersion != MODEL_VERSION:
         raise ImportProblem("MODEL_VERSION_UNSUPPORTED", "当前真实模式仅批准 hotspot-simple-v1。")
@@ -58,6 +59,10 @@ def predict_real(rows, request):
     spec = None
     if history.state == "COLD":
         method, spec, source = "last_day", FALLBACK, "APP_COLD_FALLBACK"
+    elif app_spec is not None:
+        spec = app_spec
+        method = next((name for name, candidate in COMPARISONS.items() if candidate == app_spec), "app_config")
+        source = "APP_CONFIG"
     elif has_reviewed_config(request.appId, request.horizonDays):
         # Only reviewed identifiers enter this path; user IDs cannot select filesystem paths.
         path = CONFIG_ROOT / f"{request.appId}-h{request.horizonDays}.json"
@@ -77,6 +82,7 @@ def predict_real(rows, request):
         "algorithmFingerprint": LOADED_ALGORITHM_FINGERPRINT,
         "selectedMethod": method, "selectedSpec": algorithm.describe_spec(spec),
         "parameterSource": source, "configurationEvidenceEndDate": configuration_end,
+        "appConfigVersion": app_config_version if app_spec is not None else None,
         "appHistory": history.as_dict(), "selectionEvidence": evidence,
         "dataQuality": {"excludedSuspectCutoffDate": request.cutoffDate if partial else None},
         "predictionBasis": "observed historical intensity; not calibrated complete CDN traffic",

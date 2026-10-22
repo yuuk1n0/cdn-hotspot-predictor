@@ -16,6 +16,7 @@ from .csv_import import ImportProblem
 from .import_store import json_bytes, now, read_json, replace_json, sync_directory, write_bytes
 from .prediction import PredictionRequest, mock_items
 from .algorithm_adapter import MODEL_VERSION, LOADED_ALGORITHM_FINGERPRINT, algorithm_fingerprint, predict_real
+from hotspot.core.v1.spec import ModelSpec
 
 
 logger = logging.getLogger(__name__)
@@ -69,6 +70,15 @@ class PredictionStore:
             }
             if self.execution["mode"] == "MODEL":
                 task["execution"]["algorithmFingerprint"] = LOADED_ALGORITHM_FINGERPRINT
+                configured = self.data_source.model_spec(request.appId, request.horizonDays) if self.data_source is not None else None
+                if configured:
+                    raw = configured["spec"]
+                    try:
+                        spec = ModelSpec(raw["method"], raw["window"], raw.get("halfLife"))
+                    except (KeyError, TypeError, ValueError):
+                        raise ImportProblem("APP_MODEL_SPEC_INVALID", f"{request.appId}/{request.horizonDays} 的 App 参数配置无效。", 503) from None
+                    task["execution"]["appModelSpec"] = {"method": spec.method, "window": spec.window, "halfLife": spec.half_life}
+                    task["execution"]["appConfigVersion"] = configured.get("configVersion")
             staging = self.tasks / f".task-{uuid.uuid4().hex}"
             staging.mkdir()
             write_bytes(staging / "task.json", json_bytes(task))
@@ -217,7 +227,10 @@ class PredictionStore:
                 items = mock_items(source_rows, request)
             else:
                 self._check_algorithm(task)
-                computed = predict_real(source_rows, request)
+                raw_spec = task["execution"].get("appModelSpec")
+                app_spec = ModelSpec(raw_spec["method"], raw_spec["window"], raw_spec.get("halfLife")) if raw_spec else None
+                computed = predict_real(source_rows, request, app_spec=app_spec,
+                                        app_config_version=task["execution"].get("appConfigVersion"))
                 items, model_info = computed["items"], computed["modelInfo"]
                 self._check_algorithm(task)
                 if model_info["algorithmFingerprint"] != task["execution"]["algorithmFingerprint"]:

@@ -19,6 +19,7 @@ class OperationsServiceTest {
     final ObjectMapper mapper = new ObjectMapper();
     final Clock clock = Clock.fixed(Instant.parse("2026-10-21T00:00:00Z"), ZoneOffset.UTC);
     final List<ObjectNode> runs = new ArrayList<>();
+    boolean recommendSwitch;
     JdbcTemplate jdbc;
     DefaultOperationsService service;
     @BeforeEach void setup() throws Exception {
@@ -34,10 +35,27 @@ class OperationsServiceTest {
                         .filter(r -> horizon == 0 || r.path("horizonDays").asInt() == horizon).map(ObjectNode::deepCopy).toList();
             }
         };
-        service = new DefaultOperationsService(store, predictions, (app, horizon) -> {
-            var result = mapper.createObjectNode().put("appId", app).put("horizonDays", horizon).put("formalSelectionEligible", false);
-            result.putArray("availableModels").addObject().put("modelVersion", "hotspot-simple-v1").put("predictionSource", "MODEL");
-            result.putArray("reasonCodes").add("SINGLE_DEPLOYED_MODEL").add("UNCONFIRMED_LABELS"); return result;
+        service = new DefaultOperationsService(store, predictions, new ModelEvidenceGateway() {
+            public ObjectNode metrics(String app, int horizon) {
+                var result = mapper.createObjectNode().put("appId", app).put("horizonDays", horizon).put("formalSelectionEligible", false);
+                result.putArray("availableModels").addObject().put("modelVersion", "hotspot-simple-v1").put("predictionSource", "MODEL");
+                result.putArray("reasonCodes").add("SINGLE_DEPLOYED_MODEL").add("UNCONFIRMED_LABELS"); return result;
+            }
+            public ObjectNode review(String app, int horizon) {
+                var result = mapper.createObjectNode().put("appId", app).put("horizonDays", horizon)
+                        .put("modelVersion", "hotspot-simple-v1").put("metricBasis", "REAL_OBSERVED_FUTURE_ROLLING_WINDOW")
+                        .put("currentMethod", "last_day").put("cutoffStartDate", "2026-09-01").put("cutoffEndDate", "2026-10-10")
+                        .put("cutoffCount", 5).put("canSwitch", recommendSwitch).put("targetModelVersion", "hotspot-simple-v1")
+                        .put("targetMethod", recommendSwitch ? "mean_7" : "last_day")
+                        .put("improvementRecall", recommendSwitch ? 0.03 : 0.0).put("improvementNdcg", 0.0);
+                result.putObject("currentSpec").put("method", "last_day").put("window", 1).putNull("halfLife");
+                result.putObject("targetSpec").put("method", recommendSwitch ? "mean" : "last_day").put("window", recommendSwitch ? 7 : 1).putNull("halfLife");
+                result.putObject("currentMetrics").put("recallAt50", 0.6).put("ndcgAt50", 0.8);
+                result.putArray("candidates").addObject().put("method", "last_day").putObject("mean").put("recallAt50", 0.6).put("ndcgAt50", 0.8);
+                result.putArray("reasonCodes").add(recommendSwitch ? "PARAMETER_REPLACEMENT_RECOMMENDED" : "CURRENT_CONFIG_NONINFERIOR");
+                result.putArray("recommendations").add("fixture");
+                return result;
+            }
         }, clock, mapper);
         var run = (ObjectNode) mapper.readTree("""
                 {"runId":"run_old","appId":"10066","datasetId":"ds_one","datasetSource":"REAL","predictionSource":"MODEL",
@@ -81,6 +99,19 @@ class OperationsServiceTest {
         assertThrows(PredictionProblem.class, () -> service.updateConfig("10066", body));
         assertThrows(PredictionProblem.class, () -> service.updateConfig("10066", mapper.createObjectNode().put("expectedVersion", 1).put("dailyModelVersion", "arbitrary")));
         assertFalse(service.suggestion("10066", 1, null).path("canSwitch").asBoolean());
+    }
+
+    @Test void confirmedReviewCanReplaceOnlyTheAppAndHorizonParameters() {
+        recommendSwitch = true;
+        var suggestion = service.suggestion("10066", 1, null);
+        assertTrue(suggestion.path("canSwitch").asBoolean());
+        assertEquals("mean", suggestion.path("targetSpec").path("method").asText());
+        var version = service.config("10066").path("version").asInt();
+        var switched = service.switchModel("10066", mapper.createObjectNode().put("confirmed", true)
+                .put("expectedVersion", version).put("suggestionId", suggestion.path("suggestionId").asText()));
+        assertEquals(7, switched.path("dailyModelSpec").path("window").asInt());
+        assertTrue(switched.path("weeklyModelSpec").isMissingNode() || switched.path("weeklyModelSpec").isNull());
+        assertEquals(1, switched.path("modelSwitchHistory").size());
     }
     @Test void toolsBindContextAndReportMissingFactsRatherThanMoneyZero() {
         var context = mapper.createObjectNode().put("appId", "10066").put("businessDate", "2026-10-20").put("horizonDays", 1).put("runId", "run_old");
