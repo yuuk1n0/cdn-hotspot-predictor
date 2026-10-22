@@ -1,19 +1,21 @@
 """Single-instance durable import receipts and immutable dataset snapshots."""
 
-import csv
 import hashlib
-import io
 import json
 import logging
 import os
 import re
+import shutil
 import threading
 import uuid
+from contextlib import suppress
 from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .csv_import import IDENTITY_VERSION, PARSER_VERSION, ImportConfig, ImportProblem, parse_csv
+from .csv_import import IDENTITY_VERSION, PARSER_VERSION, ImportConfig, ImportProblem
+from .staged_csv import normalize_staged_csv
+from .upload_stream import StagedUpload
 
 
 logger = logging.getLogger(__name__)
@@ -42,6 +44,14 @@ def write_bytes(path, content):
         os.fsync(stream.fileno())
 
 
+def copy_file(source, destination, chunk_bytes=1024 * 1024):
+    with Path(source).open("rb") as reader, Path(destination).open("xb") as writer:
+        while chunk := reader.read(chunk_bytes):
+            writer.write(chunk)
+        writer.flush()
+        os.fsync(writer.fileno())
+
+
 def replace_json(path, value):
     temporary = path.parent / f".{path.name}.{uuid.uuid4().hex}.tmp"
     write_bytes(temporary, json_bytes(value))
@@ -54,48 +64,80 @@ def read_json(path):
 
 
 class ImportStore:
-    def __init__(self, root: Path, max_rows: int = 20000):
+    def __init__(self, root: Path, max_rows: int = 1200000):
         self.root = Path(root)
+        self.incoming = self.root / "incoming"
         self.imports = self.root / "imports"
         self.datasets = self.root / "datasets"
         self.max_rows = max_rows
         self.lock = threading.RLock()
 
     def initialize(self):
+        self.incoming.mkdir(parents=True, exist_ok=True)
         self.imports.mkdir(parents=True, exist_ok=True)
         self.datasets.mkdir(parents=True, exist_ok=True)
+        for pattern in (".upload-*.part", ".compat-*.part"):
+            for path in self.incoming.glob(pattern):
+                path.unlink()
         self.recover()
 
     def accept(self, raw: bytes, config: ImportConfig, key: str, filename: str):
+        path = self.incoming / f".compat-{uuid.uuid4().hex}.part"
+        try:
+            write_bytes(path, raw)
+            sync_directory(self.incoming)
+            return self.accept_staged(
+                StagedUpload(path=path, size=len(raw), sha256=hashlib.sha256(raw).hexdigest()),
+                config,
+                key,
+                filename,
+            )
+        finally:
+            with suppress(FileNotFoundError):
+                path.unlink()
+
+    def accept_staged(self, staged: StagedUpload, config: ImportConfig, key: str, filename: str):
         task_id = "imp_" + hashlib.sha256(key.encode()).hexdigest()
-        file_hash = hashlib.sha256(raw).hexdigest()
+        file_hash = staged.sha256
         fingerprint = hashlib.sha256(json_bytes({
             "sha256": file_hash, "config": asdict(config),
             "parserVersion": PARSER_VERSION, "identityMappingVersion": IDENTITY_VERSION,
         })).hexdigest()
         path = self.imports / task_id
-        with self.lock:
-            if path.exists():
-                task = read_json(path / "task.json")
-                if task["requestHash"] != fingerprint:
-                    raise ImportProblem("IDEMPOTENCY_CONFLICT", "同一幂等键已用于不同文件内容或导入配置。", 409)
-                return {"importTaskId": task_id, "status": task["status"]}
-            task = {
-                "importTaskId": task_id, "status": "PENDING", "datasetId": None,
-                "error": None, "quality": None, "requestHash": fingerprint,
-                "snapshotId": "ds_" + fingerprint, "sha256": file_hash,
-                "config": asdict(config), "originalFilename": filename,
-                "createdAt": now(), "updatedAt": now(),
-            }
-            staging = self.imports / f".upload-{uuid.uuid4().hex}"
-            staging.mkdir()
-            write_bytes(staging / "original.csv", raw)
-            write_bytes(staging / "task.json", json_bytes(task))
-            sync_directory(staging)
-            os.rename(staging, path)
-            sync_directory(self.imports)
-        # This receipt is returned only after both original bytes and the task are durable.
-        return {"importTaskId": task_id, "status": "PENDING"}
+        staging = None
+        try:
+            if staged.path.parent.resolve() != self.incoming.resolve():
+                raise ImportProblem("INVALID_CSV", "暂存上传文件不属于当前导入目录。")
+            if not staged.path.is_file() or staged.path.stat().st_size != staged.size:
+                raise ImportProblem("INVALID_CSV", "暂存上传文件不存在或大小不匹配。")
+            with self.lock:
+                if path.exists():
+                    task = read_json(path / "task.json")
+                    if task["requestHash"] != fingerprint:
+                        raise ImportProblem("IDEMPOTENCY_CONFLICT", "同一幂等键已用于不同文件内容或导入配置。", 409)
+                    return {"importTaskId": task_id, "status": task["status"]}
+                task = {
+                    "importTaskId": task_id, "status": "PENDING", "datasetId": None,
+                    "error": None, "quality": None, "requestHash": fingerprint,
+                    "snapshotId": "ds_" + fingerprint, "sha256": file_hash,
+                    "config": asdict(config), "originalFilename": filename,
+                    "createdAt": now(), "updatedAt": now(),
+                }
+                staging = self.imports / f".upload-{uuid.uuid4().hex}"
+                staging.mkdir()
+                os.rename(staged.path, staging / "original.csv")
+                sync_directory(self.incoming)
+                write_bytes(staging / "task.json", json_bytes(task))
+                sync_directory(staging)
+                os.rename(staging, path)
+                sync_directory(self.imports)
+            # This receipt is returned only after both original bytes and the task are durable.
+            return {"importTaskId": task_id, "status": "PENDING"}
+        finally:
+            with suppress(FileNotFoundError):
+                staged.path.unlink()
+            if staging is not None and staging.exists():
+                shutil.rmtree(staging, ignore_errors=True)
 
     def get_import(self, task_id):
         path = self._path(self.imports, task_id, "imp_")
@@ -133,45 +175,50 @@ class ImportStore:
             path = self.imports / task_id
             task = read_json(path / "task.json")
             self._update(task, status="RUNNING")
+        staging = None
         try:
             config = ImportConfig(**task["config"])
-            raw = (path / "original.csv").read_bytes()
-            if hashlib.sha256(raw).hexdigest() != task["sha256"]:
+            source = path / "original.csv"
+            digest = hashlib.sha256()
+            with source.open("rb") as stream:
+                while chunk := stream.read(1024 * 1024):
+                    digest.update(chunk)
+            if digest.hexdigest() != task["sha256"]:
                 raise ImportProblem("INVALID_CSV", "已保存原文件的摘要不匹配，不能发布数据集。")
-            parsed = parse_csv(raw, config, self.max_rows)
-            if parsed.error:
-                self._update(task, status="FAILED", error=parsed.error, quality=parsed.quality)
-                return True
             dataset_id = task["snapshotId"]
             dataset_path = self.datasets / dataset_id
             if not self._complete(dataset_path):
                 staging = self.datasets / f".dataset-{uuid.uuid4().hex}"
-                staging.mkdir()
-                normalized = io.StringIO(newline="")
-                writer = csv.DictWriter(normalized, fieldnames=["fileKey", "date", "trafficBytes", "appId"])
-                writer.writeheader()
-                writer.writerows(parsed.rows)
+                normalized = normalize_staged_csv(source, config, staging, self.max_rows)
+                quality = read_json(normalized.quality_path)
+                if normalized.error:
+                    shutil.rmtree(staging, ignore_errors=True)
+                    staging = None
+                    self._update(task, status="FAILED", error=normalized.error, quality=quality)
+                    return True
                 metadata = {
                     "datasetId": dataset_id, "status": "READY", **asdict(config),
-                    "appIds": sorted({row["appId"] for row in parsed.rows}),
-                    "dateRange": parsed.quality["dateRange"], "appDateRanges": parsed.quality["appDateRanges"],
-                    "rowCount": len(parsed.rows), "sha256": task["sha256"],
+                    "appIds": list(normalized.app_ids),
+                    "dateRange": quality["dateRange"], "appDateRanges": normalized.app_date_ranges,
+                    "rowCount": normalized.row_count, "sha256": task["sha256"],
                     "parserVersion": PARSER_VERSION, "identityMappingVersion": IDENTITY_VERSION,
                     "unitConfirmationSource": "UPLOAD_DECLARATION", "completeness": "UNKNOWN",
                     "importTaskId": task_id, "createdAt": now(),
                 }
-                write_bytes(staging / "original.csv", raw)
-                write_bytes(staging / "normalized.csv", normalized.getvalue().encode("utf-8"))
-                write_bytes(staging / "quality.json", json_bytes(parsed.quality))
+                copy_file(source, staging / "source.csv")
+                os.link(staging / "source.csv", staging / "original.csv")
                 write_bytes(staging / "metadata.json", json_bytes(metadata))
                 sync_directory(staging)
                 os.rename(staging, dataset_path)
+                staging = None
                 sync_directory(self.datasets)
             # A complete immutable directory is published before the success task record.
             self._update(task, status="SUCCEEDED", datasetId=dataset_id, error=None)
             logger.info("import succeeded importTaskId=%s datasetId=%s", task_id, dataset_id)
         except Exception as error:
             logger.exception("import failed importTaskId=%s", task_id)
+            if staging is not None and staging.exists():
+                shutil.rmtree(staging, ignore_errors=True)
             problem = error if isinstance(error, ImportProblem) else ImportProblem("IMPORT_FAILED", "导入处理失败，未发布可用数据集。")
             self._update(task, status="FAILED", datasetId=None, error=problem.as_dict())
         return True

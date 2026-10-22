@@ -15,13 +15,14 @@ from .import_store import ImportStore
 from .prediction_store import PredictionStore
 from .history import observations
 from .model_evidence import model_evidence
+from .upload_stream import stage_upload
 
 
 def create_app(data_dir=None, *, max_file_bytes=None, max_rows=None, prediction_mode=None,
                prediction_model_version=None, mock_delay_seconds=None, prediction_timeout_seconds=None):
     root = Path(data_dir or os.getenv("PREDICTOR_DATA_DIR", Path(__file__).resolve().parents[2] / "runtime" / "predictor"))
-    max_file_bytes = max_file_bytes if max_file_bytes is not None else int(os.getenv("IMPORT_MAX_BYTES", 5 * 1024 * 1024))
-    max_rows = max_rows if max_rows is not None else int(os.getenv("IMPORT_MAX_ROWS", 20000))
+    max_file_bytes = max_file_bytes if max_file_bytes is not None else int(os.getenv("IMPORT_MAX_BYTES", 128 * 1024 * 1024))
+    max_rows = max_rows if max_rows is not None else int(os.getenv("IMPORT_MAX_ROWS", 1200000))
     if max_file_bytes <= 0 or max_rows <= 0:
         raise ValueError("导入文件和行数上限必须大于零。")
     store = ImportStore(root, max_rows)
@@ -121,12 +122,8 @@ def create_app(data_dir=None, *, max_file_bytes=None, max_rows=None, prediction_
             except (ValueError, TypeError):
                 raise ImportProblem("INVALID_MAPPING", "mapping 必须为合法 JSON 对象。") from None
             config = ImportConfig(parsed_mapping, datasetType, datasetSource, sourceUnit, appId)
-            raw = await file.read(max_file_bytes + 1)
-            if len(raw) > max_file_bytes:
-                raise ImportProblem("FILE_TOO_LARGE", f"文件超过 {max_file_bytes} B 限制；未截取导入。", 413)
-            if not raw:
-                raise ImportProblem("INVALID_CSV", "CSV 文件为空。")
-            return await asyncio.to_thread(store.accept, raw, config, idempotency_key, file.filename)
+            staged = await stage_upload(file, store.incoming, max_file_bytes)
+            return await asyncio.to_thread(store.accept_staged, staged, config, idempotency_key, file.filename)
         finally:
             await file.close()
 

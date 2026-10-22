@@ -55,10 +55,18 @@ def test_durable_upload_ready_dataset_and_quality(tmp_path):
         assert quality["totalRows"] == quality["validRows"] == 2
         assert quality["missingDateCount"] == 1
         path = tmp_path / "datasets" / dataset_id
+        assert (path / "source.csv").read_bytes() == raw
         assert (path / "original.csv").read_bytes() == raw
+        assert (path / "source.csv").stat().st_ino == (path / "original.csv").stat().st_ino
         normalized = list(csv.DictReader(io.StringIO((path / "normalized.csv").read_text())))
-        assert normalized[0]["trafficBytes"] == "10000000000000001"
-        assert [row["fileKey"] for row in normalized] == ["https://host/a", "host/a"]
+        assert [row["fileKey"] for row in normalized] == ["host/a", "https://host/a"]
+        assert normalized[1]["trafficBytes"] == "10000000000000001"
+        totals = list(csv.DictReader(io.StringIO((path / "daily_totals.csv").read_text())))
+        assert totals == [
+            {"appId": "10350", "date": "2026-01-05", "totalTrafficBytes": "10000000000000001", "fileCount": "1"},
+            {"appId": "10350", "date": "2026-01-07", "totalTrafficBytes": "2000", "fileCount": "1"},
+        ]
+        assert not list(path.glob("*.sqlite*"))
         assert client.get("/api/v1/datasets").json()["total"] == 1
         assert client.get("/api/v1/datasets?page=2&pageSize=1").json()["items"] == []
 
@@ -122,11 +130,31 @@ def test_bad_data_has_queryable_failure_and_report_but_no_dataset(tmp_path, rows
 def test_oversized_upload_and_row_limit_are_not_silent_truncations(tmp_path):
     with TestClient(create_app(tmp_path, max_file_bytes=128, max_rows=1)) as client:
         assert upload(client, b"a" * 129).status_code == 413
+        assert list((tmp_path / "incoming").glob("*.part")) == []
         assert upload(client, b"").status_code == 422
         response = upload(client, csv_bytes([["a", "2026/1/5", "1", "10350"], ["b", "2026/1/5", "2", "10350"]]))
         task = terminal(client, response.json()["importTaskId"])
         assert task["status"] == "FAILED"
         assert task["error"]["code"] == "ROW_LIMIT_EXCEEDED"
+
+
+def test_default_upload_limit_accepts_more_than_legacy_five_mib(tmp_path):
+    with TestClient(create_app(tmp_path)) as client:
+        response = upload(client, b"x" * (5 * 1024 * 1024 + 1), key="over-legacy-limit")
+
+        assert response.status_code == 202
+        assert response.json()["status"] == "PENDING"
+
+
+def test_default_row_limit_accepts_more_than_legacy_twenty_thousand(tmp_path):
+    rows = [[f"file-{index}", "2026/1/5", "1", "10350"] for index in range(20001)]
+    with TestClient(create_app(tmp_path)) as client:
+        response = upload(client, csv_bytes(rows), key="over-legacy-row-limit")
+        task = terminal(client, response.json()["importTaskId"])
+
+        assert task["status"] == "SUCCEEDED"
+        metadata = client.get(f"/api/v1/datasets/{task['datasetId']}").json()
+        assert metadata["rowCount"] == 20001
 
 
 def test_restart_preserves_success_failures_and_idempotency(tmp_path):
@@ -210,6 +238,7 @@ def test_storage_failure_returns_503_not_fake_acceptance(tmp_path, monkeypatch):
         assert response.status_code == 503
         assert response.json()["error"]["code"] == "STORAGE_UNAVAILABLE"
         assert "importTaskId" not in response.json()
+        assert list((tmp_path / "incoming").glob("*.part")) == []
 
 
 def test_errors_and_browser_cors_match_frontend_contract(tmp_path):

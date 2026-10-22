@@ -9,7 +9,7 @@ from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation
 
 
-PARSER_VERSION = "file-daily-v1"
+PARSER_VERSION = "file-daily-v2"
 IDENTITY_VERSION = "opaque-v1"
 
 
@@ -59,8 +59,8 @@ class ParsedCsv:
     error: dict | None
 
 
-def parse_csv(raw: bytes, config: ImportConfig, max_rows: int = 20000) -> ParsedCsv:
-    quality = {
+def new_quality() -> dict:
+    return {
         "encoding": None, "totalRows": 0, "validRows": 0, "duplicateRows": 0,
         "conflictRows": 0, "invalidRows": 0, "dateRange": None,
         "appDateRanges": {}, "missingDates": [], "missingDateCount": 0,
@@ -70,6 +70,38 @@ def parse_csv(raw: bytes, config: ImportConfig, max_rows: int = 20000) -> Parsed
         "completeness": "UNKNOWN", "parserVersion": PARSER_VERSION,
         "scientificNotationRows": 0, "errorSamples": [],
     }
+
+
+def finalize_quality(quality: dict, days_by_app: dict, daily_rows: dict) -> None:
+    quality["dailyRows"] = [
+        {"appId": app, "date": day, "rowCount": count}
+        for (app, day), count in sorted(daily_rows.items())
+    ]
+    if days_by_app:
+        all_days = set().union(*days_by_app.values())
+        quality["dateRange"] = {"start": min(all_days).isoformat(), "end": max(all_days).isoformat()}
+    for app_id, days in sorted(days_by_app.items()):
+        start, end = min(days), max(days)
+        quality["appDateRanges"][app_id] = {"start": start.isoformat(), "end": end.isoformat()}
+        quality["missingDateCount"] += (end - start).days + 1 - len(days)
+        day = start
+        while day < end and len(quality["missingDates"]) < 1000:
+            if day not in days:
+                quality["missingDates"].append({"appId": app_id, "date": day.isoformat()})
+            day += timedelta(days=1)
+    quality["missingDatesTruncated"] = quality["missingDateCount"] > len(quality["missingDates"])
+    quality["warnings"].extend([
+        "文件覆盖完整性未确认；READY 不代表全量数据。",
+        "原始 URL、无协议路径与 CStore fileKey 映射未确认；保留原始标识，不自动合并。",
+    ])
+    if quality["missingDateCount"]:
+        quality["warnings"].append("存在缺失日期，表示无观测；未补为零流量。")
+    if quality["scientificNotationRows"]:
+        quality["warnings"].append("科学计数法已用 Decimal 按原文本解析；无法恢复导出前可能舍入的精度。")
+
+
+def parse_csv(raw: bytes, config: ImportConfig, max_rows: int = 20000) -> ParsedCsv:
+    quality = new_quality()
     observations = {}
     days_by_app = {}
     daily_rows = Counter()
@@ -132,29 +164,7 @@ def parse_csv(raw: bytes, config: ImportConfig, max_rows: int = 20000) -> Parsed
         record_error(error.code, error.message, None)
 
     quality["validRows"] = len(observations)
-    quality["dailyRows"] = [{"appId": app, "date": day, "rowCount": count} for (app, day), count in sorted(daily_rows.items())]
-    if days_by_app:
-        all_days = set().union(*days_by_app.values())
-        quality["dateRange"] = {"start": min(all_days).isoformat(), "end": max(all_days).isoformat()}
-    for app_id, days in sorted(days_by_app.items()):
-        start, end = min(days), max(days)
-        quality["appDateRanges"][app_id] = {"start": start.isoformat(), "end": end.isoformat()}
-        quality["missingDateCount"] += (end - start).days + 1 - len(days)
-        # Limit report payload without losing the exact missing-day count.
-        day = start
-        while day < end and len(quality["missingDates"]) < 1000:
-            if day not in days:
-                quality["missingDates"].append({"appId": app_id, "date": day.isoformat()})
-            day += timedelta(days=1)
-    quality["missingDatesTruncated"] = quality["missingDateCount"] > len(quality["missingDates"])
-    quality["warnings"].extend([
-        "文件覆盖完整性未确认；READY 不代表全量数据。",
-        "原始 URL、无协议路径与 CStore fileKey 映射未确认；保留原始标识，不自动合并。",
-    ])
-    if quality["missingDateCount"]:
-        quality["warnings"].append("存在缺失日期，表示无观测；未补为零流量。")
-    if quality["scientificNotationRows"]:
-        quality["warnings"].append("科学计数法已用 Decimal 按原文本解析；无法恢复导出前可能舍入的精度。")
+    finalize_quality(quality, days_by_app, daily_rows)
     return ParsedCsv(list(observations.values()), quality, first_error)
 
 

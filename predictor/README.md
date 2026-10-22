@@ -15,7 +15,7 @@ conda run --no-capture-output -n cdn-predictor python -m uvicorn app.main:app --
 
 默认持久目录是项目的 `runtime/predictor/`，与进程工作目录无关。可通过 `PREDICTOR_DATA_DIR` 指定持久卷绝对路径。本阶段使用单实例、单 worker，勿对同一目录同时启动多个服务实例或使用 `--workers > 1`。
 
-默认文件上限 5 MiB（`IMPORT_MAX_BYTES=5242880`），数据行上限 20,000（`IMPORT_MAX_ROWS=20000`），超过上限会明确失败，不静默截断。已安装的 `python-multipart=0.0.32` 已补入 `environment.yml`；本次未执行环境安装或更新。
+默认文件上限 128 MiB（`IMPORT_MAX_BYTES=134217728`），数据行上限 1,200,000（`IMPORT_MAX_ROWS=1200000`）。上传按 1 MiB 分块暂存，归一化使用临时 SQLite 去重和磁盘 CSV 导出，不在 Python 内存保留全部观测行；超过任一上限会明确失败，不静默截断。已安装的 `python-multipart=0.0.32` 已补入 `environment.yml`；本次未执行环境安装或更新。
 
 从项目根目录发送真实文件：
 
@@ -51,7 +51,7 @@ curl -i http://127.0.0.1:8000/api/v1/imports \
 - 无效日期、空身份、非法流量、App 不匹配、缺列或行列数不一致均失败。结构和编码错误也不会发布空数据集。
 - 质量报告包含 `totalRows`、`validRows`、`duplicateRows`、`conflictRows`、`invalidRows`、`encoding`、`dateRange`、`appDateRanges`、`dailyRows`、`missingDates`、`missingDateCount`、单位确认、身份状态、完整性和 `warnings`。行数按 CSV 逻辑数据行统计；validRows 是成功解析的唯一观测数。
 - 缺日按 App 各自首尾区间检查，未补零。missingDates 最多列 1,000 项；准确总数由 missingDateCount 保留，截断会标记 missingDatesTruncated。失败报告是已能解析部分的检查结果，不能据此认为整份文件有效；errorSamples 最多列 20 项。
-- READY 只表示可读取，`completeness=UNKNOWN`；单位确认来源记录为用户提交声明，不能认证文件覆盖了完整 CDN 范围。`10066.csv` 的单位未确认且超出默认大小限制，不作为联调用例。
+- READY 只表示可读取，通用上传仍记录 `completeness=UNKNOWN`；单位确认来源记录为用户提交声明。考核使用的 `10066.csv`、`10350.csv` 已由用户确认单位为 B 且日汇总可作为完整 App 总流量，具体完整性口径在热点指标结果中显式记录。
 
 ## 持久化与恢复
 
@@ -59,13 +59,15 @@ curl -i http://127.0.0.1:8000/api/v1/imports \
 runtime/predictor/
   imports/<importTaskId>/original.csv
   imports/<importTaskId>/task.json
+  datasets/<datasetId>/source.csv
   datasets/<datasetId>/original.csv
   datasets/<datasetId>/normalized.csv
+  datasets/<datasetId>/daily_totals.csv
   datasets/<datasetId>/metadata.json
   datasets/<datasetId>/quality.json
 ```
 
-先在临时目录完整写入并 fsync，再原子发布目录；任务更新同样原子替换。未发布的临时目录不参与查询，不自动清理正式记录。文件和任务未持久化则不返回 202，存储不可用返回 503。
+`source.csv` 与兼容旧读取路径的 `original.csv` 是同一不可变文件的硬链接，不重复占用文件内容空间。先在临时目录完整写入并 fsync，再原子发布目录；任务更新同样原子替换。未发布的临时目录不参与查询，失败时清理；正式记录不自动删除。文件和任务未持久化则不返回 202，存储不可用返回 503。
 
 同一原始文件摘要、映射、单位、默认 App、来源、类型和解析版本复用相同不可变数据集。新批次独立导入，不追加旧观测。失败不修改上一份 READY 数据集。
 
