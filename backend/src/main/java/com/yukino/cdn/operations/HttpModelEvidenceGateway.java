@@ -6,12 +6,15 @@ import com.yukino.cdn.prediction.PredictionSettings;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.http.HttpClient;
 import java.time.Duration;
 import static com.yukino.cdn.operations.OperationsSupport.*;
 
 @Component
 public class HttpModelEvidenceGateway implements ModelEvidenceGateway {
+    private static final ObjectMapper MAPPER = new ObjectMapper();
     private final RestClient client;
     public HttpModelEvidenceGateway(PredictionSettings settings) {
         var factory = new JdkClientHttpRequestFactory(HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).followRedirects(HttpClient.Redirect.NEVER).build());
@@ -41,6 +44,17 @@ public class HttpModelEvidenceGateway implements ModelEvidenceGateway {
                 throw problem(503, "MODEL_REVIEW_INVALID", "模型评审响应归属或结构不符。");
             return (ObjectNode) value;
         } catch (com.yukino.cdn.prediction.PredictionProblem known) { throw known; }
+        catch (RestClientResponseException upstream) {
+            try {
+                JsonNode error = MAPPER.readTree(upstream.getResponseBodyAsString()).path("error");
+                String code = error.path("code").asText("").trim();
+                String message = error.path("message").asText("").trim();
+                if (!code.isBlank() && !message.isBlank())
+                    throw problem(upstream.getStatusCode().value(), code, message);
+            } catch (com.yukino.cdn.prediction.PredictionProblem known) { throw known; }
+            catch (Exception ignored) { }
+            throw problem(503, "MODEL_REVIEW_UNAVAILABLE", "模型评审接口不可用，未使用静态样例代替。");
+        }
         catch (RuntimeException dependency) { throw problem(503, "MODEL_REVIEW_UNAVAILABLE", "模型评审接口不可用，未使用静态样例代替。"); }
     }
 }

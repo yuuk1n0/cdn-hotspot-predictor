@@ -3,6 +3,7 @@ package com.yukino.cdn.alert;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataAccessException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -28,6 +29,9 @@ public class AlertReminderScheduler {
     @Scheduled(fixedDelayString = "${ALERT_REMINDER_POLL_MS:60000}")
     public void scheduledTick() {
         try { tick(); }
+        catch (DataAccessException ignored) {
+            // A pending manual migration must not prevent application startup or other modules.
+        }
         catch (RuntimeException error) { log.warn("Alert reminder scan failed: {}", error.getClass().getSimpleName()); }
     }
 

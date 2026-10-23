@@ -22,7 +22,7 @@ public class ModelReviewScheduler {
                 if (!config.path("modelReviewEnabled").asBoolean(false)) continue;
                 for (int horizon : new int[]{1, 7}) {
                     try {
-                        operations.suggestion(app, horizon, null);
+                        operations.reviewAndAutoSwitch(app, horizon);
                     } catch (PredictionProblem problem) {
                         log.warn("模型周期评审失败 appId={} horizonDays={} code={}", app, horizon, problem.code());
                     }

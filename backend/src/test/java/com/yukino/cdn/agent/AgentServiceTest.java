@@ -213,10 +213,35 @@ class AgentServiceTest {
         assertTrue(answer.contains("last_day"));
         assertTrue(answer.contains("mean_7"));
         assertTrue(answer.contains("Recall@50"));
-        assertTrue(answer.contains("可切换：是"));
+        assertTrue(answer.contains("已自动替换"));
+        assertFalse(answer.contains("需人工确认"));
         assertTrue(answer.contains("REAL/MODEL"));
         assertEquals("sug_test", response.path("suggestionId").asText());
         server.verify();
+    }
+
+    @Test void unavailableReviewNeverClaimsCurrentParametersAreNoninferior() throws Exception {
+        operations.reviewUnavailable = true;
+
+        var response = service.chat(request("当前模型有哪些可验证的改进建议？"));
+
+        String answer = response.path("answer").asText();
+        assertTrue(answer.contains("无法判断"));
+        assertTrue(answer.contains("未替换"));
+        assertTrue(answer.contains("MYSQL_REQUIRED"));
+        assertFalse(answer.contains("非劣门槛内"));
+    }
+
+    @Test void insufficientCutoffsAreNotDescribedAsNoninferiorParameters() throws Exception {
+        operations.reviewInsufficient = true;
+
+        var response = service.chat(request("当前模型有哪些可验证的改进建议？"));
+
+        String answer = response.path("answer").asText();
+        assertTrue(answer.contains("证据未达到自动替换门槛"));
+        assertTrue(answer.contains("本轮未替换"));
+        assertTrue(answer.contains("INSUFFICIENT_REVIEW_CUTOFFS"));
+        assertFalse(answer.contains("非劣门槛内"));
     }
 
     ObjectNode request(String message) {return mapper.createObjectNode().put("appId","10350").put("message",message);}
@@ -226,7 +251,7 @@ class AgentServiceTest {
     void verifyAndReset() { server.verify(); server.reset(); }
 
     class FakeOperations implements OperationsService {
-        int calls; String resultDate; RuntimeException failure; boolean missing; boolean top5; long delayMillis;
+        int calls; String resultDate; RuntimeException failure; boolean missing; boolean top5; boolean reviewUnavailable; boolean reviewInsufficient; long delayMillis;
         public ObjectNode evidence(String tool,JsonNode context,JsonNode arguments) {
             calls++; if(failure!=null) throw failure;
             try {Thread.sleep(delayMillis);} catch(InterruptedException ignored){Thread.currentThread().interrupt();}
@@ -278,6 +303,22 @@ class AgentServiceTest {
             candidates.addObject().put("name","mean_7").put("method","mean_7").putObject("mean").put("recallAt50",0.63).put("ndcgAt50",0.81);
             result.putArray("reasonCodes").add("PARAMETER_REPLACEMENT_RECOMMENDED");
             return result;
+        }
+        public ObjectNode reviewAndAutoSwitch(String appId,int horizon){
+            if(reviewUnavailable) {
+                var result=mapper.createObjectNode().put("suggestionId","sug_unavailable").put("appId",appId)
+                        .put("horizonDays",horizon).put("canSwitch",false).put("autoSwitchStatus","FAILED")
+                        .put("errorCode","MYSQL_REQUIRED").put("errorMessage","模型评审必须读取真实 MySQL 观测。");
+                result.putArray("reasonCodes").add("MYSQL_REQUIRED");
+                return result;
+            }
+            if(reviewInsufficient) {
+                var result=suggestion(appId,horizon,null).put("canSwitch",false).put("autoSwitchStatus","NOT_RECOMMENDED")
+                        .put("cutoffCount",3);
+                result.putArray("reasonCodes").add("INSUFFICIENT_REVIEW_CUTOFFS");
+                return result;
+            }
+            return suggestion(appId,horizon,null).put("autoSwitchStatus","SWITCHED").put("configVersion",2);
         }
     }
 }

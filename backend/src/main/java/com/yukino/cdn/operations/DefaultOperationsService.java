@@ -184,12 +184,11 @@ public class DefaultOperationsService implements OperationsService {
             suggestion.put("improvementNdcg", review.path("improvementNdcg").asDouble());
             for (var reason : review.path("reasonCodes")) addOnce(reasons, reason.asText());
             for (var recommendation : review.path("recommendations")) recommendations.add(recommendation.asText());
-            if (canSwitch) {
-                addOnce(reasons, "HUMAN_CONFIRMATION_REQUIRED");
-            }
         } catch (PredictionProblem unavailable) {
             reasons.add(unavailable.code());
             suggestion.putNull("evidence");
+            suggestion.put("errorCode", unavailable.code());
+            suggestion.put("errorMessage", unavailable.getMessage());
             recommendations.add("模型评审服务不可用；保持当前参数，不切换到未验证配置");
         }
         if (backtestId != null && !backtestId.isBlank()) reasons.add("BACKTEST_API_NOT_AVAILABLE");
@@ -200,11 +199,27 @@ public class DefaultOperationsService implements OperationsService {
         persistConfig(app, configuration, configuration.path("version").asInt());
         return suggestion;
     }
+    public ObjectNode reviewAndAutoSwitch(String app, int horizon) {
+        ObjectNode suggestion = suggestion(app, horizon, null);
+        if (suggestion.hasNonNull("errorCode") || !suggestion.path("evidence").isObject())
+            return suggestion.put("autoSwitchStatus", "FAILED");
+        if (!suggestion.path("canSwitch").asBoolean(false))
+            return suggestion.put("autoSwitchStatus", "NOT_RECOMMENDED");
+        ObjectNode configuration = config(app);
+        ObjectNode switched = applyModelSwitch(app, suggestion.path("suggestionId").asText(),
+                configuration.path("version").asInt(), "AUTO_REVIEW");
+        return suggestion.put("autoSwitchStatus", "SWITCHED")
+                .put("configVersion", switched.path("version").asInt());
+    }
     public ObjectNode switchModel(String app, JsonNode body) {
         var configuration = config(id(app));
         if (!body.path("confirmed").isBoolean() || !body.path("confirmed").booleanValue()) throw problem(422, "CONFIRMATION_REQUIRED", "模型切换必须独立确认。");
         if (!body.path("expectedVersion").isIntegralNumber() || body.path("expectedVersion").asInt() != configuration.path("version").asInt()) throw problem(409, "VERSION_CONFLICT", "配置已变化，请重新查看建议。");
-        String requested = text(body, "suggestionId", 128);
+        return applyModelSwitch(app, text(body, "suggestionId", 128), body.path("expectedVersion").asInt(), "MANUAL_CONFIRMATION");
+    }
+    private ObjectNode applyModelSwitch(String app, String requested, int expectedVersion, String trigger) {
+        var configuration = config(id(app));
+        if (configuration.path("version").asInt() != expectedVersion) throw problem(409, "VERSION_CONFLICT", "配置已变化，请重新查看建议。");
         JsonNode selected = null;
         for (var suggestion : configuration.path("latestSuggestions")) {
             if (requested.equals(suggestion.path("suggestionId").asText())) selected = suggestion;
@@ -226,6 +241,7 @@ public class DefaultOperationsService implements OperationsService {
                 .put("modelVersion", targetVersion).put("fromMethod", previousMethod)
                 .put("toMethod", selected.path("targetMethod").asText(""))
                 .put("suggestionId", requested).put("confirmedAt", clock.instant().toString())
+                .put("trigger", trigger)
                 .put("metricBasis", selected.path("metricBasis").asText("REAL_OBSERVED_FUTURE_ROLLING_WINDOW"));
         switchRecord.set("targetSpec", targetSpec.deepCopy());
         ((com.fasterxml.jackson.databind.node.ArrayNode) configuration.path("modelSwitchHistory")).add(switchRecord);

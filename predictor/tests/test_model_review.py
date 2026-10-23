@@ -42,3 +42,19 @@ def test_review_does_not_fill_missing_days():
     result = review_model(days, "10350", 1, ModelSpec("last_day", 1))
     assert result["dataStartDate"] == min(days).isoformat()
     assert "缺失日期不补零" in " ".join(result["assumptions"])
+
+
+def test_daily_review_requires_five_mature_cutoffs_before_switching():
+    result = review_model(days_with(count=5), "10350", 1, ModelSpec("last_day", 1))
+
+    assert result["cutoffCount"] == 4
+    assert result["canSwitch"] is False
+    assert "INSUFFICIENT_REVIEW_CUTOFFS" in result["reasonCodes"]
+
+
+def test_weekly_review_requires_four_mature_cutoffs_before_switching():
+    result = review_model(days_with(count=10), "10350", 7, ModelSpec("last_day", 1))
+
+    assert result["cutoffCount"] == 3
+    assert result["canSwitch"] is False
+    assert "INSUFFICIENT_REVIEW_CUTOFFS" in result["reasonCodes"]

@@ -43,7 +43,7 @@ test('legacy task and run links keep query identifiers and enter the existing AP
 
 test('notification and agent routes render live workflow controls',async()=>{
   for (const [path, labels] of [
-    ['/notifications', ['通知预览', '确认目标与内容后发送', '发送记录', 'App 通知配置']],
+    ['/notifications', ['实时告警', '业务通知配置', '发送记录', '正在发生什么']],
     ['/agent', ['查询上下文', '运营问答', '模型配置与建议', '生成当前跨度建议']]
   ]) {
     const router=createRouter(createMemoryHistory())

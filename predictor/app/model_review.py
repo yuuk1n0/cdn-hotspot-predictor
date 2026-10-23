@@ -66,18 +66,28 @@ def review_model(days, app_id, horizon_days, current_spec, *, current_source="RE
         })
 
     best = max(compared, key=lambda item: (item["mean"]["recallAt50"], item["mean"]["ndcgAt50"]))
+    required_cutoffs = 5 if horizon_days == 1 else 4
+    mature = len(cutoffs) >= required_cutoffs
     can_switch = (
+        mature
+        and
         best["spec"] != _spec_dict(current_spec)
         and best["improvementRecall"] >= RECALL_MARGIN
         and best["improvementNdcg"] >= -NDCG_TOLERANCE
     )
     reasons = ["REAL_OBSERVED_FUTURE_ROLLING_REVIEW", "OBSERVED_TOPK_PROXY", "COMPLETENESS_UNCONFIRMED"]
-    if can_switch:
+    if not mature:
+        reasons += ["INSUFFICIENT_REVIEW_CUTOFFS"]
+        recommendations = [
+            f"当前仅 {len(cutoffs)} 个成熟滚动切点，少于自动替换门槛 {required_cutoffs} 个",
+            "继续积累同一 App 与跨度的成熟未来观测，本轮保持原参数",
+        ]
+    elif can_switch:
         reasons += ["PARAMETER_REPLACEMENT_RECOMMENDED", "SAME_MODEL_VERSION_ONLY"]
         recommendations = [
             f"建议将 {app_id} 的 {'DAY' if horizon_days == 1 else 'WEEK'} 参数替换为 {best['method']}",
             "替换只改变同日/周跨度参数，不新增或伪造模型版本",
-            "人工确认后，新参数从下一次预测任务开始生效",
+            "自动替换后，新参数从下一次预测任务开始生效",
         ]
     else:
         reasons += ["CURRENT_CONFIG_NONINFERIOR", "NO_MATERIAL_RECALL_GAIN"]

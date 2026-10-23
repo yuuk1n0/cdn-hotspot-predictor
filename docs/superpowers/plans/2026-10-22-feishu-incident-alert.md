@@ -836,7 +836,7 @@ git commit -m "feat: add incident acknowledgements and reminders"
 
 ---
 
-### Task 7: 通知中心前端闭环
+### Task 7: 通知中心前端闭环（实现完成，提交待授权）
 
 **Files:**
 
@@ -853,7 +853,7 @@ git commit -m "feat: add incident acknowledgements and reminders"
 - Produces: `alertApi.listIncidents/getIncident`，页面写操作仅限配置和显式失败重试。
 - Produces: `alertApi.listRoutes/getRoute/updateRoute/validateRoute/testRoute`。
 
-- [ ] **Step 1: 写前端 API 测试**
+- [x] **Step 1: 写前端 API 测试**
 
 ```javascript
 import { test } from 'node:test'
@@ -873,7 +873,7 @@ test('alert route update carries optimistic version', async () => {
 })
 ```
 
-- [ ] **Step 2: 运行测试并确认失败**
+- [x] **Step 2: 运行测试并确认失败**
 
 Run:
 
@@ -884,7 +884,7 @@ npm test -- --test-name-pattern="alert route"
 
 Expected: FAIL，因为 `frontend/src/alerts.js` 不存在。
 
-- [ ] **Step 3: 实现 API 模块和三个页面区域**
+- [x] **Step 3: 实现 API 模块和三个页面区域**
 
 `alerts.js` 必须：
 
@@ -908,7 +908,7 @@ Expected: FAIL，因为 `frontend/src/alerts.js` 不存在。
 
 “发送记录”保留现有每日/逾期通知能力，并增加事故阶段、`chatId`、`messageId` 和错误码。
 
-- [ ] **Step 4: 运行前端测试和构建**
+- [x] **Step 4: 运行前端测试和构建**
 
 Run:
 
@@ -920,7 +920,7 @@ npm run build
 
 Expected: 测试 PASS，Vite build 成功。
 
-- [ ] **Step 5: 提交（仅在用户明确授权提交后执行）**
+- [ ] **Step 5: 提交（未执行，等待用户明确授权）**
 
 ```bash
 git add frontend/src/alerts.js \
@@ -934,7 +934,7 @@ git commit -m "feat: add incident alert center UI"
 
 ---
 
-### Task 8: 全链路验证与验收清单
+### Task 8: 全链路验证与验收清单（自动验证完成，外部验收待授权）
 
 **Files:**
 
@@ -947,7 +947,7 @@ git commit -m "feat: add incident alert center UI"
 - Consumes: Tasks 1-7 的完整后端和前端接口。
 - Produces: 可追踪的自动测试、浏览器验收和真实飞书验收边界。
 
-- [ ] **Step 1: 写全链路失败测试**
+- [x] **Step 1: 写全链路失败测试**
 
 ```java
 @Test void p1IncidentCreatesOneGroupAndRecoveryStopsReminders() {
@@ -962,7 +962,7 @@ git commit -m "feat: add incident alert center UI"
 }
 ```
 
-- [ ] **Step 2: 运行集成测试并确认失败**
+- [x] **Step 2: 运行集成测试并确认失败**
 
 Run:
 
@@ -973,7 +973,7 @@ mvn -o -Dtest=AlertFlowIntegrationTest test
 
 Expected: FAIL，因为集成夹具尚未完成。
 
-- [ ] **Step 3: 完成集成夹具和验收清单**
+- [x] **Step 3: 完成集成夹具和验收清单**
 
 自动测试必须覆盖：
 
@@ -997,7 +997,7 @@ Expected: FAIL，因为集成夹具尚未完成。
 6. Manual production MySQL migration
 ```
 
-- [ ] **Step 4: 运行完整验证**
+- [ ] **Step 4: 自动验证完成；浏览器验收未执行**
 
 Run:
 
@@ -1020,7 +1020,7 @@ Expected:
 
 浏览器验收在实际启动 Java、Vue 后执行，必须验证新增 AppID、两个 AppID 隔离、飞书群/卡片链接、恢复和失败状态展示。认领与恢复身份由飞书卡片回调验证，不从网页请求体接收。真实飞书测试需用户另行授权，不能由 fixture 代替。
 
-- [ ] **Step 5: 提交（仅在用户明确授权提交后执行）**
+- [ ] **Step 5: 提交（未执行，等待用户明确授权）**
 
 ```bash
 git add backend/src/test/java/com/yukino/cdn/alert/AlertFlowIntegrationTest.java \

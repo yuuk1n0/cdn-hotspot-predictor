@@ -113,6 +113,34 @@ class OperationsServiceTest {
         assertTrue(switched.path("weeklyModelSpec").isMissingNode() || switched.path("weeklyModelSpec").isNull());
         assertEquals(1, switched.path("modelSwitchHistory").size());
     }
+
+    @Test void automaticReviewReplacesOnlyTheRequestedAppAndHorizon() {
+        service.updateConfig("10350", mapper.createObjectNode().put("expectedVersion", 0)
+                .put("modelReviewEnabled", true));
+        recommendSwitch = true;
+
+        var result = service.reviewAndAutoSwitch("10066", 1);
+
+        assertEquals("SWITCHED", result.path("autoSwitchStatus").asText());
+        assertFalse(result.path("reasonCodes").toString().contains("HUMAN_CONFIRMATION_REQUIRED"));
+        assertEquals(7, service.config("10066").path("dailyModelSpec").path("window").asInt());
+        assertTrue(service.config("10066").path("weeklyModelSpec").isMissingNode()
+                || service.config("10066").path("weeklyModelSpec").isNull());
+        assertEquals("AUTO_REVIEW", service.config("10066").path("modelSwitchHistory").get(0).path("trigger").asText());
+        assertEquals(1, service.config("10350").path("version").asInt());
+        assertTrue(service.config("10350").path("dailyModelSpec").isMissingNode()
+                || service.config("10350").path("dailyModelSpec").isNull());
+    }
+
+    @Test void automaticReviewDoesNotReplaceWhenEvidenceRejectsCandidate() {
+        var result = service.reviewAndAutoSwitch("10066", 7);
+
+        assertEquals("NOT_RECOMMENDED", result.path("autoSwitchStatus").asText());
+        assertTrue(service.config("10066").path("weeklyModelSpec").isMissingNode()
+                || service.config("10066").path("weeklyModelSpec").isNull());
+        assertTrue(service.config("10066").path("modelSwitchHistory").isMissingNode()
+                || service.config("10066").path("modelSwitchHistory").isEmpty());
+    }
     @Test void toolsBindContextAndReportMissingFactsRatherThanMoneyZero() {
         var context = mapper.createObjectNode().put("appId", "10066").put("businessDate", "2026-10-20").put("horizonDays", 1).put("runId", "run_old");
         assertThrows(PredictionProblem.class, () -> service.evidence("getTopHotspots", context, mapper.createObjectNode().put("appId", "other")));

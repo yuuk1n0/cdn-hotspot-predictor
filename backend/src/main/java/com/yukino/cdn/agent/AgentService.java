@@ -26,7 +26,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/** Only the six read-only business functions below are callable by the model. */
+/** Only the six bounded business functions below are callable by the model. */
 public final class AgentService {
     private static final ZoneId SHANGHAI = ZoneId.of("Asia/Shanghai");
     private static final Set<String> TOOLS = Set.of("getTopHotspots", "explainFile", "getCompressionEffects",
@@ -307,22 +307,32 @@ public final class AgentService {
         }
     }
 
-    /** Deterministic model-review answer; no model call is required and no result is fabricated. */
+    /** Deterministic model-review answer; the review may auto-apply an eligible same-version parameter change. */
     private ObjectNode modelSuggestionTemplate(ObjectNode context) {
         ArrayNode evidence = mapper.createArrayNode();
         ArrayNode uncertainties = mapper.createArrayNode()
                 .add("模型建议使用已观测文件未来窗口的代理指标，不代表完整 CDN 流量准确率。")
-                .add("参数替换仅在同一 App、同一跨度、同一评估窗口内成立，并须人工确认。");
+                .add("参数替换仅在同一 App、同一跨度、同一评估窗口内成立；达到门槛后自动生效于新任务。");
         try {
             String appId = context.path("appId").asText();
             int horizon = context.path("horizonDays").asInt();
-            ObjectNode suggestion = operations.suggestion(appId, horizon, null);
+            ObjectNode suggestion = operations.reviewAndAutoSwitch(appId, horizon);
             ObjectNode item = mapper.createObjectNode().put("tool", "getModelSuggestion").put("appId", appId)
                     .put("queriedAt", clock.instant().toString());
             item.set("context", context.deepCopy());
             item.set("data", suggestion);
             item.putArray("reasonCodes").addAll((ArrayNode) suggestion.path("reasonCodes").deepCopy());
             evidence.add(item);
+
+            if ("FAILED".equals(suggestion.path("autoSwitchStatus").asText())) {
+                String code = suggestion.path("errorCode").asText("MODEL_REVIEW_UNAVAILABLE");
+                String message = suggestion.path("errorMessage").asText("模型评审证据不可用。");
+                String answer = "当前 App " + appId + " · " + (horizon == 7 ? "WEEK" : "DAY")
+                        + " 的模型参数无法判断，本轮未替换。原因码：" + code + "；" + message;
+                ObjectNode responseContext = context.deepCopy().put("modelVersion", "hotspot-simple-v1")
+                        .put("resultMode", "REVIEW_UNAVAILABLE").put("metricBasis", "NONE");
+                return response(answer, responseContext, evidence, uncertainties, "INSUFFICIENT_EVIDENCE");
+            }
 
             String currentMethod = suggestion.path("currentMethod").asText(suggestion.path("evidence").path("selectedMethod").asText("未提供"));
             JsonNode currentSpec = suggestion.has("currentSpec") ? suggestion.path("currentSpec") : suggestion.path("evidence").path("selectedSpec");
@@ -357,17 +367,22 @@ public final class AgentService {
                 answer.append("。");
             }
             boolean canSwitch = suggestion.path("canSwitch").asBoolean(false);
-            if (canSwitch) {
-                answer.append(" 结论：建议将本 App 的 ")
+            boolean currentNoninferior = false;
+            for (JsonNode reason : suggestion.path("reasonCodes"))
+                if ("CURRENT_CONFIG_NONINFERIOR".equals(reason.asText())) currentNoninferior = true;
+            if ("SWITCHED".equals(suggestion.path("autoSwitchStatus").asText())) {
+                answer.append(" 结论：已自动替换本 App 的 ")
                         .append(horizon == 7 ? "周参数" : "日参数")
                         .append(" 替换为 ").append(suggestion.path("targetMethod").asText("目标参数"))
                         .append("（Recall 提升 ").append(percentagePoint(suggestion.path("improvementRecall").asDouble())).append("）。");
-            } else {
+            } else if (currentNoninferior) {
                 answer.append(" 结论：当前参数在非劣门槛内，暂不替换。");
+            } else {
+                answer.append(" 结论：证据未达到自动替换门槛，本轮未替换。");
             }
             JsonNode reasons = suggestion.path("reasonCodes");
             if (reasons.isArray() && !reasons.isEmpty()) answer.append(" 原因码：").append(reasons.toString()).append("。");
-            answer.append(" 可切换：").append(canSwitch ? "是（需人工确认）" : "否")
+            answer.append(" 自动替换状态：").append(suggestion.path("autoSwitchStatus").asText(canSwitch ? "PENDING" : "NOT_RECOMMENDED"))
                     .append("。来源：REAL/MODEL；指标口径：OBSERVED_FUTURE_PROXY。");
             ObjectNode responseContext = context.deepCopy().put("modelVersion", suggestion.path("modelVersion").asText("hotspot-simple-v1"))
                     .put("resultMode", "REAL/MODEL").put("metricBasis", suggestion.path("metricBasis").asText("OBSERVED_FUTURE_PROXY"));
