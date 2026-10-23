@@ -1,0 +1,12 @@
+name: cdn-predictor
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python=3.11.17
+  - fastapi=0.149.0
+  - python-multipart=0.0.32
+  - uvicorn=0.54.0
+  - httpx=0.28.1
+  - pytest=9.1.1
+  - pymysql>=1.1,<2

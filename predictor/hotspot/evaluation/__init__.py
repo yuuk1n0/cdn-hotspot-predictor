@@ -1,0 +1,1 @@
+"""CDN hotspot evaluation module."""

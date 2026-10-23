@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: cdn-hotspot-backend
+  sql:
+    init:
+      mode: never
+      encoding: UTF-8
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:cdn_hotspot}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    username: ${MYSQL_USER:cdn}
+    password: ${MYSQL_PASSWORD:cdn_dev}
+    hikari:
+      initialization-fail-timeout: -1
+      connection-timeout: 3000
+      maximum-pool-size: 5
+
+server:
+  port: ${BACKEND_PORT:8080}
+
+app:
+  cors:
+    allowed-origin: ${FRONTEND_ORIGIN:http://localhost:5173}
+  prediction:
+    python-base-url: ${PYTHON_BASE_URL:http://127.0.0.1:8000}
+    connect-timeout: ${PREDICTION_CONNECT_TIMEOUT:3s}
+    read-timeout: ${PREDICTION_READ_TIMEOUT:5s}
+    poll-interval: ${PREDICTION_POLL_INTERVAL:2s}
+    task-timeout: ${PREDICTION_TASK_TIMEOUT:180s}
+    max-retry-delay: ${PREDICTION_MAX_RETRY_DELAY:10s}
+    worker-enabled: ${PREDICTION_WORKER_ENABLED:true}
+    worker-tick-ms: ${PREDICTION_WORKER_TICK_MS:500}
